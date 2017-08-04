@@ -9,7 +9,8 @@ def convert_params(f):
 
     return wrapper
 
-class AbstractVisualLogger(ABCMeta):
+class AbstractVisualLogger(object):
+    __metaclass__ = ABCMeta
     """Abstract interface for visual logger."""
 
     def process_params(self, f, *args, **kwargs):
