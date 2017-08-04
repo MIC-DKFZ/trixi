@@ -201,13 +201,12 @@ class NumpyVisdomLogger(AbstractVisualLogger):
         return win
 
     @convert_params
-    def show_text(self, text, name=None, title=None, env_appendix=""):
+    def show_text(self, text, name=None, env_appendix=""):
         """
         Displays a text in a visdom window
 
         :param text: The text to be displayed
         :param name: The name of the window
-        :param title: The title of the image window
         :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
         """
 
@@ -215,12 +214,11 @@ class NumpyVisdomLogger(AbstractVisualLogger):
             "type": "text",
             "text": text,
             "name": name,
-            "title": title,
             "env_appendix": env_appendix
         }
         self._queue.put_nowait(vis_task)
 
-    def __show_text(self, text, name=None, title=None, env_appendix="", **kwargs):
+    def __show_text(self, text, name=None, env_appendix="", **kwargs):
         """
        Internal show_text method, called by the internal process.
        This function does all the magic.
@@ -229,8 +227,7 @@ class NumpyVisdomLogger(AbstractVisualLogger):
         win = self.vis.text(
             text=text,
             win=name,
-            env=self.name + env_appendix,
-            opts=dict(title=title)
+            env=self.name + env_appendix
         )
 
         return win
