@@ -74,6 +74,12 @@ class NumpyVisdomLogger(AbstractVisualLogger):
                     self.__show_histogram_3d(**vis_task)
                 if vis_task["type"] == "barplot":
                     self.__show_barplot(**vis_task)
+                if vis_task["type"] == "lineplot":
+                    self.__show_lineplot(**vis_task)
+                if vis_task["type"] == "scatterplot":
+                    self.__show_scatterplot(**vis_task)
+                if vis_task["type"] == "piechart":
+                    self.__show_piechart(**vis_task)
 
             except:
 
@@ -410,16 +416,118 @@ class NumpyVisdomLogger(AbstractVisualLogger):
         return win
 
     @convert_params
-    def show_lineplot(self, *args, **kwargs):
-        raise NotImplementedError()
+    def show_lineplot(self, y_vals, x_vals=None, name=None, env_appendix=""):
+        """
+        Displays (multiple) lines plot, given values Y (and optional the corresponding X values)
+
+        :param y_vals: Array of shape MxN , where M is the number of points and N is the number of different line
+        :param x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if
+         not set the points are assumed to be equally distributed in the interval [0, 1] )
+        :param name: The name of the window
+        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+        """
+
+        vis_task = {
+            "type": "lineplot",
+            "x_vals": x_vals,
+            "y_vals": y_vals,
+            "name": name,
+            "env_appendix": env_appendix
+        }
+        self._queue.put_nowait(vis_task)
+
+    def __show_lineplot(self, y_vals, x_vals=None, name=None, env_appendix="", **kwargs):
+        """
+       Internal show_lineplot method, called by the internal process.
+       This function does all the magic.
+        """
+
+        win = self.vis.line(
+            X=x_vals,
+            Y=y_vals,
+            win=name,
+            env=self.name + env_appendix,
+            opts=dict(
+                title=name
+            )
+        )
+
+        return win
 
     @convert_params
-    def show_scatterplot(self, *args, **kwargs):
-        raise NotImplementedError()
+    def show_scatterplot(self, array, labels=None, name=None, env_appendix=""):
+        """
+        Displays a scatter plots, with the points given in X
+
+        :param array: A 2d array with size N x dim, where each element i \in N at X[i] results in a a 2d (if dim = 2)/
+         3d (if dim = 3) point.
+        :param labels: For each point a int label (starting from 1) can be given. Has to be an array of size N.
+        :param name: The name of the window
+        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+        """
+
+        vis_task = {
+            "type": "scatterplot",
+            "array": array,
+            "labels": labels,
+            "name": name,
+            "env_appendix": env_appendix
+        }
+        self._queue.put_nowait(vis_task)
+
+    def __show_scatterplot(self, array, labels=None, name=None, env_appendix="", **kwargs):
+        """
+       Internal show_scatterplot method, called by the internal process.
+       This function does all the magic.
+        """
+
+        win = self.vis.scatter(
+            X=array,
+            Y=labels,
+            win=name,
+            env=self.name + env_appendix,
+            opts=dict(
+                title=name
+            )
+        )
+
+        return win
 
     @convert_params
-    def show_piechart(self, *args, **kwargs):
-        raise NotImplementedError()
+    def show_piechart(self, array, name=None, env_appendix=""):
+        """
+        Displays a pie chart.
+
+        :param array: Array of positive integers. Each integer will be presented as a part of the pie (with the total
+        as the sum of all integers)
+        :param name: The name of the window
+        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+        """
+
+        vis_task = {
+            "type": "piechart",
+            "array": array,
+            "name": name,
+            "env_appendix": env_appendix
+        }
+        self._queue.put_nowait(vis_task)
+
+    def __show_piechart(self, array, name=None, env_appendix="", **kwargs):
+        """
+       Internal show_piechart method, called by the internal process.
+       This function does all the magic.
+        """
+
+        win = self.vis.pie(
+            X=array,
+            win=name,
+            env=self.name + env_appendix,
+            opts=dict(
+                title=name
+            )
+        )
+
+        return win
 
     def show_values(self, val_dict):
         """A util function for multiple values. Simple plots all values in a dict, there the window name is the key
