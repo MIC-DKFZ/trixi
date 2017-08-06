@@ -80,6 +80,8 @@ class NumpyVisdomLogger(AbstractVisualLogger):
                     self.__show_scatterplot(**vis_task)
                 if vis_task["type"] == "piechart":
                     self.__show_piechart(**vis_task)
+                if vis_task["type"] == "svg":
+                    self.__show_svg(**vis_task)
 
             except:
 
@@ -589,6 +591,50 @@ class NumpyVisdomLogger(AbstractVisualLogger):
 
         win = self.vis.pie(
             X=array,
+            win=name,
+            env=self.name + env_appendix,
+            opts=opts
+        )
+
+        return win
+
+
+    @convert_params
+    def show_svg(self, svg, name=None, env_appendix="", opts={}):
+        """
+        Displays a svg file.
+
+        :param svg: Filename of the svg file which should be displayed
+        :param name: The name of the window
+        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        """
+
+        vis_task = {
+            "type": "svg",
+            "svg": svg,
+            "name": name,
+            "env_appendix": env_appendix,
+            "opts": opts
+        }
+        self._queue.put_nowait(vis_task)
+
+    def __show_svg(self, svg, name=None, env_appendix="", opts={}, **kwargs):
+        """
+       Internal show_svg method, called by the internal process.
+       This function does all the magic.
+        """
+
+        with open(svg, 'r') as fileobj:
+            svgstr = fileobj.read()
+
+        opts = opts.copy()
+        opts.update(dict(
+            title=name
+        ))
+
+        win = self.vis.svg(
+            svgstr=svgstr,
             win=name,
             env=self.name + env_appendix,
             opts=opts
