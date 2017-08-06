@@ -27,34 +27,41 @@ class AbstractVisualLogger(object):
     @abstractmethod
     @convert_params
     def show_image(self, *args, **kwargs):
+        """Abstract method which should handle and somehow log/ store an image"""
         raise NotImplementedError()
 
     @abstractmethod
     @convert_params
     def show_value(self, *args, **kwargs):
+        """Abstract method which should handle and somehow log/ store a value"""
         raise NotImplementedError()
 
     @abstractmethod
     @convert_params
     def show_text(self, *args, **kwargs):
+        """Abstract method which should handle and somehow log/ store a text"""
         raise NotImplementedError()
 
     @abstractmethod
     @convert_params
     def show_barplot(self, *args, **kwargs):
+        """Abstract method which should handle and somehow log/ store a barplot"""
         raise NotImplementedError()
 
     @abstractmethod
     @convert_params
     def show_lineplot(self, *args, **kwargs):
+        """Abstract method which should handle and somehow log/ store a lineplot"""
         raise NotImplementedError()
 
     @abstractmethod
     @convert_params
     def show_scatterplot(self, *args, **kwargs):
+        """Abstract method which should handle and somehow log/ store a scatterplot"""
         raise NotImplementedError()
 
     @abstractmethod
     @convert_params
     def show_piechart(self, *args, **kwargs):
+        """Abstract method which should handle and somehow log/ store a piechart"""
         raise NotImplementedError()
