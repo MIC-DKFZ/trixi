@@ -1,3 +1,4 @@
 from vislogger.abstractvisuallogger import AbstractVisualLogger
 from vislogger.extravisdom import ExtraVisdom
 from vislogger.numpyvisdomlogger import NumpyVisdomLogger
+from vislogger.pytorchvisdomlogger import PytorchVisdomLogger
