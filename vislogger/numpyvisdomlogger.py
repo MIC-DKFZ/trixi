@@ -16,7 +16,7 @@ class NumpyVisdomLogger(AbstractVisualLogger):
     Visual logger, inherits the AbstractVisualLogger and plots/ logs numpy arrays/ values on a Visdom server.
     """
 
-    def __init__(self, name, server="http://localhost", port=8097, auto_close=False, **kwargs):
+    def __init__(self, name="main", server="http://localhost", port=8097, auto_close=False, **kwargs):
         """
         Creates a new NumpyVisdomLogger object.
 
@@ -25,7 +25,6 @@ class NumpyVisdomLogger(AbstractVisualLogger):
         :param port: The port of the visdom server
         :param auto_close: Close all objects and kill process at the end of the python script
         """
-
         super(NumpyVisdomLogger, self).__init__(**kwargs)
 
         self.name = name
@@ -58,30 +57,8 @@ class NumpyVisdomLogger(AbstractVisualLogger):
 
             try:
 
-                if vis_task["type"] == "image":
-                    self.__show_image(**vis_task)
-                if vis_task["type"] == "images":
-                    self.__show_images(**vis_task)
-                if vis_task["type"] == "value":
-                    self.__show_value(**vis_task)
-                if vis_task["type"] == "text":
-                    self.__show_text(**vis_task)
-                if vis_task["type"] == "progress":
-                    self.__show_progress(**vis_task)
-                if vis_task["type"] == "histogram":
-                    self.__show_histogram(**vis_task)
-                if vis_task["type"] == "histogram_3d":
-                    self.__show_histogram_3d(**vis_task)
-                if vis_task["type"] == "barplot":
-                    self.__show_barplot(**vis_task)
-                if vis_task["type"] == "lineplot":
-                    self.__show_lineplot(**vis_task)
-                if vis_task["type"] == "scatterplot":
-                    self.__show_scatterplot(**vis_task)
-                if vis_task["type"] == "piechart":
-                    self.__show_piechart(**vis_task)
-                if vis_task["type"] == "svg":
-                    self.__show_svg(**vis_task)
+                show_fn = self.show_funcs[vis_task["type"]]
+                show_fn(self, **vis_task)
 
             except:
 
@@ -216,7 +193,7 @@ class NumpyVisdomLogger(AbstractVisualLogger):
 
         opts = opts.copy()
         opts.update(dict(
-            title=name
+            title=name,
         ))
 
         win = self.vis.line(
@@ -598,7 +575,6 @@ class NumpyVisdomLogger(AbstractVisualLogger):
 
         return win
 
-
     @convert_params
     def show_svg(self, svg, name=None, env_appendix="", opts={}):
         """
@@ -660,3 +636,18 @@ class NumpyVisdomLogger(AbstractVisualLogger):
         """Kills the internal process."""
         if self._process is not None:
             self._process.terminate()
+
+    show_funcs = {
+        "image": __show_image,
+        "images": __show_images,
+        "value": __show_value,
+        "text": __show_text,
+        "progress": __show_progress,
+        "histogram": __show_histogram,
+        "histogram_3d": __show_histogram_3d,
+        "barplot": __show_barplot,
+        "lineplot": __show_lineplot,
+        "scatterplot": __show_scatterplot,
+        "piechart": __show_piechart,
+        "svg": __show_svg
+    }

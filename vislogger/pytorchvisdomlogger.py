@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from graphviz import Digraph
 from torch.autograd import Variable
+from torchvision.utils import make_grid
 
 from vislogger import NumpyVisdomLogger
 
@@ -12,6 +13,9 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
     """
     Visual logger, inherits the NumpyVisdomLogger and plots/ logs pytorch tensors and variables on a Visdom server.
     """
+
+    def __init__(self, *args, **kwargs):
+        super(PytorchVisdomLogger, self).__init__(*args, **kwargs)
 
     def process_params(self, f, *args, **kwargs):
         """
@@ -119,12 +123,12 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         due to the multi threadded plotting.
         """
 
-        def make_dot(var, state_dict=None):
+        def make_dot(output_var, state_dict=None):
             """ Produces Graphviz representation of PyTorch autograd graph
             Blue nodes are the Variables that require grad, orange are Tensors
             saved for backward in torch.autograd.Function
             Args:
-                var: output Variable
+                output_var: output Variable
                 state_dict: dict of (name, parameter) to add names to node that require grad
             """
             if state_dict is not None:
@@ -150,16 +154,16 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                     elif hasattr(var, 'variable'):
                         u = var.variable
                         if state_dict is not None and id(u.data) in param_map:
-                            name = param_map[id(u.data)]
+                            node_name = param_map[id(u.data)]
                         else:
-                            name = ""
-                        node_name = '%s\n %s' % (name, size_to_str(u.size()))
+                            node_name = ""
+                        node_name = '%s\n %s' % (node_name, size_to_str(u.size()))
                         dot.node(str(id(var)), node_name, fillcolor='lightblue')
                     else:
-                        name = str(type(var).__name__)
-                        if name.endswith("Backward"):
-                            name = name[:-8]
-                        dot.node(str(id(var)), name)
+                        node_name = str(type(var).__name__)
+                        if node_name.endswith("Backward"):
+                            node_name = node_name[:-8]
+                        dot.node(str(id(var)), node_name)
                     seen.add(var)
                     if hasattr(var, 'next_functions'):
                         for u in var.next_functions:
@@ -171,7 +175,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                             dot.edge(str(id(t)), str(id(var)))
                             add_nodes(t)
 
-            add_nodes(var.grad_fn)
+            add_nodes(output_var.grad_fn)
             return dot
 
         # Create input
@@ -193,3 +197,39 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         # Display model graph in visdom
         self.show_svg(svg=x, name=name)
 
+    def show_image_grid(self, images, name=None, title=None, caption=None, env_appendix="", opts={}):
+
+        tensor = images.cpu()
+        viz_task = {
+            "type": "image_grid",
+            "tensor": tensor,
+            "name": name,
+            "title": title,
+            "caption": caption,
+            "env_appendix": env_appendix,
+            "opts": opts
+        }
+        self._queue.put_nowait(viz_task)
+
+    def __show_image_grid(self, tensor, name=None, title=None, caption=None, env_appendix="", opts={}, **kwargs):
+
+        # tensor = tensor.cpu()
+        grid = make_grid(tensor, normalize=True)
+        image = grid.mul(255).clamp(0, 255).byte().numpy()
+
+        opts = opts.copy()
+        opts.update(dict(
+            title=name,
+            caption=caption
+        ))
+
+        win = self.vis.image(
+            img=image,
+            win=name,
+            env=self.name + env_appendix,
+            opts=opts
+        )
+
+        return win
+
+    NumpyVisdomLogger.show_funcs["image_grid"] = __show_image_grid
