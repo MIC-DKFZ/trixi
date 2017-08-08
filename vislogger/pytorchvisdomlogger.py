@@ -23,14 +23,14 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         """
 
         ### convert args
-        args = (a.cpu().numpy() if type(a).__module__ == 'torch' else a for a in args)
+        args = (a.cpu().numpy() if torch.is_tensor(a) else a for a in args)
         args = (a.data.cpu().numpy() if isinstance(a, Variable) else a for a in args)
 
         ### convert kwargs
         for key, data in kwargs.items():
             if isinstance(data, Variable):
                 kwargs[key] = data.data.cpu().numpy()
-            elif type(data).__module__ == 'torch':
+            elif torch.is_tensor(data):
                 kwargs[key] = data.cpu().numpy()
 
         return f(self, *args, **kwargs)
