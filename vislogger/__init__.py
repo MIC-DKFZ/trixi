@@ -4,4 +4,5 @@ from vislogger.filelogger import FileLogger
 from vislogger.numpyfilelogger import NumpyFileLogger
 from vislogger.numpyseabornlogger import NumpySeabornLogger
 from vislogger.numpyvisdomlogger import NumpyVisdomLogger
+from vislogger.pytorchfilelogger import PytorchFileLogger
 from vislogger.pytorchvisdomlogger import PytorchVisdomLogger
