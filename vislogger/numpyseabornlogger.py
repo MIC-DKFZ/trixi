@@ -4,10 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn
 
-from vislogger import AbstractVisualLogger
+from vislogger.abstractvisuallogger import AbstractVisualLogger
 from vislogger.abstractvisuallogger import convert_params
-
-plt.ion()
 
 
 class NumpySeabornLogger(AbstractVisualLogger):
@@ -31,6 +29,8 @@ class NumpySeabornLogger(AbstractVisualLogger):
         if show:
             plt.show(block=False)
             plt.pause(0.01)
+
+        return figure
 
     @convert_params
     def show_value(self, value, name, line_name=None, show=True, *args, **kwargs):
@@ -58,10 +58,9 @@ class NumpySeabornLogger(AbstractVisualLogger):
             plt.show(block=False)
             plt.pause(0.01)
 
-    @convert_params
-    def show_text(self, *args, **kwargs):
-        """A method which should handle and somehow log/ store a text"""
-        raise NotImplementedError()
+        return figure
+
+
 
     @convert_params
     def show_barplot(self, data, name, show=True, *args, **kwargs):
@@ -79,6 +78,8 @@ class NumpySeabornLogger(AbstractVisualLogger):
             plt.show(block=False)
             plt.pause(0.01)
 
+        return figure
+
     @convert_params
     def show_lineplot(self, x, y, name, show=True, *args, **kwargs):
         """A method which should handle and somehow log/ store a lineplot"""
@@ -93,6 +94,8 @@ class NumpySeabornLogger(AbstractVisualLogger):
         if show:
             plt.show(block=False)
             plt.pause(0.01)
+
+        return figure
 
     @convert_params
     def show_scatterplot(self, name, x, y, show=True, *args, **kwargs):
@@ -111,6 +114,8 @@ class NumpySeabornLogger(AbstractVisualLogger):
             plt.show(block=False)
             plt.pause(0.01)
 
+        return figure
+
     @convert_params
     def show_piechart(self, array, name, show=True, *args, **kwargs):
         """A method which should handle and somehow log/ store a piechart"""
@@ -123,6 +128,8 @@ class NumpySeabornLogger(AbstractVisualLogger):
         if show:
             plt.show(block=False)
             plt.pause(0.01)
+
+        return figure
 
 
     def get_figure(self, name):
