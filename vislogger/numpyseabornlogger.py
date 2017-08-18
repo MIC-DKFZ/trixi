@@ -51,7 +51,6 @@ class NumpySeabornLogger(AbstractVisualLogger):
         for y_name in self.values[name]:
 
             y, x = zip(*self.values[name][y_name])
-
             plt.plot(x, y)
 
         if show:
@@ -63,11 +62,11 @@ class NumpySeabornLogger(AbstractVisualLogger):
 
 
     @convert_params
-    def show_barplot(self, data, name, show=True, *args, **kwargs):
+    def show_barplot(self, array, name, show=True, *args, **kwargs):
         """A method which should handle and somehow log/ store a barplot"""
         figure = self.get_figure(name)
 
-        y = data
+        y = array
         x = list(range(1, len(y) + 1))
 
         seaborn.set_style("whitegrid")
@@ -81,7 +80,7 @@ class NumpySeabornLogger(AbstractVisualLogger):
         return figure
 
     @convert_params
-    def show_lineplot(self, x, y, name, show=True, *args, **kwargs):
+    def show_lineplot(self, y_vals, x_vals, name, show=True, *args, **kwargs):
         """A method which should handle and somehow log/ store a lineplot"""
 
         figure = self.get_figure(name)
@@ -89,7 +88,7 @@ class NumpySeabornLogger(AbstractVisualLogger):
 
         seaborn.set_style("whitegrid")
 
-        plt.plot(x, y)
+        plt.plot(x_vals, y_vals)
 
         if show:
             plt.show(block=False)
@@ -98,12 +97,15 @@ class NumpySeabornLogger(AbstractVisualLogger):
         return figure
 
     @convert_params
-    def show_scatterplot(self, name, x, y, show=True, *args, **kwargs):
+    def show_scatterplot(self, array, name, show=True, *args, **kwargs):
         """A method which should handle and somehow log/ store a scatterplot"""
 
-        if not isinstance(x, np.ndarray) or not isinstance(y, np.ndarray):
-            raise TypeError("x and y must be numpy arrays (this class is called NUMPY seaborn logger, and seaborn"
+        if not isinstance(array, np.ndarray):
+            raise TypeError("Array must be numpy arrays (this class is called NUMPY seaborn logger, and seaborn"
                             " can only handle numpy array -.- .__. )")
+
+        x, y = zip(*array)
+        x, y = np.asarray(x), np.asarray(y)
 
         figure = self.get_figure(name)
         plt.clf()

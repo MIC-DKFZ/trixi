@@ -67,7 +67,7 @@ class NumpyVisdomLogger(AbstractVisualLogger):
                 print("Error {}: {}".format(error, msg))
 
     @convert_params
-    def show_image(self, image, name=None, title=None, caption=None, env_appendix="", opts={}):
+    def show_image(self, image, name=None, title=None, caption=None, env_appendix="", opts={}, **kwargs):
         """
         Displays an image in a window/pane at the visdom server
 
@@ -112,7 +112,7 @@ class NumpyVisdomLogger(AbstractVisualLogger):
         return win
 
     @convert_params
-    def show_images(self, images, name=None, title=None, caption=None, env_appendix="", opts={}):
+    def show_images(self, images, name=None, title=None, caption=None, env_appendix="", opts={}, **kwargs):
         """
         Displays multiple images in a window/pane at a visdom server
 
@@ -156,7 +156,7 @@ class NumpyVisdomLogger(AbstractVisualLogger):
         return win
 
     @convert_params
-    def show_value(self, value, name=None, env_appendix="", opts={}):
+    def show_value(self, value, name=None, env_appendix="", opts={}, **kwargs):
         """
         Creates a line plot that is automatically appended with new values.
 
@@ -208,7 +208,7 @@ class NumpyVisdomLogger(AbstractVisualLogger):
         return win
 
     @convert_params
-    def show_text(self, text, name=None, env_appendix="", opts={}):
+    def show_text(self, text, name=None, env_appendix="", opts={}, **kwargs):
         """
         Displays a text in a visdom window
 
@@ -243,7 +243,7 @@ class NumpyVisdomLogger(AbstractVisualLogger):
         return win
 
     @convert_params
-    def show_progress(self, num, total=None, name=None, env_appendix="", opts={}):
+    def show_progress(self, num, total=None, name=None, env_appendix="", opts={}, **kwargs):
         """
         Shows the progress as a pie chart.
 
@@ -302,7 +302,7 @@ class NumpyVisdomLogger(AbstractVisualLogger):
         return win
 
     @convert_params
-    def show_histogram(self, array, name=None, bins=30, env_appendix="", opts={}):
+    def show_histogram(self, array, name=None, bins=30, env_appendix="", opts={}, **kwargs):
         """
         Displays the histogramm of an array.
 
@@ -344,7 +344,7 @@ class NumpyVisdomLogger(AbstractVisualLogger):
         return win
 
     @convert_params
-    def show_histogram_3d(self, array, name, bins=50, env_appendix="", opts={}):
+    def show_histogram_3d(self, array, name, bins=50, env_appendix="", opts={}, **kwargs):
         """
         Displays a history of histograms as consequtive lines in a 3d space (similar to tensorflow)
 
@@ -401,7 +401,7 @@ class NumpyVisdomLogger(AbstractVisualLogger):
         return win
 
     @convert_params
-    def show_barplot(self, array, legend=None, rownames=None, name=None, env_appendix="", opts={}):
+    def show_barplot(self, array, legend=None, rownames=None, name=None, env_appendix="", opts={}, **kwargs):
         """
         Displays a bar plot from an array
 
@@ -447,7 +447,7 @@ class NumpyVisdomLogger(AbstractVisualLogger):
         return win
 
     @convert_params
-    def show_lineplot(self, y_vals, x_vals=None, name=None, env_appendix="", opts={}):
+    def show_lineplot(self, y_vals, x_vals=None, name=None, env_appendix="", opts={}, **kwargs):
         """
         Displays (multiple) lines plot, given values Y (and optional the corresponding X values)
 
@@ -491,7 +491,7 @@ class NumpyVisdomLogger(AbstractVisualLogger):
         return win
 
     @convert_params
-    def show_scatterplot(self, array, labels=None, name=None, env_appendix="", opts={}):
+    def show_scatterplot(self, array, labels=None, name=None, env_appendix="", opts={}, **kwargs):
         """
         Displays a scatter plots, with the points given in X
 
@@ -535,7 +535,7 @@ class NumpyVisdomLogger(AbstractVisualLogger):
         return win
 
     @convert_params
-    def show_piechart(self, array, name=None, env_appendix="", opts={}):
+    def show_piechart(self, array, name=None, env_appendix="", opts={}, **kwargs):
         """
         Displays a pie chart.
 
@@ -576,7 +576,7 @@ class NumpyVisdomLogger(AbstractVisualLogger):
         return win
 
     @convert_params
-    def show_svg(self, svg, name=None, env_appendix="", opts={}):
+    def show_svg(self, svg, name=None, env_appendix="", opts={}, **kwargs):
         """
         Displays a svg file.
 

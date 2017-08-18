@@ -31,21 +31,21 @@ class NumpyFileLogger(NumpySeabornLogger, FileLogger):
         FileLogger.show_text(text)
 
     @convert_params
-    def show_barplot(self, data, name, file_format=".png", *args, **kwargs):
+    def show_barplot(self, array, name, file_format=".png", *args, **kwargs):
         """Abstract method which should handle and somehow log/ store a barplot"""
-        figure = NumpySeabornLogger.show_barplot(self, data, name, show=False)
+        figure = NumpySeabornLogger.show_barplot(self, array, name, show=False)
         figure.savefig(os.path.join(self.plot_dir, name) + file_format)
 
     @convert_params
-    def show_lineplot(self, x, y, name, file_format=".png", *args, **kwargs):
+    def show_lineplot(self, y_vals, x_vals, name, file_format=".png", *args, **kwargs):
         """Abstract method which should handle and somehow log/ store a lineplot"""
-        figure = NumpySeabornLogger.show_lineplot(self, x, y, name, show=False)
+        figure = NumpySeabornLogger.show_lineplot(self, x_vals, y_vals, name, show=False)
         figure.savefig(os.path.join(self.plot_dir, name) + file_format)
 
     @convert_params
-    def show_scatterplot(self, x, y, name, file_format=".png", *args, **kwargs):
+    def show_scatterplot(self, array, name, file_format=".png", *args, **kwargs):
         """Abstract method which should handle and somehow log/ store a scatterplot"""
-        figure = NumpySeabornLogger.show_scatterplot(self, name, x, y, show=False)
+        figure = NumpySeabornLogger.show_scatterplot(self, array, name, show=False)
         figure.savefig(os.path.join(self.plot_dir, name) + file_format)
 
     @convert_params
