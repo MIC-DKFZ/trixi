@@ -88,7 +88,7 @@ class PytorchFileLogger(NumpyFileLogger):
 
     def show_image_grid(self, images, name, n_iter=None, prefix=False, iter_format="%05d", nrow=8, padding=2,
                         normalize=False, range=None, scale_each=False, pad_value=0, **kwargs):
-        self.show_image_grid(tensor=images, name=name, n_iter=n_iter, prefix=prefix, iter_format=iter_format, nrow=nrow,
+        self.store_image_grid(tensor=images, name=name, n_iter=n_iter, prefix=prefix, iter_format=iter_format, nrow=nrow,
                              padding=padding,
                              normalize=normalize, range=range, scale_each=scale_each, pad_value=pad_value)
 

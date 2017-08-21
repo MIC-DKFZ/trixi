@@ -1,4 +1,5 @@
 from vislogger.abstractvisuallogger import AbstractVisualLogger
+from vislogger.combinedlogger import CombinedLogger
 from vislogger.extravisdom import ExtraVisdom
 from vislogger.filelogger import FileLogger
 from vislogger.numpyfilelogger import NumpyFileLogger

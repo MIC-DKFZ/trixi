@@ -63,13 +63,13 @@ class Singleton:
         return isinstance(inst, self._decorated)
 
 
-#@Singleton
+# @Singleton
 class FileLogger(AbstractVisualLogger):
     """A single class for logging"""
 
-    def __init__(self, path=None, **kwargs):
-        
-        super(FileLogger, self).__init__( **kwargs)
+    def __init__(self, path=None, folder_format="run-%05d", **kwargs):
+
+        super(FileLogger, self).__init__(**kwargs)
 
         self.logger = logging.getLogger("output")  #
         self.logger.setLevel(logging.DEBUG)
@@ -88,19 +88,28 @@ class FileLogger(AbstractVisualLogger):
 
         self.has_folder = False
         if path is not None:
-            self.make_log_folder(path)
+            self.make_log_folder(path, folder_format=folder_format)
             self.set_output_file(os.path.join(self.logfile_dir, "output.log"))
             self.has_folder = True
 
-    def make_log_folder(self, path):
+    def make_log_folder(self, path, folder_format="run-%05d"):
         """Creates a new log folder"""
 
-        run = 0
-        while os.path.exists(os.path.join(path, "run-%05d" % run)):
-            run += 1
+        if "%" not in folder_format and os.path.exists(path):
+            raise ValueError("Folder already exists and no valid folder_format is given to create a new empty folder")
 
-        self.run = run
-        self.base_dir = os.path.join(path, "run-%05d" % run)
+        ## Create base dir
+        if "%" in folder_format:
+            run = 0
+            while os.path.exists(os.path.join(path, folder_format % run)):
+                run += 1
+            self.run = run
+            self.base_dir = os.path.join(path, folder_format % run)
+        else:
+            self.run = 0
+            self.base_dir = path
+
+        ## Create sub dirs
         self.logfile_dir = os.path.join(self.base_dir, "logs")
         self.model_dir = os.path.join(self.base_dir, "models")
         self.image_dir = os.path.join(self.base_dir, "imgs")
@@ -109,6 +118,7 @@ class FileLogger(AbstractVisualLogger):
 
         self.store_dirs = dict()
 
+        ## Make dirs
         create_folder(self.base_dir)
         create_folder(self.logfile_dir)
         create_folder(self.model_dir)
@@ -211,7 +221,6 @@ class FileLogger(AbstractVisualLogger):
         aux_logger.log(log_level, msg)
         if log_to_output:
             self.logger.log(log_level, msg)
-
 
     def show_text(self, text, *args, **kwargs):
         self.log(text)

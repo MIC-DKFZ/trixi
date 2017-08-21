@@ -35,7 +35,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         return f(self, *args, **kwargs)
 
-    def plot_model_statistics(self, model, env_appendix=None, model_name="", plot_grad=False):
+    def plot_model_statistics(self, model, env_appendix=None, model_name="", plot_grad=False, **kwargs):
         """
         Plots statstics (mean, std, abs(max)) of the weights or the corresponding gradients of a model as a barplot
 
@@ -69,7 +69,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         self.show_barplot(name=win_name, array=np.asarray([means, stds, maxmin]), legend=legendary,
                           rownames=["mean", "std", "max"], env_appendix=env_appendix)
 
-    def plot_model_statistics_weights(self, model, env_appendix=None, model_name=""):
+    def plot_model_statistics_weights(self, model, env_appendix=None, model_name="", **kwargs):
         """
         Plots statstics (mean, std, abs(max)) of the weights of a model as a barplot (uses plot model statistics with
         plot_grad=False  )
@@ -80,7 +80,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         """
         self.plot_model_statistics(model=model, env_appendix=env_appendix, model_name=model_name, plot_grad=False)
 
-    def plot_model_statistics_grads(self, model, env_appendix=None, model_name=""):
+    def plot_model_statistics_grads(self, model, env_appendix=None, model_name="", **kwargs):
         """
         Plots statstics (mean, std, abs(max)) of the gradients of a model as a barplot (uses plot model statistics with
         plot_grad=True )
@@ -91,7 +91,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         """
         self.plot_model_statistics(model=model, env_appendix=env_appendix, model_name=model_name, plot_grad=True)
 
-    def plot_mutliple_models_statistics_weights(self, model_dict, env_appendix=None):
+    def plot_mutliple_models_statistics_weights(self, model_dict, env_appendix=None, **kwargs):
         """
         Given models in a dict, plots the weight statistics of the models.
 
@@ -101,7 +101,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         for model_name, model in model_dict.items():
             self.plot_model_statistics_weights(model=model, env_appendix=env_appendix, model_name=model_name)
 
-    def plot_mutliple_models_statistics_grads(self, model_dict, env_appendix=None):
+    def plot_mutliple_models_statistics_grads(self, model_dict, env_appendix=None, **kwargs):
         """
         Given models in a dict, plots the gradient statistics of the models.
 
@@ -111,7 +111,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         for model_name, model in model_dict.items():
             self.plot_model_statistics_grads(model=model, env_appendix=env_appendix, model_name=model_name)
 
-    def plot_model_structure(self, model, input_size, name=None, use_cuda=True, delete_tmp_on_close=False):
+    def plot_model_structure(self, model, input_size, name=None, use_cuda=True, delete_tmp_on_close=False, **kwargs):
         """
         Plots the model structure/ model graph of a pytorch module (this only works correctly with pytorch 0.2.0).
 
@@ -197,7 +197,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         # Display model graph in visdom
         self.show_svg(svg=x, name=name)
 
-    def show_image_grid(self, images, name=None, title=None, caption=None, env_appendix="", opts={}):
+    def show_image_grid(self, images, name=None, title=None, caption=None, env_appendix="", opts={}, **kwargs):
 
         tensor = images.cpu()
         viz_task = {
