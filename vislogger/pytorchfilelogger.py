@@ -1,5 +1,4 @@
 import atexit
-
 import fnmatch
 import os
 
@@ -63,6 +62,35 @@ class PytorchFileLogger(NumpyFileLogger):
         for name, tensor in tensors.items():
             self.store_image(tensor=tensor, name=name, n_iter=n_iter, prefix=prefix, iter_format=iter_format,
                              normalize=normalize)
+
+    def store_image_grid(self, tensor, name, n_iter=None, prefix=False, iter_format="%05d", nrow=8, padding=2,
+                         normalize=False, range=None, scale_each=False, pad_value=0):
+
+        img_name = name
+
+        if n_iter is not None:
+            img_name = self.name_and_iter_to_filename(img_name, n_iter, ".png", iter_format=iter_format, prefix=prefix)
+
+        img_file = os.path.join(self.image_dir, img_name)
+        save_image(tensor, img_file, normalize=normalize, nrow=nrow, padding=padding, range=range,
+                   scale_each=scale_each, pad_value=pad_value)
+
+    def show_image(self, image, name, n_iter=None, prefix=False, iter_format="%05d", **kwargs):
+        self.store_image(tensor=image, name=name, n_iter=n_iter, prefix=prefix, iter_format=iter_format)
+
+    def show_images(self, images, name, n_iter=None, prefix=False, iter_format="%05d", **kwargs):
+
+        tensors = {}
+        for i, img in enumerate(images):
+            tensors[name + str(i)] = img
+
+        self.store_images(tensors=tensors, n_iter=n_iter, prefix=prefix, iter_format=iter_format)
+
+    def show_image_grid(self, images, name, n_iter=None, prefix=False, iter_format="%05d", nrow=8, padding=2,
+                        normalize=False, range=None, scale_each=False, pad_value=0, **kwargs):
+        self.show_image_grid(tensor=images, name=name, n_iter=n_iter, prefix=prefix, iter_format=iter_format, nrow=nrow,
+                             padding=padding,
+                             normalize=normalize, range=range, scale_each=scale_each, pad_value=pad_value)
 
     def store_model(self, model, name, n_iter=None, prefix=False, iter_format="%05d"):
         """Stores a model"""
