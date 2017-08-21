@@ -214,8 +214,7 @@ class FileLogger(AbstractVisualLogger):
         """Logs to an previously created file"""
 
         if name not in self.aux_loggers:
-            self.error("Create/Add a log file first with 'add_log_files(name)' !")
-            return
+            self.add_log_file(name)
 
         aux_logger = self.aux_loggers[name]
         aux_logger.log(log_level, msg)
