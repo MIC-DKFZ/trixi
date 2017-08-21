@@ -9,6 +9,27 @@ from torchvision.utils import save_image
 from vislogger.numpyfilelogger import NumpyFileLogger
 
 
+class LogDict(dict):
+    def __init__(self, file_name, logger, log_to_output=False):
+        """Initilaizes a new Dict which directly logs value chnages to a given target_file."""
+
+        super(LogDict, self).__init__()
+
+        self.logger = logger
+        self.file_name = file_name
+        self.logger.add_log_file(self.file_name)
+        self.log_to_output = log_to_output
+
+    def __setitem__(self, key, item):
+        super(LogDict, self).__setitem__(key, item)
+
+        self.logger.log_to(self.file_name, "%s : %s" % (key, item), log_to_output=self.log_to_output)
+
+    def log_content(self):
+        """Logs the current content of the dict to the output file as a whole."""
+        self.logger.log_to(self.file_name, str(self), log_to_output=self.log_to_output)
+
+
 class PytorchFileLogger(NumpyFileLogger):
     """
     Visual logger, inherits the NumpyFileLogger and plots/ logs pytorch tensors and variables as files on the local
@@ -88,9 +109,10 @@ class PytorchFileLogger(NumpyFileLogger):
 
     def show_image_grid(self, images, name, n_iter=None, prefix=False, iter_format="%05d", nrow=8, padding=2,
                         normalize=False, range=None, scale_each=False, pad_value=0, **kwargs):
-        self.store_image_grid(tensor=images, name=name, n_iter=n_iter, prefix=prefix, iter_format=iter_format, nrow=nrow,
-                             padding=padding,
-                             normalize=normalize, range=range, scale_each=scale_each, pad_value=pad_value)
+        self.store_image_grid(tensor=images, name=name, n_iter=n_iter, prefix=prefix, iter_format=iter_format,
+                              nrow=nrow,
+                              padding=padding,
+                              normalize=normalize, range=range, scale_each=scale_each, pad_value=pad_value)
 
     def store_model(self, model, name, n_iter=None, prefix=False, iter_format="%05d"):
         """Stores a model"""
@@ -212,3 +234,8 @@ class PytorchFileLogger(NumpyFileLogger):
         lastest_file = sorted(checkpoint_files, reverse=True)[1]
 
         return self.restore_checkpoint(lastest_file, **kwargs)
+
+    def get_log_dict(self, file_name, log_to_output=False):
+        """Creates new dict, which automatically logs all value changes to the given file"""
+
+        return LogDict(logger=self, file_name=file_name, log_to_output=log_to_output)
