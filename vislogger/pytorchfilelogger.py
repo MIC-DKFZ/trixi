@@ -196,7 +196,7 @@ class PytorchFileLogger(NumpyFileLogger):
         for key, value in kwargs.items():
             if key in checkpoint:
                 if isinstance(value, torch.nn.Module) or isinstance(value, torch.optim.Optimizer):
-                    kwargs[key] = value.load_state_dict(checkpoint[key])
+                    value.load_state_dict(checkpoint[key])
                 else:
                     kwargs[key] = checkpoint[key]
 
@@ -231,7 +231,7 @@ class PytorchFileLogger(NumpyFileLogger):
                 checkpoint_file = os.path.join(root, filename)
                 checkpoint_files.append(checkpoint_file)
 
-        lastest_file = sorted(checkpoint_files, reverse=True)[1]
+        lastest_file = sorted(checkpoint_files, reverse=True)[0]
 
         return self.restore_checkpoint(lastest_file, **kwargs)
 
