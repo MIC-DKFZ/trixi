@@ -14,12 +14,13 @@ def create_function(self, sub_methods):
             if method_cntr % method_freq == 0:
                 sub_method(*args, **kwargs)
 
-            self.log_methods_cntr[sub_method] += 1
+            if "do_not_increase" not in kwargs or ("do_not_increase" in kwargs and kwargs["do_not_increase"] is False):
+                self.log_methods_cntr[sub_method] += 1
 
     return surrogate_fn
 
 
-class CombinedLogger():
+class CombinedLogger(object):
     def __init__(self, *loggers):
 
         self.loggers, self.frequencys = zip(*loggers)
