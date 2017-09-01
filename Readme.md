@@ -13,7 +13,11 @@ cd vislogger
 pip install -e .
 ```
 
-# Use on remote server
+
+# Use on remote server in same network
+Simple run visdom on remote server and then on your local computer go to `MY_REMOTE_SERVER_NAME:8097`.
+
+# Use on remote server in different network
 
 If you want to run vislogger on a remote server, but show the results locally
 you can do:
