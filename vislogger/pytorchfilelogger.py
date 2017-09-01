@@ -235,6 +235,17 @@ class PytorchFileLogger(NumpyFileLogger):
 
         return self.restore_checkpoint(lastest_file, **kwargs)
 
+    def restore_best_checkpoint(self, dir, **kwargs):
+        name = "checkpoint_best.pth.tar"
+        checkpoint_file = os.path.join(dir, name)
+
+        if os.path.exists(checkpoint_file):
+            return self.restore_checkpoint(checkpoint_file, **kwargs)
+        else:
+            return self.restore_lastest_checkpoint(dir=dir)
+
+
+
     def get_log_dict(self, file_name, log_to_output=False):
         """Creates new dict, which automatically logs all value changes to the given file"""
 

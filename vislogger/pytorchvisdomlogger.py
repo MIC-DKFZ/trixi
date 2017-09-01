@@ -58,13 +58,15 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                 m_param = m_param.grad
                 win_name = "%s_grad" % model_name
 
-            param_mean = m_param.data.mean()
-            param_std = np.sqrt(m_param.data.var())
+            if m_param is not None:
 
-            means.append(param_mean)
-            stds.append(param_std)
-            maxmin.append(torch.max(torch.abs(m_param)).data[0])
-            legendary.append("%s-%s" % (model_name, m_param_name))
+                param_mean = m_param.data.mean()
+                param_std = np.sqrt(m_param.data.var())
+
+                means.append(param_mean)
+                stds.append(param_std)
+                maxmin.append(torch.max(torch.abs(m_param)).data[0])
+                legendary.append("%s-%s" % (model_name, m_param_name))
 
         self.show_barplot(name=win_name, array=np.asarray([means, stds, maxmin]), legend=legendary,
                           rownames=["mean", "std", "max"], env_appendix=env_appendix)
@@ -213,8 +215,11 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
     def __show_image_grid(self, tensor, name=None, title=None, caption=None, env_appendix="", opts={}, **kwargs):
 
-        # tensor = tensor.cpu()
-        grid = make_grid(tensor, normalize=True)
+
+        if isinstance(tensor, Variable):
+            tensor = tensor.data
+
+        grid = make_grid(tensor, normalize=False)
         image = grid.mul(255).clamp(0, 255).byte().numpy()
 
         opts = opts.copy()

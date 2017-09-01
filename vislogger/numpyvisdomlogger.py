@@ -181,14 +181,23 @@ class NumpyVisdomLogger(AbstractVisualLogger):
        This function does all the magic.
         """
 
-        value = np.asarray([value])
+        value_dim = 1
+        if isinstance(value, (list, tuple, np.ndarray)):
+            value_dim = len(value)
+            value = np.asarray([value])
+        else:
+            value = np.asarray([value])
 
         if name is not None and name in self._value_counter:
             self._value_counter[name] += 1
             up_str = "append"
 
         else:
-            self._value_counter[name] = np.array([0])
+            if value_dim == 1:
+                self._value_counter[name] = np.array([0])
+            else:
+
+                self._value_counter[name] = np.array([[0]*value_dim])
             up_str = None
 
         opts = opts.copy()
