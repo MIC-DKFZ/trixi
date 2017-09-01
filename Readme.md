@@ -2,6 +2,10 @@
 Install Dependencies
 ```
 pip install numpy seaborn matplotlib
+```
+
+If you want to use pytorch*logger:
+```
 #install pytorch: http://pytorch.org/
 pip install torchvision
 ```
@@ -13,6 +17,10 @@ cd vislogger
 pip install -e .
 ```
 
+**IMPORTANT NOTE**: Somehow pytorch and lasagne/theano do not play nicely together. So if you 
+import lasagne/theano and vislogger (which imports pytorch if you have it installed), 
+your program will get stuck. So you can only use vislogger with lasagne/theano if you do not 
+have pytorch installed. If you need both you can use virtual_envs.
 
 # Use on remote server in same network
 Simple run visdom on remote server and then on your local computer go to `MY_REMOTE_SERVER_NAME:8097`.

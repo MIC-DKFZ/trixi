@@ -13,5 +13,3 @@ try:
     from vislogger.pytorchvisdomlogger import PytorchVisdomLogger
 except ImportError:
     pass
-
-    
