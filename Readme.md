@@ -15,14 +15,14 @@ pip install -e .
 
 # Use on remote server
 
-If you want to run vislogger on a remote server, but show the reuslts locally
+If you want to run vislogger on a remote server, but show the results locally
 you can do:
 
 ```
 # On local computer:
 ssh -N -f -L localhost:8099:localhost:8097 USERNAME@REMOTE_SERVERNAME
 
-
+# On remote server:
 python -m visdom.server
 python my_random_vislogger_script.py
 ```
