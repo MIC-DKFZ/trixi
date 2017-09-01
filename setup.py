@@ -8,5 +8,5 @@ setup(name='vislogger',
       author_email='mic@dkfz-heidelberg.de',
       license='MIT',
       packages=['vislogger'],
-      install_requires=['numpy', 'visdom', 'graphviz'],
+      install_requires=['numpy', 'visdom', 'graphviz', 'matplotlib', 'seaborn'],
       zip_safe=True)
