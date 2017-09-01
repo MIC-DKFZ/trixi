@@ -6,8 +6,8 @@ import vislogger
 
 ###############################################
 #
-#Basic Training script for a neural network. Does not really train, and the images look fancy, but only for
-# vislogger demo (including error plots, image plots, model checkpoint storing)
+# Basic Training script for a neural network. Does not really train, and the images look fancy, but only for
+# vislogger demo (including error plots, image plots, model checkpoint storing).
 #
 ################################################
 
@@ -87,7 +87,6 @@ for epoch in range(param["n_epoch"]):
         fileLog.print(log_text)
 
         if batch_idx % 2 == 0:
-
             vizLog.show_text(log_text, name="log")
             vizLog.show_progress(epoch, param["n_epoch"])
 
