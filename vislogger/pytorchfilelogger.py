@@ -91,6 +91,8 @@ class PytorchFileLogger(NumpyFileLogger):
 
         if n_iter is not None:
             img_name = self.name_and_iter_to_filename(img_name, n_iter, ".png", iter_format=iter_format, prefix=prefix)
+        elif not img_name.endswith(".png"):
+            img_name = img_name + ".png"
 
         img_file = os.path.join(self.image_dir, img_name)
         save_image(tensor, img_file, normalize=normalize, nrow=nrow, padding=padding, range=range,
