@@ -41,6 +41,9 @@ class LogDict(dict):
         super(LogDict, self).__delitem__(key)
         del self.__dict__[key]
 
+    def __hash__(self):
+        return hash(tuple(sorted(self.items())))
+
     def log_content(self):
         """Logs the current content of the dict to the output file as a whole."""
         self.logger.log_to(self.file_name, str(self), log_to_output=self.log_to_output)
