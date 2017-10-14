@@ -15,7 +15,7 @@ def create_function(self, sub_methods):
                 sub_method(*args, **kwargs)
 
             if "same_as_last" in kwargs and kwargs["same_as_last"] is True:
-                if method_cntr % method_freq == 0 or method_cntr % method_freq == 1:
+                if method_cntr % method_freq == 1:
                     sub_method(*args, **kwargs)
                 kwargs["do_not_increase"] = True
 

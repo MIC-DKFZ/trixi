@@ -16,7 +16,7 @@ class NumpyVisdomLogger(AbstractVisualLogger):
     Visual logger, inherits the AbstractVisualLogger and plots/ logs numpy arrays/ values on a Visdom server.
     """
 
-    def __init__(self, name="main", server="http://localhost", port=8097, auto_close=False, **kwargs):
+    def __init__(self, name="main", server="http://localhost", port=8097, auto_close=True, **kwargs):
         """
         Creates a new NumpyVisdomLogger object.
 
@@ -40,7 +40,7 @@ class NumpyVisdomLogger(AbstractVisualLogger):
         self._process = mp.Process(target=self.__show, args=(self._queue,))
 
         if auto_close:
-            atexit.register(self.close_all)
+            #atexit.register(self.close_all)
             atexit.register(self.exit)
 
         self._process.start()
