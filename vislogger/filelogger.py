@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 import datetime
 import logging
 import os
@@ -96,7 +97,7 @@ class FileLogger(AbstractVisualLogger):
     def make_log_folder(self, path, folder_format="run-%05d"):
         """Creates a new log folder"""
 
-        if "%" not in folder_format and os.path.exists(path):
+        if ("%" not in folder_format and folder_format != "run-time") and os.path.exists(path):
             raise ValueError("Folder already exists and no valid folder_format is given to create a new empty folder")
 
         ## Create base dir
@@ -106,6 +107,11 @@ class FileLogger(AbstractVisualLogger):
                 run += 1
             self.run = run
             self.base_dir = os.path.join(path, folder_format % run)
+        elif folder_format == "run-time":
+            self.run = 0
+            now = datetime.datetime.now()
+            dir_str = "run-%s" % now.strftime("%y-%m-%d_%H-%M-%S")
+            self.base_dir = os.path.join(path, dir_str)
         else:
             self.run = 0
             self.base_dir = path

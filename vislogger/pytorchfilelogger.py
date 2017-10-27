@@ -25,7 +25,6 @@ class LogDict(dict):
         super(LogDict, self).__setitem__(key, item)
 
         if self.log_temp_output:
-
             item = item.cpu().numpy() if torch.is_tensor(item) else item
             item = item.data.cpu().numpy() if isinstance(item, Variable) else item
 
@@ -76,7 +75,8 @@ class PytorchFileLogger(NumpyFileLogger):
 
         return f(self, *args, **kwargs)
 
-    def name_and_iter_to_filename(self, name, n_iter, ending, iter_format="%05d", prefix=False):
+    @staticmethod
+    def name_and_iter_to_filename(name, n_iter, ending, iter_format="%05d", prefix=False):
         iter_str = iter_format % n_iter
         if prefix:
             name = iter_str + "_" + name + ending
@@ -85,37 +85,60 @@ class PytorchFileLogger(NumpyFileLogger):
 
         return name
 
-    def store_image(self, tensor, name, n_iter=None, prefix=False, iter_format="%05d", normalize=True):
+    @staticmethod
+    def store_image_static(image_dir, tensor, name, n_iter=None, prefix=False, iter_format="%05d", normalize=True):
         """Stores an image"""
 
         img_name = name
 
         if n_iter is not None:
-            img_name = self.name_and_iter_to_filename(img_name, n_iter, ".png", iter_format=iter_format, prefix=prefix)
+            img_name = PytorchFileLogger.name_and_iter_to_filename(img_name, n_iter, ".png", iter_format=iter_format,
+                                                                   prefix=prefix)
 
-        img_file = os.path.join(self.image_dir, img_name)
+        img_file = os.path.join(image_dir, img_name)
         save_image(tensor, img_file, normalize=normalize)
 
-    def store_images(self, tensors, n_iter=None, prefix=False, iter_format="%05d", normalize=True):
+    def store_image(self, tensor, name, n_iter=None, prefix=False, iter_format="%05d", normalize=True):
+        """Stores an image"""
+        PytorchFileLogger.store_image_static(self.image_dir, tensor=tensor, name=name, n_iter=n_iter,
+                                             prefix=prefix, iter_format=iter_format, normalize=normalize)
+
+    @staticmethod
+    def store_images_static(image_dir, tensors, n_iter=None, prefix=False, iter_format="%05d", normalize=True):
         assert isinstance(tensors, dict)
 
         for name, tensor in tensors.items():
-            self.store_image(tensor=tensor, name=name, n_iter=n_iter, prefix=prefix, iter_format=iter_format,
-                             normalize=normalize)
+            PytorchFileLogger.store_image_static(image_dir=image_dir, tensor=tensor, name=name, n_iter=n_iter,
+                                                 prefix=prefix, iter_format=iter_format, normalize=normalize)
 
-    def store_image_grid(self, tensor, name, n_iter=None, prefix=False, iter_format="%05d", nrow=8, padding=2,
-                         normalize=False, range=None, scale_each=False, pad_value=0):
+    def store_images(self, tensors, n_iter=None, prefix=False, iter_format="%05d", normalize=True):
+        assert isinstance(tensors, dict)
+        PytorchFileLogger.store_images_static(self.image_dir, tensors=tensors, n_iter=n_iter, prefix=prefix,
+                                              iter_format=iter_format, normalize=normalize)
+
+    @staticmethod
+    def store_image_grid_static(image_dir, tensor, name, n_iter=None, prefix=False, iter_format="%05d", nrow=8,
+                                padding=2, normalize=False, range=None, scale_each=False, pad_value=0):
 
         img_name = name
 
         if n_iter is not None:
-            img_name = self.name_and_iter_to_filename(img_name, n_iter, ".png", iter_format=iter_format, prefix=prefix)
+            img_name = PytorchFileLogger.name_and_iter_to_filename(img_name, n_iter, ".png", iter_format=iter_format,
+                                                                   prefix=prefix)
         elif not img_name.endswith(".png"):
             img_name = img_name + ".png"
 
-        img_file = os.path.join(self.image_dir, img_name)
+        img_file = os.path.join(image_dir, img_name)
         save_image(tensor, img_file, normalize=normalize, nrow=nrow, padding=padding, range=range,
                    scale_each=scale_each, pad_value=pad_value)
+
+    def store_image_grid(self, tensor, name, n_iter=None, prefix=False, iter_format="%05d", nrow=8, padding=2,
+                         normalize=False, range=None, scale_each=False, pad_value=0):
+        PytorchFileLogger.store_image_grid_static(self.image_dir, tensor=tensor, name=name, n_iter=n_iter,
+                                                  prefix=prefix,
+                                                  iter_format=iter_format, nrow=nrow, padding=padding,
+                                                  normalize=normalize, range=range, scale_each=scale_each,
+                                                  pad_value=pad_value)
 
     def show_image(self, image, name, n_iter=None, prefix=False, iter_format="%05d", **kwargs):
         self.store_image(tensor=image, name=name, n_iter=n_iter, prefix=prefix, iter_format=iter_format)
@@ -135,32 +158,44 @@ class PytorchFileLogger(NumpyFileLogger):
                               padding=padding,
                               normalize=normalize, range=range, scale_each=scale_each, pad_value=pad_value)
 
-    def store_model(self, model, name, n_iter=None, prefix=False, iter_format="%05d"):
+    @staticmethod
+    def store_model_static(model_dir, model, name, n_iter=None, prefix=False, iter_format="%05d"):
         """Stores a model"""
-
         model_name = name
 
         if n_iter is not None:
-            model_name = self.name_and_iter_to_filename(model_name, n_iter, ".pth", iter_format=iter_format,
-                                                        prefix=prefix)
+            model_name = PytorchFileLogger.name_and_iter_to_filename(model_name, n_iter, ".pth",
+                                                                     iter_format=iter_format,
+                                                                     prefix=prefix)
 
-        model_file = os.path.join(self.model_dir, model_name)
+        model_file = os.path.join(model_dir, model_name)
         torch.save(model.state_dict(), model_file)
 
-    def store_models(self, models, n_iter=None, prefix=False, iter_format="%05d"):
+    def store_model(self, model, name, n_iter=None, prefix=False, iter_format="%05d"):
+        PytorchFileLogger.store_model_static(self.model_dir, model=model, name=name, n_iter=n_iter, prefix=prefix,
+                                             iter_format=iter_format)
+
+    @staticmethod
+    def store_models_static(model_dir, models, n_iter=None, prefix=False, iter_format="%05d"):
         assert isinstance(models, dict)
 
         for name, model in models.items():
-            self.store_model(model=model, name=name, n_iter=n_iter, prefix=prefix, iter_format=iter_format)
+            PytorchFileLogger.store_model_static(model_dir=model_dir, model=model, name=name, n_iter=n_iter,
+                                                 prefix=prefix, iter_format=iter_format)
 
-    def load_model(self, model, model_file, exclude_layers=None):
+    def store_models(self, models, n_iter=None, prefix=False, iter_format="%05d"):
+        PytorchFileLogger.store_models_static(model_dir=self.model_dir, models=models, n_iter=n_iter, prefix=prefix,
+                                              iter_format=iter_format)
+
+    @staticmethod
+    def load_model(model, model_file, exclude_layers=None):
         if os.path.exists(model_file):
 
             if exclude_layers is None:
                 exclude_layers = []
 
             # also allow loading of partially pretrained net
-            pretrained_dict = torch.load(model_file)
+            pretrained_dict = torch.load(model_file, map_location=lambda storage, loc: storage)
             model_dict = model.state_dict()
 
             # 1. filter out unnecessary keys
@@ -173,7 +208,8 @@ class PytorchFileLogger(NumpyFileLogger):
         else:
             raise ValueError("Model file does not exisit !")
 
-    def load_model_from_dir(self, model, dir, name, n_iter=None, prefix=False, iter_format="%05d", exclude_layers=None):
+    @staticmethod
+    def load_model_from_dir(model, dir, name, n_iter=None, prefix=False, iter_format="%05d", exclude_layers=None):
 
         # If not iteration given, take the most recent model
         if n_iter is None:
@@ -189,30 +225,40 @@ class PytorchFileLogger(NumpyFileLogger):
             model_name = sorted(model_files, reverse=True)[1]
 
         else:
-            model_name = self.name_and_iter_to_filename(name, n_iter, ".pth", iter_format=iter_format, prefix=prefix)
+            model_name = PytorchFileLogger.name_and_iter_to_filename(name, n_iter, ".pth", iter_format=iter_format,
+                                                                     prefix=prefix)
 
         model_file = os.path.join(dir, model_name)
-        self.load_model(model, model_file, exclude_layers=exclude_layers)
+        PytorchFileLogger.load_model(model, model_file, exclude_layers=exclude_layers)
 
-    def load_models_from_dir(self, models, dir, n_iter=None, prefix=False, iter_format="%05d", step_size=25,
-                             exclude_layers={}):
+    @staticmethod
+    def load_models_from_dir(models, dir, n_iter=None, prefix=False, iter_format="%05d", exclude_layers=None):
+
+        if exclude_layers is None:
+            exclude_layers = dict()
+
         assert isinstance(models, dict) and isinstance(exclude_layers, dict)
 
         for name, model in models.items():
-            self.load_model_from_dir(model, dir, name, n_iter=n_iter, prefix=prefix, iter_format=iter_format,
-                                     step_size=step_size, exclude_layers=exclude_layers.get(name))
+            PytorchFileLogger.load_model_from_dir(model=model, dir=dir, name=name, n_iter=n_iter, prefix=prefix,
+                                                  iter_format=iter_format, exclude_layers=exclude_layers.get(name))
 
-    def store_checkpoint(self, name, **kwargs):
+    @staticmethod
+    def store_checkpoint_static(model_dir, name, **kwargs):
         for key, value in kwargs.items():
             if isinstance(value, torch.nn.Module) or isinstance(value, torch.optim.Optimizer):
                 kwargs[key] = value.state_dict()
 
-        checkpoint_file = os.path.join(self.model_dir, name)
+        checkpoint_file = os.path.join(model_dir, name)
 
         torch.save(kwargs, checkpoint_file)
 
-    def restore_checkpoint(self, name, **kwargs):
-        checkpoint = torch.load(name)
+    def store_checkpoint(self, name, **kwargs):
+        PytorchFileLogger.store_checkpoint_static(self.model_dir, name=name, **kwargs)
+
+    @staticmethod
+    def restore_checkpoint(name, **kwargs):
+        checkpoint = torch.load(name, map_location=lambda storage, loc: storage)
 
         for key, value in kwargs.items():
             if key in checkpoint:
@@ -241,7 +287,8 @@ class PytorchFileLogger(NumpyFileLogger):
 
         return save_fnc
 
-    def restore_lastest_checkpoint(self, dir, name=None, **kwargs):
+    @staticmethod
+    def restore_lastest_checkpoint(dir, name=None, **kwargs):
         if name is None:
             name = "*checkpoint*.pth.tar"
 
@@ -254,18 +301,17 @@ class PytorchFileLogger(NumpyFileLogger):
 
         lastest_file = sorted(checkpoint_files, reverse=True)[0]
 
-        return self.restore_checkpoint(lastest_file, **kwargs)
+        return PytorchFileLogger.restore_checkpoint(lastest_file, **kwargs)
 
-    def restore_best_checkpoint(self, dir, **kwargs):
+    @staticmethod
+    def restore_best_checkpoint(dir, **kwargs):
         name = "checkpoint_best.pth.tar"
         checkpoint_file = os.path.join(dir, name)
 
         if os.path.exists(checkpoint_file):
-            return self.restore_checkpoint(checkpoint_file, **kwargs)
+            return PytorchFileLogger.restore_checkpoint(checkpoint_file, **kwargs)
         else:
-            return self.restore_lastest_checkpoint(dir=dir)
-
-
+            return PytorchFileLogger.restore_lastest_checkpoint(dir=dir)
 
     def get_log_dict(self, file_name, log_to_output=False):
         """Creates new dict, which automatically logs all value changes to the given file"""
