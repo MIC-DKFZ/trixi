@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from vislogger import AbstractVisualLogger
+from vislogger import AbstractLogger
 
 
 def create_function(self, sub_methods):
@@ -33,7 +33,7 @@ class CombinedLogger(object):
         self.loggers, self.frequencys = zip(*loggers)
 
         for logger in self.loggers:
-            if not isinstance(logger, AbstractVisualLogger):
+            if not isinstance(logger, AbstractLogger):
                 raise TypeError("All logger must be subclasses of the abstract visual logger.")
         for freq in self.frequencys:
             if freq < 1:

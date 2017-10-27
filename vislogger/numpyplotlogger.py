@@ -4,31 +4,28 @@ import matplotlib
 
 matplotlib.use("Agg")
 
-from vislogger.filelogger import FileLogger
 from vislogger.numpyseabornlogger import NumpySeabornLogger
-from vislogger.abstractvisuallogger import convert_params
+from vislogger.abstractlogger import convert_params
 
 
-class NumpyFileLogger(NumpySeabornLogger, FileLogger):
-    def __init__(self, path, **kwargs):
-        super(NumpyFileLogger, self).__init__(path=path, **kwargs)
+class NumpyPlotLogger(NumpySeabornLogger):
+
+    def __init__(self, img_dir, plot_dir, **kwargs):
+        super(NumpyPlotLogger, self).__init__(**kwargs)
+        self.img_dir = img_dir
+        self.plot_dir = plot_dir
 
     @convert_params
     def show_image(self, image, name, file_format=".png", *args, **kwargs):
         """Abstract method which should handle and somehow log/ store an image"""
         figure = NumpySeabornLogger.show_image(self, image, name, show=False)
-        figure.savefig(os.path.join(self.image_dir, name) + file_format)
+        figure.savefig(os.path.join(self.img_dir, name) + file_format)
 
     @convert_params
     def show_value(self, value, name, file_format=".png", *args, **kwargs):
         """Abstract method which should handle and somehow log/ store a value"""
         figure = NumpySeabornLogger.show_value(self, value, name, show=False)
         figure.savefig(os.path.join(self.plot_dir, name) + file_format)
-
-    @convert_params
-    def show_text(self, text, *args, **kwargs):
-        """Abstract method which should handle and somehow log/ store a text"""
-        FileLogger.show_text(text)
 
     @convert_params
     def show_barplot(self, array, name, file_format=".png", *args, **kwargs):

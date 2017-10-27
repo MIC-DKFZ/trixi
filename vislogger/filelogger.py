@@ -3,233 +3,111 @@ from __future__ import print_function
 import datetime
 import logging
 import os
+import sys
 
-from vislogger.abstractvisuallogger import AbstractVisualLogger
-
-
-def create_folder(path):
-    """
-    Creates a folder if not already exits
-    Args:
-        :param path: The folder to be created
-    Returns
-        :return: True if folder was newly created, false if folder already exists
-    """
-
-    if not os.path.exists(path):
-        os.makedirs(path)
-        return True
-    else:
-        return False
+from vislogger import AbstractLogger
+from vislogger.util import random_string
 
 
-class Singleton:
-    """
-    A non-thread-safe helper class to ease implementing singletons.
-    This should be used as a decorator -- not a metaclass -- to the
-    class that should be a singleton.
-
-    The decorated class can define one `__init__` function that
-    takes only the `self` argument. Also, the decorated class cannot be
-    inherited from. Other than that, there are no restrictions that apply
-    to the decorated class.
-
-    To get the singleton instance, use the `Instance` method. Trying
-    to use `__call__` will result in a `TypeError` being raised.
-
-    """
-
-    _instance = None
-
-    def __init__(self, decorated):
-        self._decorated = decorated
-
-    def get_instance(self, **kwargs):
-        """
-        Returns the singleton instance. Upon its first call, it creates a
-        new instance of the decorated class and calls its `__init__` method.
-        On all subsequent calls, the already created instance is returned.
-
-        """
-        if not self._instance:
-            self._instance = self._decorated(**kwargs)
-            return self._instance
-        else:
-            return self._instance
-
-    def __call__(self):
-        raise TypeError('Singletons must be accessed through `get_instance()`.')
-        # return self.get_instance()
-
-    def __instancecheck__(self, inst):
-        return isinstance(inst, self._decorated)
-
-
-# @Singleton
-class FileLogger(AbstractVisualLogger):
+class FileLogger(AbstractLogger):
     """A single class for logging"""
 
-    def __init__(self, path=None, folder_format="run-%05d", **kwargs):
+    def __init__(self,
+                 base_dir=None,
+                 logging_level=logging.DEBUG,
+                 logging_stream=sys.stdout,
+                 **kwargs):
 
         super(FileLogger, self).__init__(**kwargs)
 
-        self.logger = logging.getLogger("output")  #
-        self.logger.setLevel(logging.DEBUG)
+        self.base_dir = base_dir
+        self.logging_level = logging_level
+        self.logging_stream = logging_stream
+        self.loggers = dict()
+        self.stream_handler_formatter = logging.Formatter('%(message)s')
+        self.file_handler_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
-        logger_handler = logging.StreamHandler()  # Handler for the logger
-        self.logger.addHandler(logger_handler)
+        self.init_time = datetime.datetime.today()
 
-        # First, generic formatter:
-        self.clean_formatter = logging.Formatter('%(message)s')
-        logger_handler.setFormatter(self.clean_formatter)
+        # set up logging
+        self.logging_identifier = random_string(10)
+        self.add_logger("default")
 
-        self.file_handler = None
-        self.file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    def add_logger(self, name, logging_level=None, file_handler=True, stream_handler=True):
 
-        self.aux_loggers = {"output": self.logger}
+        self.loggers[name] = logging.getLogger(name + "-" + self.logging_identifier)
 
-        self.has_folder = False
-        if path is not None:
-            self.make_log_folder(path, folder_format=folder_format)
-            self.set_output_file(os.path.join(self.logfile_dir, "output.log"))
-            self.has_folder = True
-
-    def make_log_folder(self, path, folder_format="run-%05d"):
-        """Creates a new log folder"""
-
-        if ("%" not in folder_format and folder_format != "run-time") and os.path.exists(path):
-            raise ValueError("Folder already exists and no valid folder_format is given to create a new empty folder")
-
-        ## Create base dir
-        if "%" in folder_format:
-            run = 0
-            while os.path.exists(os.path.join(path, folder_format % run)):
-                run += 1
-            self.run = run
-            self.base_dir = os.path.join(path, folder_format % run)
-        elif folder_format == "run-time":
-            self.run = 0
-            now = datetime.datetime.now()
-            dir_str = "run-%s" % now.strftime("%y-%m-%d_%H-%M-%S")
-            self.base_dir = os.path.join(path, dir_str)
+        if logging_level is None:
+            self.loggers[name].setLevel(self.logging_level)
         else:
-            self.run = 0
-            self.base_dir = path
+            self.loggers[name].setLevel(logging_level)
 
-        ## Create sub dirs
-        self.logfile_dir = os.path.join(self.base_dir, "logs")
-        self.model_dir = os.path.join(self.base_dir, "models")
-        self.image_dir = os.path.join(self.base_dir, "imgs")
-        self.plot_dir = os.path.join(self.base_dir, "plots")
-        self.store_dir = os.path.join(self.base_dir, "store")
-
-        self.store_dirs = dict()
-
-        ## Make dirs
-        create_folder(self.base_dir)
-        create_folder(self.logfile_dir)
-        create_folder(self.model_dir)
-        create_folder(self.image_dir)
-        create_folder(self.plot_dir)
-        create_folder(self.store_dir)
-
-        with open(os.path.join(self.base_dir, "time.txt"), 'w') as output:
-            now = datetime.datetime.now()
-            output.write(now.strftime("%y-%m-%d_%H:%M:%S"))
-
-    def set_output_file(self, file):
-        """Sets a new output file"""
-        assert file is not None
-
-        if self.file_handler is not None:
-            self.logger.removeHandler(self.file_handler)
-
-        self.file_handler = logging.FileHandler(file)
-        self.file_handler.setLevel(logging.DEBUG)
-        self.file_handler.setFormatter(self.file_formatter)
-        self.logger.addHandler(self.file_handler)
-
-    def add_log_file(self, name, formatter="clean"):
-        """Adds a new auxilary log file with the name 'name.log' """
-        assert name is not None and isinstance(name, str)
-
-        if not self.has_folder:
-            return False
-
-        if name in self.aux_loggers:
-            self.error("Log file with this name already exists !")
-            return False
-
-        if formatter == "clean":
-            formatter = self.clean_formatter
-        elif formatter == "file":
-            formatter = self.file_formatter
-
-        file = os.path.join(self.logfile_dir, name + ".log")
-
-        aux_logger = logging.getLogger(name)
-        aux_logger.setLevel(logging.DEBUG)
-
-        aux_file_handler = logging.FileHandler(file)
-        aux_file_handler.setFormatter(formatter)
-        aux_logger.addHandler(aux_file_handler)
-
-        self.aux_loggers[name] = aux_logger
-
-        return True
-
-    def get_storage_folder(self, name, *paths):
-        """Makes and returns a new folder in the base_dir for the given folder path"""
-        assert name is not None
-
-        if not self.has_folder:
-            return False
-
-        if name not in self.store_dirs:
-            if len(paths) == 0:
-                paths = name
-            target_dir = os.path.join(self.store_dir_dir, paths)
-            self.store_dirs[name] = target_dir
-            create_folder(target_dir)
+        if file_handler == True:
+            self.add_file_handler(name, name)
+        elif isinstance(file_handler, (list, tuple, set)):
+            for fh in file_handler:
+                if isinstance(fh, logging.FileHandler):
+                    self.add_handler(fh, name)
+                else:
+                    self.add_file_handler(fh, name)
+        elif isinstance(file_handler, logging.FileHandler):
+            self.add_handler(file_handler, name)
         else:
-            target_dir = self.store_dirs[name]
+            pass
 
-        return target_dir
+        if stream_handler:
+            self.add_stream_handler(name)
 
-    def print(self, *args):
+    def add_handler(self, handler, logger="default"):
+        self.loggers[logger].addHandler(handler)
+
+    def add_file_handler(self, name, logger="default"):
+        file_handler = logging.FileHandler(os.path.join(self.base_dir, name + ".log"))
+        file_handler.setFormatter(self.file_handler_formatter)
+        self.add_handler(file_handler, logger)
+
+    def add_stream_handler(self, logger="default"):
+        stream_handler = logging.StreamHandler(self.logging_stream)
+        stream_handler.setFormatter(self.stream_handler_formatter)
+        self.add_handler(stream_handler, logger)
+
+    def print(self, *args, logger="default"):
         """Prints and logs an object"""
-        for text in args:
-            self.log(str(text))
+        self.log(" ".join(map(str, args)), logger)
 
-    def log(self, msg):
+    def log(self, msg, logger="default"):
         """Logs a string as info log"""
-        self.logger.info(msg)
+        self.loggers[logger].info(msg)
 
-    def info(self, msg):
+    def info(self, msg, logger="default"):
         """wrapper for logger.info"""
-        self.logger.info(msg)
+        self.loggers[logger].info(msg)
 
-    def debug(self, msg):
+    def debug(self, msg, logger="default"):
         """wrapper for logger.debug"""
-        self.logger.debug(msg)
+        self.loggers[logger].debug(msg)
 
-    def error(self, msg):
+    def error(self, msg, logger="default"):
         """wrapper for logger.error"""
-        self.logger.error(msg)
+        self.loggers[logger].error(msg)
 
-    def log_to(self, name, msg, log_level=logging.INFO, log_to_output=True):
-        """Logs to an previously created file"""
+    def log_to(self, msg, name, log_level=logging.INFO, log_to_default=True):
+        """Logs to an existing logger or creates new one"""
 
-        if name not in self.aux_loggers:
-            self.add_log_file(name)
+        if name not in self.loggers:
+            self.add_logger(name)
+        self.log(msg, name)
+        if log_to_default:
+            self.log(msg, "default")
 
-        aux_logger = self.aux_loggers[name]
-        aux_logger.log(log_level, msg)
-        if log_to_output:
-            self.logger.log(log_level, msg)
+    def show_text(self, text, name=None, logger="default", **kwargs):
+        if name is not None:
+            self.log("{}: {}".format(name, text), logger)
+        else:
+            self.log(text, logger)
 
-    def show_text(self, text, *args, **kwargs):
-        self.log(text)
-
-    def show_value(self, value, *args, **kwargs):
-        self.log(value)
+    def show_value(self, value, name=None, logger="default", **kwargs):
+        if name is not None:
+            self.log("{}: {}".format(name, value), logger)
+        else:
+            self.log(value, logger)
