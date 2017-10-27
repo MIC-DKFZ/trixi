@@ -59,7 +59,6 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                 win_name = "%s_grad" % model_name
 
             if m_param is not None:
-
                 param_mean = m_param.data.mean()
                 param_std = np.sqrt(m_param.data.var())
 
@@ -215,9 +214,13 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
     def __show_image_grid(self, tensor, name=None, title=None, caption=None, env_appendix="", opts={}, **kwargs):
 
-
         if isinstance(tensor, Variable):
             tensor = tensor.data
+
+        assert torch.is_tensor(tensor), "tensor has to be a pytorch tensor or variable"
+        assert tensor.dim() == 4, "tensor has to have 4 dimensions"
+        assert tensor.size(1) == 1 or tensor.size(
+            1) == 3, "The 1. dimension (channel) has to be either 1 (gray) or 3 (rgb)"
 
         grid = make_grid(tensor, normalize=False)
         image = grid.mul(255).clamp(0, 255).byte().numpy()
