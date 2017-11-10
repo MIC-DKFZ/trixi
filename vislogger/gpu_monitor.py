@@ -29,7 +29,7 @@ class GpuMonitor(object):
 
         memory_info = pynvml.nvmlDeviceGetMemoryInfo(
             self._device_handles[device_index])
-        return memory_info.used, memory_info.total
+        return memory_info.used / 1e6, memory_info.total / 1e6
 
     def memory_usages(self):
 
@@ -37,6 +37,55 @@ class GpuMonitor(object):
         for i in range(self.number_of_devices):
             usages.append(self.memory_usage(i))
         return usages
+
+    def gpu_usage(self, device_index=0):
+
+        return pynvml.nvmlDeviceGetUtilizationRates(
+            self._device_handles[device_index]).gpu
+
+    def gpu_usages(self):
+
+        ut = []
+        for i in range(self.number_of_devices):
+            ut.append(self.gpu_usage(i))
+        return ut
+
+    def temperature(self, device_index=0):
+
+        return pynvml.nvmlDeviceGetTemperature(
+            self._device_handles[device_index], pynvml.NVML_TEMPERATURE_GPU)
+
+    def temperatures(self):
+
+        temp = []
+        for i in range(self.number_of_devices):
+            temp.append(self.temperature(i))
+        return temp
+
+    def power_usage(self, device_index=0):
+
+        handle = self._device_handles[device_index]
+        used = pynvml.nvmlDeviceGetPowerUsage(handle) / 1000.
+        total = pynvml.nvmlDeviceGetPowerManagementLimit(handle) / 1000.
+        return used, total
+
+    def power_usages(self):
+
+        pwr = []
+        for i in range(self.number_of_devices):
+            pwr.append(self.power_usage(i))
+        return pwr
+
+    def fan_usage(self, device_index=0):
+
+        return pynvml.nvmlDeviceGetFanSpeed(self._device_handles[device_index])
+
+    def fan_usages(self):
+
+        fan = []
+        for i in range(self.number_of_devices):
+            fan.append(self.fan_usage(i))
+        return fan
 
     def __del__(self):
 
