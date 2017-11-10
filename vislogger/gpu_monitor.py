@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import atexit
 import pynvml
 
 class GpuMonitor(object):
@@ -24,6 +25,8 @@ class GpuMonitor(object):
         self.number_of_devices = pynvml.nvmlDeviceGetCount()
         self._device_handles = [pynvml.nvmlDeviceGetHandleByIndex(i)\
                                 for i in range(self.number_of_devices)]
+
+        atexit.register(pynvml.nvmlShutdown)
 
     def memory_usage(self, device_index=0):
 
@@ -86,8 +89,3 @@ class GpuMonitor(object):
         for i in range(self.number_of_devices):
             fan.append(self.fan_usage(i))
         return fan
-
-    def __del__(self):
-
-        pynvml.nvmlShutdown()
-        super(GpuMonitor, self).__del__()
