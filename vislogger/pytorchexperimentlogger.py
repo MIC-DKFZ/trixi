@@ -7,7 +7,7 @@ import os
 import torch
 
 from vislogger import ExperimentLogger, PytorchPlotLogger
-from vislogger.util import name_and_iter_to_filename
+from vislogger.util import name_and_iter_to_filename, update_model
 
 
 class PytorchExperimentLogger(ExperimentLogger):
@@ -48,40 +48,26 @@ class PytorchExperimentLogger(ExperimentLogger):
                                name=name)
 
     @staticmethod
-    def load_model_static(model, model_file, exclude_layers=()):
+    def load_model_static(model, model_file, exclude_layers=(), warnings=True):
 
         if os.path.exists(model_file):
 
-
-            #### TODO: Add warnings if parameters are not loaded / set in the target model &
-            #### outsource dict --> model into method (and use in load checkpoint)
-
-
             pretrained_dict = torch.load(model_file, map_location=lambda storage, loc: storage)
-
-            # also allow loading of partially pretrained net
-            model_dict = model.state_dict()
-
-            # 1. filter out unnecessary keys
-            pretrained_dict = {k: v for k, v in pretrained_dict.items() if
-                               k in model_dict and k not in exclude_layers}
-            # 2. overwrite entries in the existing state dict
-            model_dict.update(pretrained_dict)
-            # 3. load the new state dict
-            model.load_state_dict(model_dict)
+            update_model(model, pretrained_dict, exclude_layers, warnings)
 
         else:
 
             raise IOError("Model file does not exist!")
 
-    def load_model(self, model, name, exclude_layers=()):
+    def load_model(self, model, name, exclude_layers=(), warnings=True):
 
         if not name.endswith(".pth"):
             name += ".pth"
 
         self.load_model_static(model=model,
                                model_file=os.path.join(self.checkpoint_dir, name),
-                               exclude_layers=exclude_layers)
+                               exclude_layers=exclude_layers,
+                               warnings=warnings)
 
     @staticmethod
     def save_checkpoint_static(checkpoint_dir, name, **kwargs):
@@ -108,26 +94,32 @@ class PytorchExperimentLogger(ExperimentLogger):
         self.save_checkpoint_static(self.checkpoint_dir, name=name, **kwargs)
 
     @staticmethod
-    def load_checkpoint_static(checkpoint_file, **kwargs):
+    def load_checkpoint_static(checkpoint_file, exclude_layer_dict=None, warnings=True, **kwargs):
+
+        if exclude_layer_dict is None:
+            exclude_layer_dict = {}
 
         checkpoint = torch.load(checkpoint_file, map_location=lambda storage, loc: storage)
 
         for key, value in kwargs.items():
             if key in checkpoint:
                 if isinstance(value, torch.nn.Module) or isinstance(value, torch.optim.Optimizer):
-                    value.load_state_dict(checkpoint[key])
+                    exclude_layers = exclude_layer_dict.get(key, [])
+                    update_model(value, checkpoint[key], exclude_layers, warnings)
                 else:
                     kwargs[key] = checkpoint[key]
 
         return kwargs
 
-    def load_checkpoint(self, name, **kwargs):
+    def load_checkpoint(self, name, exclude_layer_dict=None, warnings=True, **kwargs):
 
         if not name.endswith(".pth.tar"):
             name += ".pth.tar"
 
         checkpoint_file = os.path.join(self.checkpoint_dir, name)
         return self.load_checkpoint_static(checkpoint_file=checkpoint_file,
+                                           exclude_layer_dict=exclude_layer_dict,
+                                           warnings=warnings,
                                            **kwargs)
 
     def save_at_exit(self, name="checkpoint_end", **kwargs):

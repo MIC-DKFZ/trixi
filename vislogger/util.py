@@ -1,6 +1,7 @@
 import string
 import random
 import os
+import warning
 
 
 class Singleton:
@@ -74,3 +75,27 @@ def name_and_iter_to_filename(name, n_iter, ending, iter_format="{:05d}", prefix
         name = name + "_" + iter_str + ending
 
     return name
+
+
+def update_model(original_model, update_dict, exclude_layers=(), warnings=True):
+
+        # also allow loading of partially pretrained net
+        model_dict = original_model.state_dict()
+
+        # 1. Give warnings for unused update values
+        unused = set(update_dict.keys()) - set(exclude_layers) - set(model_dict.keys())
+        not_updated = set(model_dict.keys()) - set(exclude_layers) - set(update_dict.keys())
+        for item in unused:
+            warnings.warn("Update layer {} not used.".format(item))
+        for item in not_updated:
+            warnings.warn("{} layer not updated.".format(item))
+
+        # 2. filter out unnecessary keys
+        update_dict = {k: v for k, v in update_dict.items() if
+                       k in model_dict and k not in exclude_layers}
+
+        # 3. overwrite entries in the existing state dict
+        model_dict.update(update_dict)
+
+        # 4. load the new state dict
+        original_model.load_state_dict(model_dict)
