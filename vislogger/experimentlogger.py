@@ -36,18 +36,18 @@ class ExperimentLogger(AbstractLogger):
 
         self.config_dir = os.path.join(self.work_dir, "config")
         self.log_dir = os.path.join(self.work_dir, "log")
-        self.model_dir = os.path.join(self.work_dir, "model")
+        self.checkpoint_dir = os.path.join(self.work_dir, "checkpoint")
         self.img_dir = os.path.join(self.work_dir, "img")
         self.plot_dir = os.path.join(self.work_dir, "plot")
-        self.store_dir = os.path.join(self.work_dir, "store")
+        self.save_dir = os.path.join(self.work_dir, "save")
 
         create_folder(self.work_dir)
         create_folder(self.config_dir)
         create_folder(self.log_dir)
-        create_folder(self.model_dir)
+        create_folder(self.checkpoint_dir)
         create_folder(self.img_dir)
         create_folder(self.plot_dir)
-        create_folder(self.store_dir)
+        create_folder(self.save_dir)
 
         self.file_logger = FileLogger(self.work_dir)
         self.plot_logger = NumpyPlotLogger(self.img_dir, self.plot_dir)
@@ -68,7 +68,7 @@ class ExperimentLogger(AbstractLogger):
         self.plot_logger.show_scatterplot(array, name, file_format=".png", **kwargs)
 
     def show_value(self, value, name=None, logger="default", **kwargs):
-        self.file_logger.show_value(value, name, logger, **kwargs)
+        self.plot_logger.show_value(value, name, logger, **kwargs)
 
     def show_text(self, text, name=None, logger="default", **kwargs):
         self.file_logger.show_text(text, name, logger, **kwargs)
@@ -97,11 +97,11 @@ class ExperimentLogger(AbstractLogger):
     def load_checkpoint(self):
         raise NotImplementedError
 
-    def store_dict(self, data, path):
+    def save_dict(self, data, path):
 
         if not path.endswith(".json"):
             path += ".json"
-        path = os.path.join(self.store_dir, path)
+        path = os.path.join(self.save_dir, path)
         create_folder(os.path.dirname(path))
         json.dump(data, path)
 
@@ -109,14 +109,14 @@ class ExperimentLogger(AbstractLogger):
 
         if not path.endswith(".json"):
             path += ".json"
-        path = os.path.join(self.store_dir, path)
+        path = os.path.join(self.save_dir, path)
         return json.load(path)
 
-    def store_numpy_data(self, data, path):
+    def save_numpy_data(self, data, path):
 
         if not path.endswith(".npy"):
             path += ".npy"
-        path = os.path.join(self.store_dir, path)
+        path = os.path.join(self.save_dir, path)
         create_folder(os.path.dirname(path))
         np.save(path, data)
 
@@ -124,19 +124,19 @@ class ExperimentLogger(AbstractLogger):
 
         if not path.endswith(".npy"):
             path += ".npy"
-        path = os.path.join(self.store_dir, path)
+        path = os.path.join(self.save_dir, path)
         return np.load(path)
 
-    def store_pickle(self, data, path):
+    def save_pickle(self, data, path):
 
-        path = os.path.join(self.store_dir, path)
+        path = os.path.join(self.save_dir, path)
         create_folder(os.path.dirname(path))
         with open(path, "wb") as out:
             pickle.dump(data, out)
 
     def load_pickle(self, path):
 
-        path = os.path.join(self.store_dir, path)
+        path = os.path.join(self.save_dir, path)
         with open(path, "rb") as in_:
             return pickle.load(in_)
 

@@ -38,8 +38,8 @@ class PytorchPlotLogger(NumpyPlotLogger):
         return f(self, *args, **kwargs)
 
     @staticmethod
-    def store_image_static(image_dir, tensor, name, n_iter=None, prefix=False, iter_format="{:05d}", normalize=True):
-        """Stores an image"""
+    def save_image_static(image_dir, tensor, name, n_iter=None, prefix=False, iter_format="{:05d}", normalize=True):
+        """saves an image"""
 
         img_name = name
 
@@ -50,26 +50,26 @@ class PytorchPlotLogger(NumpyPlotLogger):
         img_file = os.path.join(image_dir, img_name)
         save_image(tensor, img_file, normalize=normalize)
 
-    def store_image(self, tensor, name, n_iter=None, prefix=False, iter_format="{:05d}", normalize=True):
-        """Stores an image"""
-        PytorchPlotLogger.store_image_static(self.image_dir, tensor=tensor, name=name, n_iter=n_iter,
+    def save_image(self, tensor, name, n_iter=None, prefix=False, iter_format="{:05d}", normalize=True):
+        """saves an image"""
+        PytorchPlotLogger.save_image_static(self.image_dir, tensor=tensor, name=name, n_iter=n_iter,
                                              prefix=prefix, iter_format=iter_format, normalize=normalize)
 
     @staticmethod
-    def store_images_static(image_dir, tensors, n_iter=None, prefix=False, iter_format="{:05d}", normalize=True):
+    def save_images_static(image_dir, tensors, n_iter=None, prefix=False, iter_format="{:05d}", normalize=True):
         assert isinstance(tensors, dict)
 
         for name, tensor in tensors.items():
-            PytorchPlotLogger.store_image_static(image_dir=image_dir, tensor=tensor, name=name, n_iter=n_iter,
+            PytorchPlotLogger.save_image_static(image_dir=image_dir, tensor=tensor, name=name, n_iter=n_iter,
                                                  prefix=prefix, iter_format=iter_format, normalize=normalize)
 
-    def store_images(self, tensors, n_iter=None, prefix=False, iter_format="{:05d}", normalize=True):
+    def save_images(self, tensors, n_iter=None, prefix=False, iter_format="{:05d}", normalize=True):
         assert isinstance(tensors, dict)
-        PytorchPlotLogger.store_images_static(self.image_dir, tensors=tensors, n_iter=n_iter, prefix=prefix,
+        PytorchPlotLogger.save_images_static(self.image_dir, tensors=tensors, n_iter=n_iter, prefix=prefix,
                                               iter_format=iter_format, normalize=normalize)
 
     @staticmethod
-    def store_image_grid_static(image_dir, tensor, name, n_iter=None, prefix=False, iter_format="{:05d}", nrow=8,
+    def save_image_grid_static(image_dir, tensor, name, n_iter=None, prefix=False, iter_format="{:05d}", nrow=8,
                                 padding=2, normalize=False, range=None, scale_each=False, pad_value=0):
 
         img_name = name
@@ -84,16 +84,16 @@ class PytorchPlotLogger(NumpyPlotLogger):
         save_image(tensor, img_file, normalize=normalize, nrow=nrow, padding=padding, range=range,
                    scale_each=scale_each, pad_value=pad_value)
 
-    def store_image_grid(self, tensor, name, n_iter=None, prefix=False, iter_format="{:05d}", nrow=8, padding=2,
+    def save_image_grid(self, tensor, name, n_iter=None, prefix=False, iter_format="{:05d}", nrow=8, padding=2,
                          normalize=False, range=None, scale_each=False, pad_value=0):
-        PytorchPlotLogger.store_image_grid_static(self.image_dir, tensor=tensor, name=name, n_iter=n_iter,
+        PytorchPlotLogger.save_image_grid_static(self.image_dir, tensor=tensor, name=name, n_iter=n_iter,
                                                   prefix=prefix,
                                                   iter_format=iter_format, nrow=nrow, padding=padding,
                                                   normalize=normalize, range=range, scale_each=scale_each,
                                                   pad_value=pad_value)
 
     def show_image(self, image, name, n_iter=None, prefix=False, iter_format="{:05d}", **kwargs):
-        self.store_image(tensor=image, name=name, n_iter=n_iter, prefix=prefix, iter_format=iter_format)
+        self.save_image(tensor=image, name=name, n_iter=n_iter, prefix=prefix, iter_format=iter_format)
 
     def show_images(self, images, name, n_iter=None, prefix=False, iter_format="{:05d}", **kwargs):
 
@@ -101,17 +101,17 @@ class PytorchPlotLogger(NumpyPlotLogger):
         for i, img in enumerate(images):
             tensors[name + str(i)] = img
 
-        self.store_images(tensors=tensors, n_iter=n_iter, prefix=prefix, iter_format=iter_format)
+        self.save_images(tensors=tensors, n_iter=n_iter, prefix=prefix, iter_format=iter_format)
 
     def show_image_grid(self, images, name, n_iter=None, prefix=False, iter_format="{:05d}", nrow=8, padding=2,
                         normalize=False, range=None, scale_each=False, pad_value=0, **kwargs):
-        self.store_image_grid(tensor=images, name=name, n_iter=n_iter, prefix=prefix, iter_format=iter_format,
+        self.save_image_grid(tensor=images, name=name, n_iter=n_iter, prefix=prefix, iter_format=iter_format,
                               nrow=nrow,
                               padding=padding,
                               normalize=normalize, range=range, scale_each=scale_each, pad_value=pad_value)
 
     @staticmethod
-    def store_checkpoint_static(model_dir, name, **kwargs):
+    def save_checkpoint_static(model_dir, name, **kwargs):
         for key, value in kwargs.items():
             if isinstance(value, torch.nn.Module) or isinstance(value, torch.optim.Optimizer):
                 kwargs[key] = value.state_dict()
@@ -120,11 +120,11 @@ class PytorchPlotLogger(NumpyPlotLogger):
 
         torch.save(kwargs, checkpoint_file)
 
-    def store_checkpoint(self, name, **kwargs):
-        PytorchPlotLogger.store_checkpoint_static(self.model_dir, name=name, **kwargs)
+    def save_checkpoint(self, name, **kwargs):
+        PytorchPlotLogger.save_checkpoint_static(self.model_dir, name=name, **kwargs)
 
     @staticmethod
-    def restore_checkpoint(name, **kwargs):
+    def load_checkpoint(name, **kwargs):
         checkpoint = torch.load(name, map_location=lambda storage, loc: storage)
 
         for key, value in kwargs.items():
@@ -140,22 +140,22 @@ class PytorchPlotLogger(NumpyPlotLogger):
         filename = "checkpoint_end.pth.tar"
 
         def save_fnc():
-            self.store_checkpoint(filename, **kwargs)
-            print("Checkpoint stored securely... =)")
+            self.save_checkpoint(filename, **kwargs)
+            print("Checkpoint saved securely... =)")
 
         atexit.register(save_fnc)
 
-    def get_store_checkpoint_fn(self, **kwargs):
+    def get_save_checkpoint_fn(self, **kwargs):
         def save_fnc(n_iter, iter_format="{:05d}", prefix=False):
             name = name_and_iter_to_filename(name="checkpoint", n_iter=n_iter, ending=".pth.tar",
                                                   iter_format=iter_format,
                                                   prefix=prefix)
-            self.store_checkpoint(name, **kwargs)
+            self.save_checkpoint(name, **kwargs)
 
         return save_fnc
 
     @staticmethod
-    def restore_lastest_checkpoint(dir, name=None, **kwargs):
+    def load_last_checkpoint(dir, name=None, **kwargs):
         if name is None:
             name = "*checkpoint*.pth.tar"
 
@@ -166,21 +166,16 @@ class PytorchPlotLogger(NumpyPlotLogger):
                 checkpoint_file = os.path.join(root, filename)
                 checkpoint_files.append(checkpoint_file)
 
-        lastest_file = sorted(checkpoint_files, reverse=True)[0]
+        last_file = sorted(checkpoint_files, reverse=True)[0]
 
-        return PytorchPlotLogger.restore_checkpoint(lastest_file, **kwargs)
+        return PytorchPlotLogger.load_checkpoint(last_file, **kwargs)
 
     @staticmethod
-    def restore_best_checkpoint(dir, **kwargs):
+    def load_best_checkpoint(dir, **kwargs):
         name = "checkpoint_best.pth.tar"
         checkpoint_file = os.path.join(dir, name)
 
         if os.path.exists(checkpoint_file):
-            return PytorchPlotLogger.restore_checkpoint(checkpoint_file, **kwargs)
+            return PytorchPlotLogger.load_checkpoint(checkpoint_file, **kwargs)
         else:
-            return PytorchPlotLogger.restore_lastest_checkpoint(dir=dir)
-
-    def get_log_dict(self, file_name, log_to_output=False):
-        """Creates new dict, which automatically logs all value changes to the given file"""
-
-        return LogDict(logger=self, file_name=file_name, log_to_output=log_to_output)
+            return PytorchPlotLogger.load_lastest_checkpoint(dir=dir)
