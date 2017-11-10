@@ -142,35 +142,42 @@ class PytorchExperimentLogger(ExperimentLogger):
         atexit.register(save_fnc)
 
     def get_save_checkpoint_fn(self, name="checkpoint", **kwargs):
-        def save_fnc(n_iter, iter_format="{:05d}", prefix=False):
-            self.save_checkpoint(name=name, n_iter=n_iter,
-                                                  iter_format=iter_format,
-                                                  prefix=prefix **kwargs)
 
+        def save_fnc(n_iter, iter_format="{:05d}", prefix=False):
+            self.save_checkpoint(name=name,
+                                 n_iter=n_iter,
+                                 iter_format=iter_format,
+                                 prefix=prefix,
+                                 **kwargs)
         return save_fnc
 
     @staticmethod
-    def load_last_checkpoint(dir, name=None, **kwargs):
+    def load_last_checkpoint(dir_, name=None, **kwargs):
+
         if name is None:
             name = "*checkpoint*.pth.tar"
 
         checkpoint_files = []
 
-        for root, dirs, files in os.walk(dir):
+        for root, dirs, files in os.walk(dir_):
             for filename in fnmatch.filter(files, name):
                 checkpoint_file = os.path.join(root, filename)
                 checkpoint_files.append(checkpoint_file)
 
+        if len(checkpoint_files) == 0:
+            return None
+
         last_file = sorted(checkpoint_files, reverse=True)[0]
 
-        return PytorchPlotLogger.load_checkpoint(last_file, **kwargs)
+        return PytorchExperimentLogger.load_checkpoint_static(last_file, **kwargs)
 
     @staticmethod
-    def load_best_checkpoint(dir, **kwargs):
-        name = "checkpoint_best.pth.tar"
-        checkpoint_file = os.path.join(dir, name)
+    def load_best_checkpoint(dir_, **kwargs):
 
-        if os.path.exists(checkpoint_file):
-            return PytorchPlotLogger.load_checkpoint(checkpoint_file, **kwargs)
+        best_checkpoint = PytorchExperimentLogger.load_last_checkpoint(
+            dir_=dir_, name="checkpoint_best.pth.tar", **kwargs)
+
+        if best_checkpoint is not None:
+            return best_checkpoint
         else:
-            return PytorchPlotLogger.load_lastest_checkpoint(dir=dir)
+            return PytorchPlotLogger.load_lastest_checkpoint(dir_=dir_, **kwargs)
