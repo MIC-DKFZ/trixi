@@ -52,7 +52,7 @@ class PytorchPlotLogger(NumpyPlotLogger):
     def save_image(self, tensor, name, n_iter=None, iter_format="{:05d}", prefix=False, normalize=True):
         """saves an image"""
 
-        PytorchPlotLogger.save_image_static(image_dir=self.image_dir,
+        PytorchPlotLogger.save_image_static(image_dir=self.img_dir,
                                             tensor=tensor,
                                             name=name,
                                             n_iter=n_iter,
@@ -77,7 +77,7 @@ class PytorchPlotLogger(NumpyPlotLogger):
     def save_images(self, tensors, n_iter=None, iter_format="{:05d}", prefix=False, normalize=True):
 
         assert isinstance(tensors, dict)
-        PytorchPlotLogger.save_images_static(image_dir=self.image_dir,
+        PytorchPlotLogger.save_images_static(image_dir=self.img_dir,
                                              tensors=tensors,
                                              n_iter=n_iter,
                                              iter_format=iter_format,
@@ -111,7 +111,7 @@ class PytorchPlotLogger(NumpyPlotLogger):
     def save_image_grid(self, tensor, name, n_iter=None, prefix=False, iter_format="{:05d}", nrow=8, padding=2,
                         normalize=False, range_=None, scale_each=False, pad_value=0):
 
-        PytorchPlotLogger.save_image_grid_static(image_dir=self.image_dir,
+        PytorchPlotLogger.save_image_grid_static(image_dir=self.img_dir,
                                                  tensor=tensor,
                                                  name=name,
                                                  n_iter=n_iter,

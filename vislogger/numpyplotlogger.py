@@ -2,7 +2,8 @@ import os
 
 import matplotlib
 
-matplotlib.use("Agg")
+if "DISPLAY" not in os.environ:
+    matplotlib.use("Agg")
 
 from vislogger.numpyseabornlogger import NumpySeabornLogger
 from vislogger.abstractlogger import convert_params

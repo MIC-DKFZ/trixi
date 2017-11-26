@@ -1,7 +1,7 @@
 import string
 import random
 import os
-import warning
+import warnings
 
 
 class Singleton:
