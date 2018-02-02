@@ -10,7 +10,7 @@ except:
 
 import numpy as np
 
-from vislogger import AbstractLogger, FileLogger, NumpyPlotLogger
+from vislogger import AbstractLogger, FileLogger, NumpyPlotLogger, Config
 from vislogger.util import create_folder
 
 
@@ -83,13 +83,15 @@ class ExperimentLogger(AbstractLogger):
 
         if not name.endswith(".json"):
             name += ".json"
-        json.dump(data, os.path.join(self.config_dir, name))
+        data.dump(os.path.join(self.config_dir, name))
 
     def load_config(self, name):
 
         if not name.endswith(".json"):
             name += ".json"
-        return json.load(os.path.join(self.config_dir, name))
+        c = Config()
+        c.load(os.path.join(self.config_dir, name))
+        return c
 
     def save_checkpoint(self):
         raise NotImplementedError
