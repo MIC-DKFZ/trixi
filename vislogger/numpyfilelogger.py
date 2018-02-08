@@ -1,8 +1,10 @@
 import os
 
-import matplotlib
+use_agg = True
 
-matplotlib.use("Agg")
+import matplotlib
+if use_agg:
+    matplotlib.use("Agg")
 
 from vislogger.filelogger import FileLogger
 from vislogger.numpyseabornlogger import NumpySeabornLogger

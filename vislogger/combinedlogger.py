@@ -11,18 +11,20 @@ def create_function(self, sub_methods):
             method_cntr = self.log_methods_cntr[sub_method]
             method_freq = self.log_methods_freq[sub_method]
 
+            if "log_all" in kwargs and kwargs["log_all"] is True:
+                sub_method(*args, **kwargs)
+                continue
+
             if method_cntr % method_freq == 0:
                 sub_method(*args, **kwargs)
 
-            if "same_as_last" in kwargs and kwargs["same_as_last"] is True:
+            elif "same_as_last" in kwargs and kwargs["same_as_last"] is True:
                 if method_cntr % method_freq == 1:
                     sub_method(*args, **kwargs)
                 kwargs["do_not_increase"] = True
 
-
             if "do_not_increase" not in kwargs or ("do_not_increase" in kwargs and kwargs["do_not_increase"] is False):
                 self.log_methods_cntr[sub_method] += 1
-
 
     return surrogate_fn
 
