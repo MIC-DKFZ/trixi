@@ -11,7 +11,7 @@ except:
 import numpy as np
 
 from vislogger import AbstractLogger, FileLogger, NumpyPlotLogger, Config
-from vislogger.util import create_folder
+from vislogger.util import create_folder, MultiTypeEncoder, MultiTypeDecoder
 
 
 class ExperimentLogger(AbstractLogger):
@@ -105,14 +105,14 @@ class ExperimentLogger(AbstractLogger):
             path += ".json"
         path = os.path.join(self.save_dir, path)
         create_folder(os.path.dirname(path))
-        json.dump(data, path)
+        json.dump(data, open(path, "w"), cls=MultiTypeEncoder)
 
     def load_dict(self, path):
 
         if not path.endswith(".json"):
             path += ".json"
         path = os.path.join(self.save_dir, path)
-        return json.load(path)
+        return json.load(open(path, "r"), cls=MultiTypeDecoder)
 
     def save_numpy_data(self, data, path):
 

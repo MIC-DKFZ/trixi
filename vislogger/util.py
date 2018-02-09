@@ -1,7 +1,107 @@
+import ast
+import importlib
+import json
 import string
 import random
 import os
-import warnings
+from types import ModuleType
+
+class CustomJSONEncoder(json.JSONEncoder):
+
+    def _encode(self, obj):
+        raise NotImplementedError
+
+    def _encode_switch(self, obj):
+        if isinstance(obj, list):
+            return [self._encode_switch(item) for item in obj]
+        elif isinstance(obj, dict):
+            return {self._encode_key(key): self._encode_switch(val) for key, val in obj.items()}
+        else:
+            return self._encode(obj)
+
+    def _encode_key(self, obj):
+        return self._encode(obj)
+
+    def encode(self, obj):
+        return super(CustomJSONEncoder, self).encode(self._encode_switch(obj))
+
+    def iterencode(self, obj, *args, **kwargs):
+        return super(CustomJSONEncoder, self).iterencode(self._encode_switch(obj), *args, **kwargs)
+
+
+class MultiTypeEncoder(CustomJSONEncoder):
+
+    def _encode_key(self, obj):
+        if isinstance(obj, int):
+            return "__int__({})".format(obj)
+        if isinstance(obj, float):
+            return "__float__({})".format(obj)
+        else:
+            return self._encode(obj)
+
+    def _encode(self, obj):
+        if isinstance(obj, tuple):
+            return "__tuple__({})".format(obj)
+        else:
+            return obj
+
+
+class ModuleMultiTypeEncoder(MultiTypeEncoder):
+
+    def _encode(self, obj):
+        if type(obj) == type:
+            return "__type__({}.{})".format(obj.__module__, obj.__name__)
+        elif isinstance(obj, ModuleType):
+            return "__module__({})".format(obj.__name__)
+        else:
+            return super(ModuleMultiTypeEncoder, self)._encode(obj)
+
+
+class CustomJSONDecoder(json.JSONDecoder):
+
+    def _decode(self, obj):
+        raise NotImplementedError
+
+    def _decode_switch(self, obj):
+        if isinstance(obj, list):
+            return [self._decode_switch(item) for item in obj]
+        elif isinstance(obj, dict):
+            return {self._decode_key(key): self._decode_switch(val) for key, val in obj.items()}
+        else:
+            return self._decode(obj)
+
+    def _decode_key(self, obj):
+        return self._decode(obj)
+
+    def decode(self, obj):
+        return self._decode_switch(super(CustomJSONDecoder, self).decode(obj))
+
+
+class MultiTypeDecoder(CustomJSONDecoder):
+
+    def _decode(self, obj):
+        if isinstance(obj, str):
+            if obj.startswith("__int__"):
+                return int(obj[8:-1])
+            elif obj.startswith("__float__"):
+                return float(obj[10:-1])
+            elif obj.startswith("__tuple__"):
+                return tuple(ast.literal_eval(obj[10:-1]))
+        return obj
+
+
+class ModuleMultiTypeDecoder(MultiTypeDecoder):
+
+    def _decode(self, obj):
+        if isinstance(obj, str):
+            if obj.startswith("__type__"):
+                str_ = obj[9:-1]
+                module_ = ".".join(str_.split(".")[:-1])
+                name_ = str_.split(".")[-1]
+                return getattr(importlib.import_module(module_), name_)
+            elif obj.startswith("__module__"):
+                return importlib.import_module(obj[11:-1])
+        return super(ModuleMultiTypeDecoder, self)._decode(obj)
 
 
 class Singleton:

@@ -7,6 +7,7 @@ from vislogger.numpyplotlogger import NumpyPlotLogger
 from vislogger.numpyseabornlogger import NumpySeabornLogger
 from vislogger.numpyvisdomlogger import NumpyVisdomLogger
 from vislogger.experimentlogger import ExperimentLogger
+from vislogger.gpu_monitor import GpuMonitor
 
 try:
     from vislogger.pytorchplotlogger import PytorchPlotLogger
