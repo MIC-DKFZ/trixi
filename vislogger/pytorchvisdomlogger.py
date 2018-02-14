@@ -6,7 +6,12 @@ from graphviz import Digraph
 from torch.autograd import Variable
 from torchvision.utils import make_grid
 
+from sklearn import manifold
+import umap
+from multiprocessing import Process
+
 from vislogger import NumpyVisdomLogger
+from vislogger.abstractvisuallogger import convert_params
 
 
 class PytorchVisdomLogger(NumpyVisdomLogger):
@@ -250,5 +255,59 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         )
 
         return win
-
     NumpyVisdomLogger.show_funcs["image_grid"] = __show_image_grid
+
+    @convert_params
+    def show_embedding(self, tensor, labels=None, name=None, method="tsne", n_dims=2, n_neigh=30, **meth_args):
+
+        def __show_embedding(queue, tensor, labels=None, name=None, method="tsne", n_dims=2, n_neigh=30, **meth_args):
+            emb_data = []
+
+            linears = ['standard', 'ltsa', 'hessian', 'modified']
+            if method in linears:
+
+                loclin = manifold.LocallyLinearEmbedding(n_neigh, n_dims, method=method, **meth_args)
+                emb_data = loclin.fit_transform(tensor)
+
+            elif method == "isomap":
+                iso = manifold.Isomap(n_neigh, n_dims, **meth_args)
+                emb_data = iso.fit_transform(tensor)
+
+            elif method == "mds":
+                mds = manifold.MDS(n_dims, **meth_args)
+                emb_data = mds.fit_transform(tensor)
+
+            elif method == "spectral":
+                se = manifold.SpectralEmbedding(n_components=n_dims, n_neighbors=n_neigh, **meth_args)
+                emb_data = se.fit_transform(tensor)
+
+            elif method == "tsne":
+                tsne = manifold.TSNE(n_components=n_dims, perplexity=n_neigh, **meth_args)
+                emb_data = tsne.fit_transform(tensor)
+
+            elif method == "umap":
+                um = umap.UMAP(n_components=n_dims, n_neighbors=n_neigh, **meth_args)
+                emb_data = um.fit_transform(tensor)
+
+            vis_task = {
+                "type": "scatterplot",
+                "array": emb_data,
+                "labels": labels,
+                "name": name,
+                "env_appendix": "",
+                "opts": {}
+            }
+            queue.put_nowait(vis_task)
+
+        p = Process(target=__show_embedding, kwargs=dict(
+            queue=self._queue,
+            tensor=tensor,
+            labels=labels,
+            name=name,
+            method=method,
+            n_dims=n_dims,
+            n_neigh=n_neigh,
+            **meth_args
+        ))
+        p.start()
+

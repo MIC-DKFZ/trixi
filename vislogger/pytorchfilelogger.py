@@ -6,6 +6,7 @@ import torch
 from torch.autograd import Variable
 from torchvision.utils import save_image
 
+from vislogger.abstractvisuallogger import threaded
 from vislogger.numpyfilelogger import NumpyFileLogger
 
 
@@ -86,6 +87,7 @@ class PytorchFileLogger(NumpyFileLogger):
         return name
 
     @staticmethod
+    @threaded
     def store_image_static(image_dir, tensor, name, n_iter=None, prefix=False, iter_format="%05d", normalize=True):
         """Stores an image"""
 
@@ -104,6 +106,7 @@ class PytorchFileLogger(NumpyFileLogger):
                                              prefix=prefix, iter_format=iter_format, normalize=normalize)
 
     @staticmethod
+    @threaded
     def store_images_static(image_dir, tensors, n_iter=None, prefix=False, iter_format="%05d", normalize=True):
         assert isinstance(tensors, dict)
 
@@ -117,6 +120,7 @@ class PytorchFileLogger(NumpyFileLogger):
                                               iter_format=iter_format, normalize=normalize)
 
     @staticmethod
+    @threaded
     def store_image_grid_static(image_dir, tensor, name, n_iter=None, prefix=False, iter_format="%05d", nrow=8,
                                 padding=2, normalize=False, range=None, scale_each=False, pad_value=0):
 
@@ -143,6 +147,7 @@ class PytorchFileLogger(NumpyFileLogger):
     def show_image(self, image, name, n_iter=None, prefix=False, iter_format="%05d", **kwargs):
         self.store_image(tensor=image, name=name, n_iter=n_iter, prefix=prefix, iter_format=iter_format)
 
+    @threaded
     def show_images(self, images, name, n_iter=None, prefix=False, iter_format="%05d", **kwargs):
 
         tensors = {}
@@ -159,6 +164,7 @@ class PytorchFileLogger(NumpyFileLogger):
                               normalize=normalize, range=range, scale_each=scale_each, pad_value=pad_value)
 
     @staticmethod
+    @threaded
     def store_model_static(model_dir, model, name, n_iter=None, prefix=False, iter_format="%05d"):
         """Stores a model"""
         model_name = name
@@ -176,6 +182,7 @@ class PytorchFileLogger(NumpyFileLogger):
                                              iter_format=iter_format)
 
     @staticmethod
+    @threaded
     def store_models_static(model_dir, models, n_iter=None, prefix=False, iter_format="%05d"):
         assert isinstance(models, dict)
 
@@ -244,6 +251,7 @@ class PytorchFileLogger(NumpyFileLogger):
                                                   iter_format=iter_format, exclude_layers=exclude_layers.get(name))
 
     @staticmethod
+    @threaded
     def store_checkpoint_static(model_dir, name, **kwargs):
         for key, value in kwargs.items():
             if isinstance(value, torch.nn.Module) or isinstance(value, torch.optim.Optimizer):
