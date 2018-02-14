@@ -16,6 +16,7 @@ class FileLogger(AbstractLogger):
                  base_dir=None,
                  logging_level=logging.DEBUG,
                  logging_stream=sys.stdout,
+                 default_stream_handler=False,
                  **kwargs):
 
         super(FileLogger, self).__init__(**kwargs)
@@ -31,7 +32,7 @@ class FileLogger(AbstractLogger):
 
         # set up logging
         self.logging_identifier = random_string(10)
-        self.add_logger("default")
+        self.add_logger("default", stream_handler=default_stream_handler)
 
     def add_logger(self, name, logging_level=None, file_handler=True, stream_handler=True):
 

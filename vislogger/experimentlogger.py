@@ -3,6 +3,7 @@ from __future__ import print_function
 import datetime
 import json
 import os
+import re
 try:
     import cPickle as pickle
 except:
@@ -11,7 +12,12 @@ except:
 import numpy as np
 
 from vislogger import AbstractLogger, FileLogger, NumpyPlotLogger, Config
-from vislogger.util import create_folder, MultiTypeEncoder, MultiTypeDecoder
+from vislogger.util import create_folder, MultiTypeEncoder, MultiTypeDecoder, SafeDict
+
+
+REPLACEMENTS = [("%Y", 4), ("%m", 2), ("%d", 2), ("%H", 2), ("%M", 2), ("%S", 2),
+                ("%w", 1), ("%y", 2), ("%I", 2), ("%f", 6), ("%j", 3), ("%U", 2),
+                ("%W", 2)]
 
 
 class ExperimentLogger(AbstractLogger):
@@ -21,6 +27,7 @@ class ExperimentLogger(AbstractLogger):
                  experiment_name,
                  base_dir,
                  folder_format="{experiment_name}-{run_number:04d}",
+                 resume=False,
                  **kwargs):
 
         super(ExperimentLogger, self).__init__(**kwargs)
@@ -30,8 +37,7 @@ class ExperimentLogger(AbstractLogger):
         self.folder_format = folder_format
 
         self.init_time = datetime.datetime.today()
-
-        self.folder_name = self.resolve_format(folder_format)
+        self.folder_name = self.resolve_format(folder_format, resume)
         self.work_dir = os.path.join(base_dir, self.folder_name)
 
         self.config_dir = os.path.join(self.work_dir, "config")
@@ -41,13 +47,14 @@ class ExperimentLogger(AbstractLogger):
         self.plot_dir = os.path.join(self.work_dir, "plot")
         self.save_dir = os.path.join(self.work_dir, "save")
 
-        create_folder(self.work_dir)
-        create_folder(self.config_dir)
-        create_folder(self.log_dir)
-        create_folder(self.checkpoint_dir)
-        create_folder(self.img_dir)
-        create_folder(self.plot_dir)
-        create_folder(self.save_dir)
+        if not resume:
+            create_folder(self.work_dir)
+            create_folder(self.config_dir)
+            create_folder(self.log_dir)
+            create_folder(self.checkpoint_dir)
+            create_folder(self.img_dir)
+            create_folder(self.plot_dir)
+            create_folder(self.save_dir)
 
         self.file_logger = FileLogger(self.work_dir)
         self.plot_logger = NumpyPlotLogger(self.img_dir, self.plot_dir)
@@ -67,8 +74,8 @@ class ExperimentLogger(AbstractLogger):
     def show_scatterplot(self, array, name, file_format=".png", **kwargs):
         self.plot_logger.show_scatterplot(array, name, file_format=".png", **kwargs)
 
-    def show_value(self, value, name=None, logger="default", **kwargs):
-        self.plot_logger.show_value(value, name, logger, **kwargs)
+    def show_value(self, value, name=None, file_format=".png", **kwargs):
+        self.plot_logger.show_value(value, name, file_format, **kwargs)
 
     def show_text(self, text, name=None, logger="default", **kwargs):
         self.file_logger.show_text(text, name, logger, **kwargs)
@@ -142,7 +149,29 @@ class ExperimentLogger(AbstractLogger):
         with open(path, "rb") as in_:
             return pickle.load(in_)
 
-    def resolve_format(self, input_):
+    def resolve_format(self, input_, resume):
+
+        if resume:
+
+            pattern = input_[:]
+
+            for find in re.findall("{[\w\:]+}", pattern):
+                run_match = re.search("(?<=\{run_number\:0)\d+(?=d\})", find)
+                if find == "{run_number}":
+                    pattern = pattern.replace("{run_number}", "\d+")
+                elif run_match:
+                    length = int(run_match.group(0))
+                    pattern = re.sub("\{run_number\:\d+d\}", "\\d{"+str(length)+"}", pattern)
+                else:
+                    if find[1:-1] in self.__dict__:
+                        pattern = pattern.replace(find, self.__dict__[find[1:-1]])
+
+            for r in REPLACEMENTS:
+                pattern = pattern.replace(r[0], "\\d{"+str(r[1])+"}")
+
+            return list(filter(lambda x: re.match(pattern, x),
+                               sorted(os.listdir(self.base_dir))))[-1]
+
 
         if "%" in input_:
             input_ = self.init_time.strftime(input_)

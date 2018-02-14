@@ -199,3 +199,8 @@ def update_model(original_model, update_dict, exclude_layers=(), warnings=True):
 
         # 4. load the new state dict
         original_model.load_state_dict(model_dict)
+
+
+class SafeDict(dict):
+    def __missing__(self, key):
+        return "{" + key + "}"
