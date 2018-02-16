@@ -16,7 +16,7 @@ class TextLogger(AbstractLogger):
                  base_dir=None,
                  logging_level=logging.DEBUG,
                  logging_stream=sys.stdout,
-                 default_stream_handler=False,
+                 default_stream_handler=True,
                  **kwargs):
 
         super(TextLogger, self).__init__(**kwargs)
@@ -43,7 +43,7 @@ class TextLogger(AbstractLogger):
         else:
             self.loggers[name].setLevel(logging_level)
 
-        if file_handler == True:
+        if file_handler is True:
             self.add_file_handler(name, name)
         elif isinstance(file_handler, (list, tuple, set)):
             for fh in file_handler:

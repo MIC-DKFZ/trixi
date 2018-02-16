@@ -58,7 +58,7 @@ class ExperimentLogger(AbstractLogger):
             create_folder(self.save_dir)
             create_folder(self.result_dir)
 
-        self.file_logger = TextLogger(self.work_dir)
+        self.file_logger = TextLogger(self.log_dir)
         self.plot_logger = NumpyPlotFileLogger(self.img_dir, self.plot_dir)
 
     def show_image(self, image, name, file_format=".png", **kwargs):
