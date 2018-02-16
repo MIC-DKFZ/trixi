@@ -203,11 +203,10 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         # Display model graph in visdom
         self.show_svg(svg=x, name=name)
 
-    def show_image_grid(self, images, name=None, title=None, caption=None, env_appendix="", opts=None,
-                        make_grid_args=None, **kwargs):
+    def show_image_grid(self, images, name=None, title=None, caption=None, env_appendix="", opts=None, make_grid_args=None, **kwargs):
 
-        if opts is None:
-            opts = {}
+        if opts is None: opts = {}
+        if make_grid_args is None: make_grid_args = {}
 
         tensor = images.cpu()
         viz_task = {
@@ -225,10 +224,8 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
     def __show_image_grid(self, tensor, name=None, title=None, caption=None, env_appendix="", opts=None,
                           make_grid_args=None,  **kwargs):
 
-        if opts is None:
-            opts = {}
-        if make_grid_args is None:
-            make_grid_args = {}
+        if opts is None: opts = {}
+        if make_grid_args is None: make_grid_args = {}
 
         if isinstance(tensor, Variable):
             tensor = tensor.data

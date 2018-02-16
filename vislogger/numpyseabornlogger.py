@@ -4,13 +4,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn
 
-from vislogger.abstractvisuallogger import AbstractVisualLogger
-from vislogger.abstractvisuallogger import convert_params
+from vislogger.abstractlogger import AbstractLogger
+from vislogger.abstractlogger import convert_params
 
 
-class NumpySeabornLogger(AbstractVisualLogger):
+class NumpySeabornLogger(AbstractLogger):
     """
-    Visual logger, inherits the AbstractVisualLogger and plots/ logs numpy arrays/ values as matplotlib / seaborn plots.
+    Visual logger, inherits the AbstractLogger and plots/ logs numpy arrays/ values as matplotlib / seaborn plots.
     """
 
     def __init__(self, **kwargs):

@@ -7,13 +7,13 @@ import traceback
 
 import numpy as np
 
-from vislogger.abstractvisuallogger import AbstractVisualLogger, convert_params
+from vislogger.abstractlogger import AbstractLogger, convert_params
 from vislogger.extravisdom import ExtraVisdom
 
 
-class NumpyVisdomLogger(AbstractVisualLogger):
+class NumpyVisdomLogger(AbstractLogger):
     """
-    Visual logger, inherits the AbstractVisualLogger and plots/ logs numpy arrays/ values on a Visdom server.
+    Visual logger, inherits the AbstractLogger and plots/ logs numpy arrays/ values on a Visdom server.
     """
 
     def __init__(self, name="main", server="http://localhost", port=8080, auto_close=True, **kwargs):

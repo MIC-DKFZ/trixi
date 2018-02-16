@@ -9,7 +9,6 @@ def convert_params(f):
 
     return wrapper
 
-
 def threaded(f):
     """Decorator to run the process in an extra thread."""
 
@@ -19,7 +18,7 @@ def threaded(f):
     return wrapper
 
 
-class AbstractVisualLogger(object):
+class AbstractLogger(object):
     """Abstract interface for visual logger."""
 
     __metaclass__ = ABCMeta

@@ -10,45 +10,6 @@ from vislogger.abstractvisuallogger import threaded
 from vislogger.numpyfilelogger import NumpyFileLogger
 
 
-class LogDict(dict):
-    def __init__(self, file_name, logger, log_to_output=False, log_temp_output=True):
-        """Initilaizes a new Dict which directly logs value chnages to a given target_file."""
-
-        super(LogDict, self).__init__()
-
-        self.logger = logger
-        self.file_name = file_name
-        self.logger.add_log_file(self.file_name)
-        self.log_to_output = log_to_output
-        self.log_temp_output = log_temp_output
-
-    def __setitem__(self, key, item):
-        super(LogDict, self).__setitem__(key, item)
-
-        if self.log_temp_output:
-            item = item.cpu().numpy() if torch.is_tensor(item) else item
-            item = item.data.cpu().numpy() if isinstance(item, Variable) else item
-
-            self.logger.log_to(self.file_name, "%s : %s" % (key, item), log_to_output=self.log_to_output)
-
-    def __getattr__(self, attr):
-        return self.get(attr)
-
-    def __setattr__(self, key, value):
-        self.__setitem__(key, value)
-
-    def __delitem__(self, key):
-        super(LogDict, self).__delitem__(key)
-        del self.__dict__[key]
-
-    def __hash__(self):
-        return hash(tuple(sorted(self.items())))
-
-    def log_content(self):
-        """Logs the current content of the dict to the output file as a whole."""
-        self.logger.log_to(self.file_name, str(self), log_to_output=self.log_to_output)
-
-
 class PytorchFileLogger(NumpyFileLogger):
     """
     Visual logger, inherits the NumpyFileLogger and plots/ logs pytorch tensors and variables as files on the local
