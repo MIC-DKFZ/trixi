@@ -9,7 +9,7 @@ from vislogger import AbstractLogger
 from vislogger.util import random_string
 
 
-class FileLogger(AbstractLogger):
+class TextLogger(AbstractLogger):
     """A single class for logging"""
 
     def __init__(self,
@@ -19,7 +19,7 @@ class FileLogger(AbstractLogger):
                  default_stream_handler=False,
                  **kwargs):
 
-        super(FileLogger, self).__init__(**kwargs)
+        super(TextLogger, self).__init__(**kwargs)
 
         self.base_dir = base_dir
         self.logging_level = logging_level

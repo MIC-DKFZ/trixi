@@ -5,13 +5,13 @@ use_agg = True
 import matplotlib
 if use_agg: matplotlib.use("Agg")
 
-from vislogger.numpyseabornlogger import NumpySeabornLogger
-from vislogger.abstractvisuallogger import convert_params, threaded
+from vislogger.numpyseabornlogger import NumpySeabornPlotLogger
+from vislogger.abstractlogger import convert_params, threaded
 
-class NumpyPlotLogger(NumpySeabornLogger):
+class NumpyPlotFileLogger(NumpySeabornPlotLogger):
 
     def __init__(self, img_dir, plot_dir, **kwargs):
-        super(NumpyPlotLogger, self).__init__(**kwargs)
+        super(NumpyPlotFileLogger, self).__init__(**kwargs)
         self.img_dir = img_dir
         self.plot_dir = plot_dir
 
@@ -27,7 +27,6 @@ class NumpyPlotLogger(NumpySeabornLogger):
         figure = NumpySeabornLogger.show_value(self, value, name, show=False)
         threaded(figure.savefig)(os.path.join(self.plot_dir, name) + file_format)
 
-    @threaded
     @convert_params
     def show_barplot(self, array, name, file_format=".png", *args, **kwargs):
         """Abstract method which should handle and somehow log/ store a barplot"""

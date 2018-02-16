@@ -6,12 +6,10 @@ from graphviz import Digraph
 from torch.autograd import Variable
 from torchvision.utils import make_grid
 
-from sklearn import manifold
-import umap
 from multiprocessing import Process
 
 from vislogger import NumpyVisdomLogger
-from vislogger.abstractvisuallogger import convert_params
+from vislogger.abstractlogger import convert_params
 
 
 class PytorchVisdomLogger(NumpyVisdomLogger):
@@ -256,6 +254,9 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
     @convert_params
     def show_embedding(self, tensor, labels=None, name=None, method="tsne", n_dims=2, n_neigh=30, **meth_args):
+
+        from sklearn import manifold
+        import umap
 
         def __show_embedding(queue, tensor, labels=None, name=None, method="tsne", n_dims=2, n_neigh=30, **meth_args):
             emb_data = []

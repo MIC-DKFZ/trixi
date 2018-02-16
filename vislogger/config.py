@@ -17,13 +17,21 @@ class Config(dict):
 
         self.update(kwargs)
 
-    def dump(self, file_, **kwargs):
+    def dump(self, file_, indent=4, separators=(",", ": "), **kwargs):
 
         if hasattr(file_, "write"):
-            json.dump(self, file_, cls=ModuleMultiTypeEncoder, **kwargs)
+            json.dump(self, file_,
+                      cls=ModuleMultiTypeEncoder,
+                      indent=indent,
+                      separators=separators,
+                      **kwargs)
         else:
             with open(file_, "w") as file_object:
-                json.dump(self, file_object, cls=ModuleMultiTypeEncoder, **kwargs)
+                json.dump(self, file_object,
+                          cls=ModuleMultiTypeEncoder,
+                          indent=indent,
+                          separators=separators,
+                          **kwargs)
 
     def load(self, file_, raise_=True, **kwargs):
 

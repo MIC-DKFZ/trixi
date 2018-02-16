@@ -8,13 +8,13 @@ from vislogger.abstractlogger import AbstractLogger
 from vislogger.abstractlogger import convert_params
 
 
-class NumpySeabornLogger(AbstractLogger):
+class NumpySeabornPlotLogger(AbstractLogger):
     """
     Visual logger, inherits the AbstractLogger and plots/ logs numpy arrays/ values as matplotlib / seaborn plots.
     """
 
     def __init__(self, **kwargs):
-        super(NumpySeabornLogger, self).__init__(**kwargs)
+        super(NumpySeabornPlotLogger, self).__init__(**kwargs)
 
         self.figures = {}
         self.values = defaultdict(lambda: defaultdict(list))

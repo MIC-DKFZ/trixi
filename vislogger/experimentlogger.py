@@ -11,7 +11,7 @@ except:
 
 import numpy as np
 
-from vislogger import AbstractLogger, FileLogger, NumpyPlotLogger, Config
+from vislogger import AbstractLogger, TextLogger, NumpyPlotFileLogger, Config
 from vislogger.util import create_folder, MultiTypeEncoder, MultiTypeDecoder, SafeDict
 
 
@@ -26,7 +26,7 @@ class ExperimentLogger(AbstractLogger):
     def __init__(self,
                  experiment_name,
                  base_dir,
-                 folder_format="{experiment_name}-{run_number:04d}",
+                 folder_format="%Y%m%d-%H%M%S_{experiment_name}",
                  resume=False,
                  **kwargs):
 
@@ -46,6 +46,7 @@ class ExperimentLogger(AbstractLogger):
         self.img_dir = os.path.join(self.work_dir, "img")
         self.plot_dir = os.path.join(self.work_dir, "plot")
         self.save_dir = os.path.join(self.work_dir, "save")
+        self.result_dir = os.path.join(self.work_dir, "result")
 
         if not resume:
             create_folder(self.work_dir)
@@ -55,9 +56,10 @@ class ExperimentLogger(AbstractLogger):
             create_folder(self.img_dir)
             create_folder(self.plot_dir)
             create_folder(self.save_dir)
+            create_folder(self.result_dir)
 
-        self.file_logger = FileLogger(self.work_dir)
-        self.plot_logger = NumpyPlotLogger(self.img_dir, self.plot_dir)
+        self.file_logger = TextLogger(self.work_dir)
+        self.plot_logger = NumpyPlotFileLogger(self.img_dir, self.plot_dir)
 
     def show_image(self, image, name, file_format=".png", **kwargs):
         self.plot_logger.show_image(image, name, file_format=".png", **kwargs)
@@ -86,18 +88,18 @@ class ExperimentLogger(AbstractLogger):
     def load_model(self):
         raise NotImplementedError
 
-    def save_config(self, data, name):
+    def save_config(self, data, name, **kwargs):
 
         if not name.endswith(".json"):
             name += ".json"
-        data.dump(os.path.join(self.config_dir, name))
+        data.dump(os.path.join(self.config_dir, name), **kwargs)
 
-    def load_config(self, name):
+    def load_config(self, name, **kwargs):
 
         if not name.endswith(".json"):
             name += ".json"
         c = Config()
-        c.load(os.path.join(self.config_dir, name))
+        c.load(os.path.join(self.config_dir, name), **kwargs)
         return c
 
     def save_checkpoint(self):
@@ -106,13 +108,29 @@ class ExperimentLogger(AbstractLogger):
     def load_checkpoint(self):
         raise NotImplementedError
 
-    def save_dict(self, data, path):
+    def save_result(self, data, name, indent=4, separators=(",", ": "), **kwargs):
+
+        if not name.endswith(".json"):
+            name += ".json"
+        name = os.path.join(self.result_dir, name)
+        create_folder(os.path.dirname(name))
+        json.dump(data, open(name, "w"),
+                  cls=MultiTypeEncoder,
+                  indent=indent,
+                  separators=separators,
+                  **kwargs)
+
+    def save_dict(self, data, path, indent=4, separators=(",", ": "), **kwargs):
 
         if not path.endswith(".json"):
             path += ".json"
         path = os.path.join(self.save_dir, path)
         create_folder(os.path.dirname(path))
-        json.dump(data, open(path, "w"), cls=MultiTypeEncoder)
+        json.dump(data, open(path, "w"),
+                  cls=MultiTypeEncoder,
+                  indent=indent,
+                  separators=separators,
+                  **kwargs)
 
     def load_dict(self, path):
 
@@ -186,5 +204,3 @@ class ExperimentLogger(AbstractLogger):
             run_number += 1
 
         return input_.format(run_number=run_number, **self.__dict__)
-
-

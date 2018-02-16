@@ -6,7 +6,8 @@ import os
 
 import torch
 
-from vislogger import ExperimentLogger, PytorchPlotLogger
+from vislogger.abstractlogger import threaded
+from vislogger import ExperimentLogger, PytorchPlotFileLogger
 from vislogger.util import name_and_iter_to_filename, update_model
 
 
@@ -25,6 +26,7 @@ class PytorchExperimentLogger(ExperimentLogger):
         self.plot_logger.show_image_grid(image, name, **kwargs)
 
     @staticmethod
+    @threaded
     def save_model_static(model, model_dir, name):
         """Stores a model"""
 
@@ -48,6 +50,7 @@ class PytorchExperimentLogger(ExperimentLogger):
                                name=name)
 
     @staticmethod
+    @threaded
     def load_model_static(model, model_file, exclude_layers=(), warnings=True):
 
         if os.path.exists(model_file):
@@ -70,6 +73,7 @@ class PytorchExperimentLogger(ExperimentLogger):
                                warnings=warnings)
 
     @staticmethod
+    @threaded
     def save_checkpoint_static(checkpoint_dir, name, **kwargs):
         for key, value in kwargs.items():
             if isinstance(value, torch.nn.Module) or isinstance(value, torch.optim.Optimizer):
@@ -94,6 +98,7 @@ class PytorchExperimentLogger(ExperimentLogger):
         self.save_checkpoint_static(self.checkpoint_dir, name=name, **kwargs)
 
     @staticmethod
+    @threaded
     def load_checkpoint_static(checkpoint_file, exclude_layer_dict=None, warnings=True, **kwargs):
 
         if exclude_layer_dict is None:
@@ -144,7 +149,7 @@ class PytorchExperimentLogger(ExperimentLogger):
         return save_fnc
 
     @staticmethod
-    def load_last_checkpoint(dir_, name=None, **kwargs):
+    def load_last_checkpoint_static(dir_, name=None, **kwargs):
 
         if name is None:
             name = "*checkpoint*.pth.tar"
@@ -163,13 +168,5 @@ class PytorchExperimentLogger(ExperimentLogger):
 
         return PytorchExperimentLogger.load_checkpoint_static(last_file, **kwargs)
 
-    @staticmethod
-    def load_best_checkpoint(dir_, **kwargs):
-
-        best_checkpoint = PytorchExperimentLogger.load_last_checkpoint(
-            dir_=dir_, name="checkpoint_best.pth.tar", **kwargs)
-
-        if best_checkpoint is not None:
-            return best_checkpoint
-        else:
-            return PytorchPlotLogger.load_lastest_checkpoint(dir_=dir_, **kwargs)
+    def load_last_checkpoint(**kwargs):
+        return self.load_last_checkpoint_static(self.checkpoint_dir, **kwargs)

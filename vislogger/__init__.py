@@ -1,17 +1,31 @@
 from vislogger.config import Config
 from vislogger.abstractlogger import AbstractLogger
 from vislogger.combinedlogger import CombinedLogger
-from vislogger.extravisdom import ExtraVisdom
-from vislogger.filelogger import FileLogger
-from vislogger.numpyplotlogger import NumpyPlotLogger
-from vislogger.numpyseabornlogger import NumpySeabornLogger
-from vislogger.numpyvisdomlogger import NumpyVisdomLogger
+from vislogger.textlogger import TextLogger
+from vislogger.numpyplotfilelogger import NumpyPlotFileLogger
+from vislogger.numpyseabornplotlogger import NumpySeabornPlotLogger
 from vislogger.experimentlogger import ExperimentLogger
-from vislogger.gpu_monitor import GpuMonitor
 
+# pynvml
+try:
+    from vislogger.gpu_monitor import GpuMonitor
+except ImportError as e:
+    print("Could not import pynvml related modules.")
+    print(e)
+
+# Visdom
+try:
+    from vislogger.extravisdom import ExtraVisdom
+    from vislogger.numpyvisdomlogger import NumpyVisdomLogger
+except ImportError as e:
+    print("Could not import Visdom related modules.")
+    print(e)
+
+# Pytorch
 try:
     from vislogger.pytorchplotlogger import PytorchPlotLogger
     from vislogger.pytorchvisdomlogger import PytorchVisdomLogger
     from vislogger.pytorchexperimentlogger import PytorchExperimentLogger
-except ImportError:
-    pass
+except ImportError as e:
+    print("Could not import Pytorch related modules.")
+    print(e)
