@@ -23,7 +23,7 @@ except ImportError as e:
 
 # Pytorch
 try:
-    from vislogger.pytorchplotlogger import PytorchPlotLogger
+    from vislogger.pytorchplotfilelogger import PytorchPlotFileLogger
     from vislogger.pytorchvisdomlogger import PytorchVisdomLogger
     from vislogger.pytorchexperimentlogger import PytorchExperimentLogger
 except ImportError as e:

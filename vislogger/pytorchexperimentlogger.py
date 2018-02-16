@@ -17,7 +17,7 @@ class PytorchExperimentLogger(ExperimentLogger):
     def __init__(self, *args, **kwargs):
 
         super(PytorchExperimentLogger, self).__init__(*args, **kwargs)
-        self.plot_logger = PytorchPlotLogger(self.img_dir, self.plot_dir)
+        self.plot_logger = PytorchPlotFileLogger(self.img_dir, self.plot_dir)
 
     def show_images(self, images, name, **kwargs):
         self.plot_logger.show_images(images, name, **kwargs)
@@ -98,7 +98,6 @@ class PytorchExperimentLogger(ExperimentLogger):
         self.save_checkpoint_static(self.checkpoint_dir, name=name, **kwargs)
 
     @staticmethod
-    @threaded
     def load_checkpoint_static(checkpoint_file, exclude_layer_dict=None, warnings=True, **kwargs):
 
         if exclude_layer_dict is None:
@@ -168,5 +167,9 @@ class PytorchExperimentLogger(ExperimentLogger):
 
         return PytorchExperimentLogger.load_checkpoint_static(last_file, **kwargs)
 
-    def load_last_checkpoint(**kwargs):
+    def load_last_checkpoint(self, **kwargs):
         return self.load_last_checkpoint_static(self.checkpoint_dir, **kwargs)
+
+
+    def print(self, *args):
+        self.file_logger.print(*args)

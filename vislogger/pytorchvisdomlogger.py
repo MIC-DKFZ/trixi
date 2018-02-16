@@ -1,12 +1,11 @@
 import tempfile
+from multiprocessing import Process
 
 import numpy as np
 import torch
 from graphviz import Digraph
 from torch.autograd import Variable
 from torchvision.utils import make_grid
-
-from multiprocessing import Process
 
 from vislogger import NumpyVisdomLogger
 from vislogger.abstractlogger import convert_params
@@ -201,7 +200,8 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         # Display model graph in visdom
         self.show_svg(svg=x, name=name)
 
-    def show_image_grid(self, images, name=None, title=None, caption=None, env_appendix="", opts=None, make_grid_args=None, **kwargs):
+    def show_image_grid(self, images, name=None, title=None, caption=None, env_appendix="", opts=None,
+                        make_grid_args=None, **kwargs):
 
         if opts is None: opts = {}
         if make_grid_args is None: make_grid_args = {}
@@ -220,7 +220,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         self._queue.put_nowait(viz_task)
 
     def __show_image_grid(self, tensor, name=None, title=None, caption=None, env_appendix="", opts=None,
-                          make_grid_args=None,  **kwargs):
+                          make_grid_args=None, **kwargs):
 
         if opts is None: opts = {}
         if make_grid_args is None: make_grid_args = {}
@@ -250,6 +250,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         )
 
         return win
+
     NumpyVisdomLogger.show_funcs["image_grid"] = __show_image_grid
 
     @convert_params
@@ -297,15 +298,13 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             }
             queue.put_nowait(vis_task)
 
-        p = Process(target=__show_embedding, kwargs=dict(
-            queue=self._queue,
-            tensor=tensor,
-            labels=labels,
-            name=name,
-            method=method,
-            n_dims=n_dims,
-            n_neigh=n_neigh,
-            **meth_args
-        ))
+        p = Process(target=__show_embedding, kwargs=dict(queue=self._queue,
+                                                         tensor=tensor,
+                                                         labels=labels,
+                                                         name=name,
+                                                         method=method,
+                                                         n_dims=n_dims,
+                                                         n_neigh=n_neigh,
+                                                         **meth_args
+                                                         ))
         p.start()
-
