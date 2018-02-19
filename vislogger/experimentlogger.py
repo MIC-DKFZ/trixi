@@ -4,6 +4,7 @@ import datetime
 import json
 import os
 import re
+import shutil
 try:
     import cPickle as pickle
 except:
@@ -171,6 +172,15 @@ class ExperimentLogger(AbstractLogger):
         path = os.path.join(self.save_dir, path)
         with open(path, "rb") as in_:
             return pickle.load(in_)
+
+    def save_file(self, filepath, path=None):
+
+        if path is None:
+            target_dir = self.save_dir
+        else:
+            target_dir = os.path.join(self.save_dir, path)
+        filename = os.path.basename(filepath)
+        shutil.copy(filepath, os.path.join(target_dir, filename))
 
     def resolve_format(self, input_, resume):
 
