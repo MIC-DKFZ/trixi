@@ -40,7 +40,7 @@ class NumpyVisdomLogger(AbstractLogger):
         self._process = mp.Process(target=self.__show, args=(self._queue,))
 
         if auto_close:
-            #atexit.register(self.close_all)
+            # atexit.register(self.close_all)
             atexit.register(self.exit)
             atexit.register(self.save_vis)
 
@@ -68,7 +68,7 @@ class NumpyVisdomLogger(AbstractLogger):
                 print("Error {}: {}".format(error, msg))
 
     @convert_params
-    def show_image(self, image, name=None, title=None, caption=None, env_appendix="", opts={}, **kwargs):
+    def show_image(self, image, name=None, title=None, caption=None, env_appendix="", opts=None, **kwargs):
         """
         Displays an image in a window/pane at the visdom server
 
@@ -80,6 +80,8 @@ class NumpyVisdomLogger(AbstractLogger):
         :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
+        if opts is None:
+            opts = {}
         vis_task = {
             "type": "image",
             "image": image,
@@ -91,12 +93,14 @@ class NumpyVisdomLogger(AbstractLogger):
         }
         self._queue.put_nowait(vis_task)
 
-    def __show_image(self, image, name=None, title=None, caption=None, env_appendix="", opts={}, **kwargs):
+    def __show_image(self, image, name=None, title=None, caption=None, env_appendix="", opts=None, **kwargs):
         """
         Internal show_image method, called by the internal process.
         This function does all the magic.
         """
 
+        if opts is None:
+            opts = {}
         opts = opts.copy()
         opts.update(dict(
             title=title,
@@ -113,7 +117,7 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
-    def show_images(self, images, name=None, title=None, caption=None, env_appendix="", opts={}, **kwargs):
+    def show_images(self, images, name=None, title=None, caption=None, env_appendix="", opts=None, **kwargs):
         """
         Displays multiple images in a window/pane at a visdom server
 
@@ -125,6 +129,8 @@ class NumpyVisdomLogger(AbstractLogger):
         :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
+        if opts is None:
+            opts = {}
         vis_task = {
             "type": "images",
             "images": images,
@@ -136,11 +142,13 @@ class NumpyVisdomLogger(AbstractLogger):
         }
         self._queue.put_nowait(vis_task)
 
-    def __show_images(self, images, name=None, title=None, caption=None, env_appendix="", opts={}, **kwargs):
+    def __show_images(self, images, name=None, title=None, caption=None, env_appendix="", opts=None, **kwargs):
         """
        Internal show_images method, called by the internal process.
        This function does all the magic.
         """
+        if opts is None:
+            opts = {}
         opts = opts.copy()
         opts.update(dict(
             title=title,
@@ -157,7 +165,7 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
-    def show_value(self, value, name=None, env_appendix="", opts={}, **kwargs):
+    def show_value(self, value, name=None, env_appendix="", opts=None, **kwargs):
         """
         Creates a line plot that is automatically appended with new values.
 
@@ -167,6 +175,8 @@ class NumpyVisdomLogger(AbstractLogger):
         :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
+        if opts is None:
+            opts = {}
         vis_task = {
             "type": "value",
             "value": value,
@@ -176,12 +186,14 @@ class NumpyVisdomLogger(AbstractLogger):
         }
         self._queue.put_nowait(vis_task)
 
-    def __show_value(self, value, name=None, env_appendix="", opts={}, **kwargs):
+    def __show_value(self, value, name=None, env_appendix="", opts=None, **kwargs):
         """
        Internal show_value method, called by the internal process.
        This function does all the magic.
         """
 
+        if opts is None:
+            opts = {}
         value_dim = 1
         if isinstance(value, (list, tuple, np.ndarray)):
             value_dim = len(value)
@@ -198,7 +210,7 @@ class NumpyVisdomLogger(AbstractLogger):
                 self._value_counter[name] = np.array([0])
             else:
 
-                self._value_counter[name] = np.array([[0]*value_dim])
+                self._value_counter[name] = np.array([[0] * value_dim])
             up_str = None
 
         opts = opts.copy()
@@ -218,7 +230,7 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
-    def show_text(self, text, name=None, env_appendix="", opts={}, **kwargs):
+    def show_text(self, text, name=None, env_appendix="", opts=None, **kwargs):
         """
         Displays a text in a visdom window
 
@@ -228,6 +240,8 @@ class NumpyVisdomLogger(AbstractLogger):
         :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
+        if opts is None:
+            opts = {}
         vis_task = {
             "type": "text",
             "text": text,
@@ -237,12 +251,14 @@ class NumpyVisdomLogger(AbstractLogger):
         }
         self._queue.put_nowait(vis_task)
 
-    def __show_text(self, text, name=None, env_appendix="", opts={}, **kwargs):
+    def __show_text(self, text, name=None, env_appendix="", opts=None, **kwargs):
         """
        Internal show_text method, called by the internal process.
        This function does all the magic.
         """
 
+        if opts is None:
+            opts = {}
         win = self.vis.text(
             text=text,
             win=name,
@@ -253,7 +269,7 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
-    def show_progress(self, num, total=None, name=None, env_appendix="", opts={}, **kwargs):
+    def show_progress(self, num, total=None, name=None, env_appendix="", opts=None, **kwargs):
         """
         Shows the progress as a pie chart.
 
@@ -265,6 +281,8 @@ class NumpyVisdomLogger(AbstractLogger):
         :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
+        if opts is None:
+            opts = {}
         vis_task = {
             "type": "progress",
             "num": num,
@@ -275,12 +293,14 @@ class NumpyVisdomLogger(AbstractLogger):
         }
         self._queue.put_nowait(vis_task)
 
-    def __show_progress(self, num, total=None, name=None, env_appendix="", opts={}, **kwargs):
+    def __show_progress(self, num, total=None, name=None, env_appendix="", opts=None, **kwargs):
         """
        Internal show_progress method, called by the internal process.
        This function does all the magic.
         """
 
+        if opts is None:
+            opts = {}
         if total is None:
             if 0 <= num <= 1:
                 total = 1000.
@@ -312,7 +332,7 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
-    def show_histogram(self, array, name=None, bins=30, env_appendix="", opts={}, **kwargs):
+    def show_histogram(self, array, name=None, bins=30, env_appendix="", opts=None, **kwargs):
         """
         Displays the histogramm of an array.
 
@@ -323,6 +343,8 @@ class NumpyVisdomLogger(AbstractLogger):
         :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
+        if opts is None:
+            opts = {}
         vis_task = {
             "type": "histogram",
             "array": array,
@@ -333,11 +355,13 @@ class NumpyVisdomLogger(AbstractLogger):
         }
         self._queue.put_nowait(vis_task)
 
-    def __show_histogram(self, array, name=None, bins=30, env_appendix="", opts={}, **kwargs):
+    def __show_histogram(self, array, name=None, bins=30, env_appendix="", opts=None, **kwargs):
         """
        Internal show_histogram method, called by the internal process.
        This function does all the magic.
         """
+        if opts is None:
+            opts = {}
         opts = opts.copy()
         opts.update(dict(
             title=name,
@@ -354,7 +378,7 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
-    def show_histogram_3d(self, array, name, bins=50, env_appendix="", opts={}, **kwargs):
+    def show_histogram_3d(self, array, name, bins=50, env_appendix="", opts=None, **kwargs):
         """
         Displays a history of histograms as consequtive lines in a 3d space (similar to tensorflow)
 
@@ -365,6 +389,8 @@ class NumpyVisdomLogger(AbstractLogger):
         :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
+        if opts is None:
+            opts = {}
         vis_task = {
             "type": "histogram_3d",
             "array": array,
@@ -375,12 +401,14 @@ class NumpyVisdomLogger(AbstractLogger):
         }
         self._queue.put_nowait(vis_task)
 
-    def __show_histogram_3d(self, array, name, bins=50, env_appendix="", opts={}, **kwargs):
+    def __show_histogram_3d(self, array, name, bins=50, env_appendix="", opts=None, **kwargs):
         """
        Internal show_histogram_3d method, called by the internal process.
        This function does all the magic.
         """
 
+        if opts is None:
+            opts = {}
         if name not in self._3d_histograms:
             self._3d_histograms[name] = []
 
@@ -411,7 +439,7 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
-    def show_barplot(self, array, legend=None, rownames=None, name=None, env_appendix="", opts={}, **kwargs):
+    def show_barplot(self, array, legend=None, rownames=None, name=None, env_appendix="", opts=None, **kwargs):
         """
         Displays a bar plot from an array
 
@@ -423,6 +451,8 @@ class NumpyVisdomLogger(AbstractLogger):
         :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
+        if opts is None:
+            opts = {}
         vis_task = {
             "type": "barplot",
             "array": array,
@@ -434,11 +464,13 @@ class NumpyVisdomLogger(AbstractLogger):
         }
         self._queue.put_nowait(vis_task)
 
-    def __show_barplot(self, array, legend=None, rownames=None, name=None, env_appendix="", opts={}, **kwargs):
+    def __show_barplot(self, array, legend=None, rownames=None, name=None, env_appendix="", opts=None, **kwargs):
         """
        Internal show_barplot method, called by the internal process.
        This function does all the magic.
         """
+        if opts is None:
+            opts = {}
         opts = opts.copy()
         opts.update(dict(
             stacked=False,
@@ -457,7 +489,7 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
-    def show_lineplot(self, y_vals, x_vals=None, name=None, env_appendix="", opts={}, **kwargs):
+    def show_lineplot(self, y_vals, x_vals=None, name=None, env_appendix="", opts=None, **kwargs):
         """
         Displays (multiple) lines plot, given values Y (and optional the corresponding X values)
 
@@ -469,6 +501,8 @@ class NumpyVisdomLogger(AbstractLogger):
         :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
+        if opts is None:
+            opts = {}
         vis_task = {
             "type": "lineplot",
             "x_vals": x_vals,
@@ -479,12 +513,14 @@ class NumpyVisdomLogger(AbstractLogger):
         }
         self._queue.put_nowait(vis_task)
 
-    def __show_lineplot(self, y_vals, x_vals=None, name=None, env_appendix="", opts={}, **kwargs):
+    def __show_lineplot(self, y_vals, x_vals=None, name=None, env_appendix="", opts=None, **kwargs):
         """
        Internal show_lineplot method, called by the internal process.
        This function does all the magic.
         """
 
+        if opts is None:
+            opts = {}
         opts = opts.copy()
         opts.update(dict(
             title=name,
@@ -501,7 +537,7 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
-    def show_scatterplot(self, array, labels=None, name=None, env_appendix="", opts={}, **kwargs):
+    def show_scatterplot(self, array, labels=None, name=None, env_appendix="", opts=None, **kwargs):
         """
         Displays a scatter plots, with the points given in X
 
@@ -513,6 +549,8 @@ class NumpyVisdomLogger(AbstractLogger):
         :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
+        if opts is None:
+            opts = {}
         vis_task = {
             "type": "scatterplot",
             "array": array,
@@ -523,13 +561,14 @@ class NumpyVisdomLogger(AbstractLogger):
         }
         self._queue.put_nowait(vis_task)
 
-    def __show_scatterplot(self, array, labels=None, name=None, env_appendix="", opts={}, **kwargs):
+    def __show_scatterplot(self, array, labels=None, name=None, env_appendix="", opts=None, **kwargs):
         """
        Internal show_scatterplot method, called by the internal process.
        This function does all the magic.
         """
 
-        opts = opts.copy()
+        if opts is None:
+            opts = {}
         opts.update(dict(
             title=name,
         ))
@@ -545,7 +584,7 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
-    def show_piechart(self, array, name=None, env_appendix="", opts={}, **kwargs):
+    def show_piechart(self, array, name=None, env_appendix="", opts=None, **kwargs):
         """
         Displays a pie chart.
 
@@ -556,6 +595,8 @@ class NumpyVisdomLogger(AbstractLogger):
         :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
+        if opts is None:
+            opts = {}
         vis_task = {
             "type": "piechart",
             "array": array,
@@ -565,13 +606,14 @@ class NumpyVisdomLogger(AbstractLogger):
         }
         self._queue.put_nowait(vis_task)
 
-    def __show_piechart(self, array, name=None, env_appendix="", opts={}, **kwargs):
+    def __show_piechart(self, array, name=None, env_appendix="", opts=None, **kwargs):
         """
        Internal show_piechart method, called by the internal process.
        This function does all the magic.
         """
 
-        opts = opts.copy()
+        if opts is None:
+            opts = {}
         opts.update(dict(
             title=name
         ))
@@ -586,7 +628,7 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
-    def show_svg(self, svg, name=None, env_appendix="", opts={}, **kwargs):
+    def show_svg(self, svg, name=None, env_appendix="", opts=None, **kwargs):
         """
         Displays a svg file.
 
@@ -596,6 +638,8 @@ class NumpyVisdomLogger(AbstractLogger):
         :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
+        if opts is None:
+            opts = {}
         vis_task = {
             "type": "svg",
             "svg": svg,
@@ -605,16 +649,17 @@ class NumpyVisdomLogger(AbstractLogger):
         }
         self._queue.put_nowait(vis_task)
 
-    def __show_svg(self, svg, name=None, env_appendix="", opts={}, **kwargs):
+    def __show_svg(self, svg, name=None, env_appendix="", opts=None, **kwargs):
         """
        Internal show_svg method, called by the internal process.
        This function does all the magic.
         """
 
+        if opts is None:
+            opts = {}
         with open(svg, 'r') as fileobj:
             svgstr = fileobj.read()
 
-        opts = opts.copy()
         opts.update(dict(
             title=name
         ))
@@ -637,6 +682,103 @@ class NumpyVisdomLogger(AbstractLogger):
 
         for name, value in val_dict:
             self.show_value(value, name)
+
+    @convert_params
+    def add_to_graph(self, y_vals, x_vals=None, name=None, legend_name=None, append=True, env_appendix="", opts=None,
+                     **kwargs):
+        """
+        Displays (multiple) lines plot, given values Y (and optional the corresponding X values)
+
+        :param y_vals: Array of shape MxN , where M is the number of points and N is the number of different line
+        :param x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if
+         not set the points are assumed to be equally distributed in the interval [0, 1] )
+        :param name: The name of the window
+        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        """
+
+        if opts is None:
+            opts = {}
+        vis_task = {
+            "type": "add",
+            "x_vals": x_vals,
+            "y_vals": y_vals,
+            "name": name,
+            "legend_name": legend_name,
+            "append": append,
+            "env_appendix": env_appendix,
+            "opts": opts
+        }
+        self._queue.put_nowait(vis_task)
+
+    def __add_to_graph(self, y_vals, x_vals=None, name=None, legend_name=None, append=True, env_appendix="", opts=None,
+                       **kwargs):
+        """
+       Internal show_lineplot method, called by the internal process.
+       This function does all the magic.
+        """
+
+        if opts is None:
+            opts = {}
+        opts.update(dict(
+            title=name,
+        ))
+
+        win = self.vis.updateTrace(
+            X=x_vals,
+            Y=y_vals,
+            win=name,
+            name=legend_name,
+            append=append,
+            env=self.name + env_appendix,
+            opts=opts
+        )
+
+        return win
+
+    @convert_params
+    def send_data(self, data, name=None, layout=None, endpoint='events', append=False, **kwargs):
+        """
+        Displays (multiple) lines plot, given values Y (and optional the corresponding X values)
+
+        :param y_vals: Array of shape MxN , where M is the number of points and N is the number of different line
+        :param x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if
+         not set the points are assumed to be equally distributed in the interval [0, 1] )
+        :param name: The name of the window
+        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        """
+
+        if layout is None:
+            layout = {}
+        vis_task = {
+            "type": "data",
+            "data": data,
+            "layout": layout,
+            "name": name,
+            "endpoint": endpoint,
+            "append": append
+        }
+        self._queue.put_nowait(vis_task)
+
+    def __send_data(self, data, name=None, layout=None, endpoint='events', append=False, **kwargs):
+        """
+       Internal show_lineplot method, called by the internal process.
+       This function does all the magic.
+        """
+
+        if layout is None:
+            layout = {}
+
+        if not isinstance(data, (list, type)):
+            data = [data]
+
+        win = self.vis._send({'data': data,
+                              'layout': layout,
+                              'win': name,
+                              'append': append}, endpoint=endpoint)
+
+        return win
 
     def close_all(self):
         """Closes all visdom windows."""
@@ -662,5 +804,7 @@ class NumpyVisdomLogger(AbstractLogger):
         "lineplot": __show_lineplot,
         "scatterplot": __show_scatterplot,
         "piechart": __show_piechart,
-        "svg": __show_svg
+        "svg": __show_svg,
+        "add": __add_to_graph,
+        "data": __send_data,
     }
