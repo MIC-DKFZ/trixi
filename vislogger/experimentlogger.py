@@ -28,6 +28,8 @@ class ExperimentLogger(AbstractLogger):
                  base_dir,
                  folder_format="%Y%m%d-%H%M%S_{experiment_name}",
                  resume=False,
+                 text_logger_args=None,
+                 plot_logger_args=None,
                  **kwargs):
 
         super(ExperimentLogger, self).__init__(**kwargs)
@@ -58,8 +60,11 @@ class ExperimentLogger(AbstractLogger):
             create_folder(self.save_dir)
             create_folder(self.result_dir)
 
-        self.file_logger = TextLogger(self.log_dir)
-        self.plot_logger = NumpyPlotFileLogger(self.img_dir, self.plot_dir)
+        if text_logger_args is None: text_logger_args = {}
+        if plot_logger_args is None: plot_logger_args = {}
+
+        self.text_logger = TextLogger(self.log_dir, **text_logger_args)
+        self.plot_logger = NumpyPlotFileLogger(self.img_dir, self.plot_dir, **plot_logger_args)
 
     def show_image(self, image, name, file_format=".png", **kwargs):
         self.plot_logger.show_image(image, name, file_format=".png", **kwargs)
@@ -80,7 +85,7 @@ class ExperimentLogger(AbstractLogger):
         self.plot_logger.show_value(value, name, file_format, **kwargs)
 
     def show_text(self, text, name=None, logger="default", **kwargs):
-        self.file_logger.show_text(text, name, logger, **kwargs)
+        self.text_logger.show_text(text, name, logger, **kwargs)
 
     def save_model(self):
         raise NotImplementedError
