@@ -201,10 +201,10 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         self.show_svg(svg=x, name=name)
 
     def show_image_grid(self, images, name=None, title=None, caption=None, env_appendix="", opts=None,
-                        make_grid_args=None, **kwargs):
+                        image_args=None, **kwargs):
 
         if opts is None: opts = {}
-        if make_grid_args is None: make_grid_args = {}
+        if image_args is None: image_args = {}
 
         tensor = images.cpu()
         viz_task = {
@@ -215,15 +215,15 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             "caption": caption,
             "env_appendix": env_appendix,
             "opts": opts,
-            "make_grid_args": make_grid_args
+            "image_args": image_args
         }
         self._queue.put_nowait(viz_task)
 
     def __show_image_grid(self, tensor, name=None, title=None, caption=None, env_appendix="", opts=None,
-                          make_grid_args=None, **kwargs):
+                          image_args=None, **kwargs):
 
         if opts is None: opts = {}
-        if make_grid_args is None: make_grid_args = {}
+        if image_args is None: image_args = {}
 
         if isinstance(tensor, Variable):
             tensor = tensor.data
@@ -233,7 +233,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         assert tensor.size(1) == 1 or tensor.size(
             1) == 3, "The 1. dimension (channel) has to be either 1 (gray) or 3 (rgb)"
 
-        grid = make_grid(tensor, **make_grid_args)
+        grid = make_grid(tensor, **image_args)
         image = grid.mul(255).clamp(0, 255).byte().numpy()
 
         opts = opts.copy()
