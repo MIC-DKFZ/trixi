@@ -4,7 +4,7 @@ import json
 import string
 import random
 import os
-from types import ModuleType
+from types import ModuleType, FunctionType
 
 class CustomJSONEncoder(json.JSONEncoder):
 
@@ -51,6 +51,8 @@ class ModuleMultiTypeEncoder(MultiTypeEncoder):
     def _encode(self, obj):
         if type(obj) == type:
             return "__type__({}.{})".format(obj.__module__, obj.__name__)
+        elif isinstance(obj, FunctionType):
+            return "__function__({}.{})".format(obj.__module__, obj.__name__)
         elif isinstance(obj, ModuleType):
             return "__module__({})".format(obj.__name__)
         else:
@@ -96,6 +98,11 @@ class ModuleMultiTypeDecoder(MultiTypeDecoder):
         if isinstance(obj, str):
             if obj.startswith("__type__"):
                 str_ = obj[9:-1]
+                module_ = ".".join(str_.split(".")[:-1])
+                name_ = str_.split(".")[-1]
+                return getattr(importlib.import_module(module_), name_)
+            elif obj.startswith("__function__"):
+                str_ = obj[13:-1]
                 module_ = ".".join(str_.split(".")[:-1])
                 name_ = str_.split(".")[-1]
                 return getattr(importlib.import_module(module_), name_)

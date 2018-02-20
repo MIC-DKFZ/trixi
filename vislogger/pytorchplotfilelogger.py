@@ -44,10 +44,10 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
                           n_iter=None,
                           iter_format="{:05d}",
                           prefix=False,
-                          save_image_args=None):
+                          image_args=None):
         """saves an image"""
 
-        if save_image_args is None: save_image_args = {}
+        if image_args is None: image_args = {}
 
         if n_iter is not None:
             name = name_and_iter_to_filename(name=name,
@@ -57,7 +57,7 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
                                              prefix=prefix)
 
         img_file = os.path.join(image_dir, name)
-        tv_save_image(tensor=tensor, filename=img_file, **save_image_args)
+        tv_save_image(tensor=tensor, filename=img_file, **image_args)
 
     def save_image(self,
                    tensor,
@@ -65,10 +65,10 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
                    n_iter=None,
                    iter_format="{:05d}",
                    prefix=False,
-                   save_image_args=None):
+                   image_args=None):
         """saves an image"""
 
-        if save_image_args is None: save_image_args = {}
+        if image_args is None: image_args = {}
 
         self.save_image_static(image_dir=self.img_dir,
                                tensor=tensor,
@@ -76,7 +76,7 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
                                n_iter=n_iter,
                                iter_format=iter_format,
                                prefix=prefix,
-                               save_image_args=save_image_args)
+                               image_args=image_args)
 
     @staticmethod
     @threaded
@@ -85,10 +85,10 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
                            n_iter=None,
                            iter_format="{:05d}",
                            prefix=False,
-                           save_image_args=None):
+                           image_args=None):
 
         assert isinstance(tensors, dict)
-        if save_image_args is None: save_image_args = {}
+        if image_args is None: image_args = {}
 
         for name, tensor in tensors.items():
             PytorchPlotFileLogger.save_image_static(image_dir=image_dir,
@@ -97,24 +97,24 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
                                                     n_iter=n_iter,
                                                     iter_format=iter_format,
                                                     prefix=prefix,
-                                                    save_image_args=save_image_args)
+                                                    image_args=image_args)
 
     def save_images(self,
                     tensors,
                     n_iter=None,
                     iter_format="{:05d}",
                     prefix=False,
-                    save_image_args=None):
+                    image_args=None):
 
         assert isinstance(tensors, dict)
-        if save_image_args is None: save_image_args = {}
+        if image_args is None: image_args = {}
 
         self.save_images_static(image_dir=self.img_dir,
                                 tensors=tensors,
                                 n_iter=n_iter,
                                 iter_format=iter_format,
                                 prefix=prefix,
-                                save_image_args=save_image_args)
+                                image_args=image_args)
 
     @staticmethod
     @threaded
@@ -124,7 +124,7 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
                                n_iter=None,
                                prefix=False,
                                iter_format="{:05d}",
-                               save_image_args=None):
+                               image_args=None):
 
         if n_iter is not None:
             name = name_and_iter_to_filename(name=name,
@@ -137,11 +137,11 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
 
         img_file = os.path.join(image_dir, name)
 
-        if save_image_args is None: save_image_args = {}
+        if image_args is None: image_args = {}
 
         tv_save_image(tensor=tensor,
                       filename=img_file,
-                      **save_image_args)
+                      **image_args)
 
     def save_image_grid(self,
                         tensor,
@@ -149,9 +149,9 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
                         n_iter=None,
                         prefix=False,
                         iter_format="{:05d}",
-                        save_image_args=None):
+                        image_args=None):
 
-        if save_image_args is None: save_image_args = {}
+        if image_args is None: image_args = {}
 
         self.save_image_grid_static(image_dir=self.img_dir,
                                     tensor=tensor,
@@ -159,7 +159,7 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
                                     n_iter=n_iter,
                                     prefix=prefix,
                                     iter_format=iter_format,
-                                    save_image_args=save_image_args)
+                                    image_args=image_args)
 
     def show_image(self,
                    image,
@@ -167,13 +167,13 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
                    n_iter=None,
                    iter_format="{:05d}",
                    prefix=False,
-                   save_image_args=None,
+                   image_args=None,
                    **kwargs):
         self.save_image(tensor=image,
                         name=name,
                         n_iter=n_iter,
                         iter_format=iter_format,
-                        save_image_args=save_image_args,
+                        image_args=image_args,
                         prefix=prefix)
 
     def show_images(self,
@@ -182,7 +182,7 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
                     n_iter=None,
                     iter_format="{:05d}",
                     prefix=False,
-                    save_image_args=None,
+                    image_args=None,
                     **kwargs):
 
         tensors = {}
@@ -193,7 +193,7 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
                          n_iter=n_iter,
                          iter_format=iter_format,
                          prefix=prefix,
-                         save_image_args=save_image_args)
+                         image_args=image_args)
 
     def show_image_grid(self,
                         images,
@@ -201,7 +201,7 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
                         n_iter=None,
                         prefix=False,
                         iter_format="{:05d}",
-                        save_image_args=None,
+                        image_args=None,
                         **kwargs):
 
         self.save_image_grid(tensor=images,
@@ -209,4 +209,4 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
                              n_iter=n_iter,
                              prefix=prefix,
                              iter_format=iter_format,
-                             save_image_args=save_image_args)
+                             image_args=image_args)
