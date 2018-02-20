@@ -308,3 +308,23 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                                                          **meth_args
                                                          ))
         p.start()
+
+
+    @convert_params
+    def show_roc_curve(self, tensor, labels, name):
+
+        from sklearn import metrics
+
+        def __show_roc_curve(self, tensor, labels, name):
+
+            fpr, tpr, thresholds = metrics.roc_curve(labels.flatten(), tensor.flatten())
+            self.show_lineplot(tpr, fpr, name=name, opts={"fillarea": True})
+            self.add_to_graph(x_vals=np.arange(0, 1.1, 0.1), y_vals=np.arange(0, 1.1, 0.1), name=name, append=True)
+
+
+        p = Process(target=__show_roc_curve, kwargs=dict(self=self,
+                                                         tensor=tensor,
+                                                         labels=labels,
+                                                         name=name
+                                                         ))
+        p.start()
