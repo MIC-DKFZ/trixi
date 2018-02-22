@@ -2,7 +2,9 @@ import ast
 import importlib
 import json
 import string
+import subprocess as subp
 import random
+import re
 import os
 from types import ModuleType, FunctionType
 
@@ -151,6 +153,27 @@ class Singleton:
 
     def __instancecheck__(self, inst):
         return isinstance(inst, self._decorated)
+
+
+def git_info(file_):
+
+    old_dir = os.getcwd()
+    file_path = os.path.abspath(file_)
+    os.chdir(os.path.dirname(file_path))
+
+    try:
+        commit = subp.check_output(["git", "rev-parse", "HEAD"]).decode("ascii")[:-1]
+        branch = subp.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).decode("ascii")[:-1]
+        repo = subp.check_output(["git", "remote", "-vv"]).decode("ascii")
+        repo = re.findall("(?<=origin[\s\t])(http.+|ssh.+)(?=[\s\t]\(fetch)", repo)[0]
+        result = (repo, branch, commit)
+    except Exception as e:
+        print("Could not find GIT info for {}".format(file_path))
+        print(e)
+        result = (None, None, None)
+
+    os.chdir(old_dir)
+    return result
 
 
 def random_string(length):
