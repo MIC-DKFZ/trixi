@@ -328,3 +328,58 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                                                          name=name
                                                          ))
         p.start()
+
+    @convert_params
+    def show_pr_curve(self, tensor, labels, name):
+
+        from sklearn import metrics
+
+        def __show_roc_curve(self, tensor, labels, name):
+            precision, recall, thresholds = metrics.precision_recall_curve(labels.flatten(), tensor.flatten())
+            self.show_lineplot(precision, recall, name=name, opts={"fillarea": True})
+            # self.add_to_graph(x_vals=np.arange(0, 1.1, 0.1), y_vals=np.arange(0, 1.1, 0.1), name=name, append=True)
+
+
+        p = Process(target=__show_roc_curve, kwargs=dict(self=self,
+                                                         tensor=tensor,
+                                                         labels=labels,
+                                                         name=name
+                                                         ))
+        p.start()
+
+
+    @convert_params
+    def show_classification_metrics(self, tensor, labels, name, metric=("roc-auc", "pr-auc", "pr-score")):
+
+        from sklearn import metrics
+
+        def __show_roc_curve(self, tensor, labels, name, metric=("roc-auc", "pr-auc", "pr-score")):
+
+            vals = []
+
+            if "roc-auc" in metric:
+                roc_auc = metrics.roc_auc_score(labels.flatten(), tensor.flatten())
+                vals.append(roc_auc)
+            if "pr-auc" in metric:
+                precision, recall, thresholds = metrics.precision_recall_curve(labels.flatten(), tensor.flatten())
+                pr_auc = metrics.auc(recall, precision)
+                vals.append(pr_auc)
+            if "pr-score" in metric:
+                pr_score = metrics.average_precision_score(labels.flatten(), tensor.flatten())
+                vals.append(pr_score)
+            if "mcc" in metric:
+                mcc_score = metrics.matthews_corrcoef(labels.flatten(), tensor.flatten())
+                vals.append(mcc_score)
+            if "f1" in metric:
+                f1_score = metrics.f1_score(labels.flatten(), tensor.flatten())
+                vals.append(f1_score)
+
+            self.show_value(vals, name=name)
+
+        p = Process(target=__show_roc_curve, kwargs=dict(self=self,
+                                                         tensor=tensor,
+                                                         labels=labels,
+                                                         name=name,
+                                                         metric=metric
+                                                         ))
+        p.start()

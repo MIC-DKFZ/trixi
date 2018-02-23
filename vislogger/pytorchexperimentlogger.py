@@ -172,4 +172,4 @@ class PytorchExperimentLogger(ExperimentLogger):
 
 
     def print(self, *args):
-        self.file_logger.print(*args)
+        self.text_logger.print(*args)
