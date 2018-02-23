@@ -81,7 +81,15 @@ class PytorchExperimentLogger(ExperimentLogger):
 
         checkpoint_file = os.path.join(checkpoint_dir, name)
 
-        torch.save(kwargs, checkpoint_file)
+        def to_cpu(obj):
+            if hasattr(obj, "cpu"):
+                return obj.cpu()
+            elif isinstance(obj, dict):
+                return {key: to_cpu(val) for key, val in obj.items()}
+            else:
+                return obj
+
+        torch.save(to_cpu(kwargs), checkpoint_file)
 
     def save_checkpoint(self, name, n_iter=None, iter_format="{:05d}", prefix=False, **kwargs):
 
