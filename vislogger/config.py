@@ -42,3 +42,8 @@ class Config(dict):
                 new_dict = json.load(file_object, cls=ModuleMultiTypeDecoder, **kwargs)
 
         self.update(new_dict)
+
+    def update_missing(self, dict_):
+        for key, val in dict_.items():
+            if key not in self:
+                self[key] = val
