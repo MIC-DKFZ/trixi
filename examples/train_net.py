@@ -36,7 +36,7 @@ alexNet = torchvision.models.alexnet(pretrained=False, num_classes=10)
 nets = dict(alexNet=alexNet)
 
 if "load_path" in param:
-    nets = expLog.restore_lastest_checkpoint(dir=param["load_path"], **nets)
+    nets = expLog.load_last_checkpoint(dir=param["load_path"], **nets)
 
 expLog.text_logger.log_to(nets, "nets")
 
