@@ -20,13 +20,12 @@ param = dict(
 )
 
 ### Init stuff
-vizLog = vislogger.PytorchVisdomLogger(name=param["name"])
-fileLog = vislogger.PytorchFileLogger(path=param["output_folder"])
-combiLog = vislogger.CombinedLogger((vizLog, 1), (fileLog, 10))
+vizLog = vislogger.PytorchVisdomLogger(name=param["name"], port=8080)
+expLog = vislogger.PytorchExperimentLogger(experiment_name=param["name"], base_dir=param["output_folder"])
+combiLog = vislogger.CombinedLogger((vizLog, 1), (expLog, 10))
 
-fileLog.print(fileLog.base_dir)
-fileLog.log_to("config", param)
-statLog = fileLog.get_log_dict(file_name="stats")
+expLog.print(expLog.base_dir)
+expLog.text_logger.log_to(param, "config")
 
 ### Get Dataset
 dataset = torchvision.datasets.MNIST(root="data/", download=True, transform=torchvision.transforms.ToTensor())
@@ -37,9 +36,9 @@ alexNet = torchvision.models.alexnet(pretrained=False, num_classes=10)
 nets = dict(alexNet=alexNet)
 
 if "load_path" in param:
-    nets = fileLog.restore_lastest_checkpoint(dir=param["load_path"], **nets)
+    nets = expLog.restore_lastest_checkpoint(dir=param["load_path"], **nets)
 
-fileLog.log_to("nets", nets)
+expLog.text_logger.log_to(nets, "nets")
 
 ### Criterion
 criterion = torch.nn.CrossEntropyLoss()
@@ -48,8 +47,8 @@ criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(alexNet.parameters(), lr=1e-10)
 
 ### Store stuff
-store_checkpoint_fn = fileLog.get_store_checkpoint_fn(optimizer=optimizer, **nets)
-fileLog.save_at_exit(optimizer=optimizer, **nets)
+store_checkpoint_fn = expLog.get_save_checkpoint_fn(optimizer=optimizer, **nets)
+expLog.save_at_exit(optimizer=optimizer, **nets)
 
 ### Fitting model
 for epoch in range(param["n_epoch"]):
@@ -84,7 +83,7 @@ for epoch in range(param["n_epoch"]):
 
         log_text = '[%d/%d][%d/%d] Loss: %.4f ' % (epoch, param["n_epoch"], batch_idx, len(dataset), err.data[0])
 
-        fileLog.print(log_text)
+        expLog.print(log_text)
 
         if batch_idx % 2 == 0:
             vizLog.show_text(log_text, name="log")
