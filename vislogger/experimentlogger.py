@@ -216,6 +216,9 @@ class ExperimentLogger(AbstractLogger):
         while os.path.exists(os.path.join(self.base_dir,
                                           input_.format(run_number=run_number,
                                                         **self.__dict__))):
+            if "{run_number}" not in input_:
+                raise FileExistsError
+
             run_number += 1
 
         return input_.format(run_number=run_number, **self.__dict__)

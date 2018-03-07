@@ -48,6 +48,11 @@ class Config(dict):
 
         self.update(new_dict)
 
+    def update_missing(self, dict_):
+        for key, val in dict_.items():
+            if key not in self:
+                self[key] = val
+
 
 def update_from_sys_argv(config):
 
@@ -130,3 +135,4 @@ def update_from_sys_argv(config):
 
         # update dict
         update_keys(config, vars(param))
+

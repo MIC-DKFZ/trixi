@@ -32,20 +32,20 @@ def create_function(self, sub_methods):
 class CombinedLogger(object):
     def __init__(self, *loggers):
 
-        self.loggers, self.frequencys = zip(*loggers)
+        self.loggers, self.frequencies = zip(*loggers)
 
         for logger in self.loggers:
             if not isinstance(logger, AbstractLogger):
                 raise TypeError("All logger must be subclasses of the abstract visual logger.")
-        for freq in self.frequencys:
+        for freq in self.frequencies:
             if freq < 1:
-                raise ValueError("All frequencys must be at least one.")
+                raise ValueError("All frequencies must be at least one.")
 
         self.logger_methods = defaultdict(list)
         self.log_methods_cntr = defaultdict(int)
         self.log_methods_freq = defaultdict(int)
 
-        for logger, freq in zip(self.loggers, self.frequencys):
+        for logger, freq in zip(self.loggers, self.frequencies):
 
             logger_vars = [i for i in dir(logger) if not i.startswith("__")]
 
