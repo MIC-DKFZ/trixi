@@ -53,6 +53,43 @@ class Config(dict):
             if key not in self:
                 self[key] = val
 
+    @staticmethod
+    def init_objects(config):
+
+        def init_sub_objects(objs):
+            if isinstance(objs, dict):
+                ret_dict = {}
+                for key, val in objs.items():
+                    if isinstance(key, type):
+                        init_param = init_sub_objects(val)
+                        if isinstance(init_param, dict):
+                            init_obj = key(**init_param)
+                        elif isinstance(init_param, (list, tuple, set)):
+                            init_obj = key(*init_param)
+                        else:
+                            init_obj = key()
+                        return init_obj
+                    elif isinstance(val, Config):
+                        ret_dict[key] = Config(config=init_sub_objects(val))
+                    elif isinstance(val, (dict, list, tuple, set)):
+                        ret_dict[key] = init_sub_objects(val)
+                    else:
+                        ret_dict[key] = val
+                return ret_dict
+            elif isinstance(objs, (list, tuple, set)):
+                ret_list = []
+                for el in objs:
+                    ret_list.append(init_sub_objects(el))
+                return ret_list
+            else:
+                return objs
+
+        conv_config = init_sub_objects(config)
+
+        return Config(config=conv_config)
+
+
+
 
 def update_from_sys_argv(config):
 
