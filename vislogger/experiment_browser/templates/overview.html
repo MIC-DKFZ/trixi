@@ -1,0 +1,120 @@
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap4.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.5.1/css/buttons.bootstrap4.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.2.5/css/select.bootstrap4.min.css"/>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='custom.css') }}"/>
+</head>
+<body>
+  <h1>{{ title }}</h1>
+
+
+
+  <table id="example" class="table table-bordered" cellspacing="0" width="100%">
+        <thead>
+            <tr>
+                <th>Directory</th>
+                <th>Name</th>
+                <th>Time</th>
+                <th>Note</th>
+                {% for c in cols %}
+                    <th>{{ c }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tfoot>
+            <tr>
+                <th>Dir</th>
+                <th>Name</th>
+                <th>Time</th>
+                <th>Note</th>
+                {% for c in cols %}
+                    <th>{{ c }}</th>
+                {% endfor %}
+            </tr>
+        <tbody>
+                {% for dir, name, time, note, row in rows %}
+                    <tr>
+                        <td><a href="/experiment?id={{ dir }}">{{ dir }}</a></td>
+                        <td>{{ name }}</td>
+                        <td>{{ time }}</td>
+                        <td>{{ note }}</td>
+                        {% for el, el_short in row %}
+                            <td title="{{ el }}">{{ el_short }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+        </tbody>
+  </table>
+  <br>
+  <div>
+        <h3>Hide</h3>
+        <div class="button-list">
+          {% for c in cols %}
+            <a role="button" class="btn btn-light btn-sm toggle-vis" data-column="{{ loop.index + 3 }}">{{ c }}</a>
+          {% endfor %}
+        </div>
+  </div>
+
+  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/v/bs4-4.0.0/jq-3.2.1/dt-1.10.16/datatables.min.js"></script>
+  <script>
+    $(document).ready(function() {
+
+        // Setup - add a text input to each footer cell
+        $('#example tfoot th').each( function () {
+            var title = $(this).text();
+            $(this).html( '<input type="text" placeholder="Search '+title+'" />' );
+        } );
+
+
+        // DataTable
+        var table = $('#example').DataTable( {
+                scrollY:        '70vh',
+                scrollCollapse: true,
+                paging:         false,
+                scrollX:        true
+        } );
+
+        $('a.toggle-vis').on( 'click', function (e) {
+            e.preventDefault();
+
+            // Get the column API object
+            var column = table.column( $(this).attr('data-column') );
+
+            // Toggle the visibility
+            column.visible( ! column.visible() );
+
+            // Set button state
+            if (column.visible()) {
+                $(this).removeClass("btn-outline-light");
+                $(this).addClass("btn-light");
+            }
+            else {
+                $(this).removeClass("btn-light");
+                $(this).addClass("btn-outline-light");
+            }
+            ;
+         } );
+
+
+        // Apply the search
+        table.columns().every( function () {
+            var that = this;
+
+            $( 'input', this.footer() ).on( 'keyup change', function () {
+                if ( that.search() !== this.value ) {
+                    that
+                        .search( this.value )
+                        .draw();
+                }
+            } );
+        } );
+
+
+
+
+    } );
+  </script>
+</body>
+</html>
