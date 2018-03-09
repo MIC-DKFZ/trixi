@@ -18,7 +18,7 @@ from vislogger.util import name_and_iter_to_filename
 
 class Experiment(object):
     def __init__(self, n_epochs=0):
-        super(Experiment, self).__init__()
+        # super(Experiment, self).__init__()
 
         self.n_epochs = n_epochs
         self.exp_state = "Preparing"
@@ -123,7 +123,8 @@ class PyTorchExperiment(Experiment):
     def __init__(self, config=None, name=None, n_epochs=None, seed=None, base_dir=None, globs=None, resume=None,
                  ignore_resume_config=False, parse_sys_argv=False):
         """Inits an algo with a config, config needs to a n_epochs, name, output_folder and seed !"""
-        super(PyTorchExperiment, self).__init__()
+        # super(PyTorchExperiment, self).__init__()
+        Experiment.__init__(self)
 
         if parse_sys_argv:
             config_path, resume_path = get_vars_from_sys_argv()
@@ -438,3 +439,52 @@ def set_seed(seed):
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+
+
+def experimentify(setup_fn="setup", train_fn="train", validate_fn="validate", end_fn="end", test_fn="test", **decoargs):
+    def wrap(cls):
+
+        ### Initilaize both Classes (as original class)
+        prev_init = cls.__init__
+
+        def new_init(*args, **kwargs):
+            prev_init(*args, **kwargs)
+            kwargs.update(decoargs)
+            PyTorchExperiment.__init__(*args, **kwargs)
+
+        cls.__init__ = new_init
+
+        ### Set new Experiment methods
+        if not hasattr(cls, "setup") and hasattr(cls, setup_fn):
+            setattr(cls, "setup", getattr(cls, setup_fn))
+        elif hasattr(cls, "setup") and setup_fn != "setup":
+            warnings.warn("Found already exisiting setup function in class, so will use the exisiting one")
+
+        if not hasattr(cls, "train") and hasattr(cls, train_fn):
+            setattr(cls, "train", getattr(cls, train_fn))
+        elif hasattr(cls, "train") and setup_fn != "train":
+            warnings.warn("Found already exisiting train function in class, so will use the exisiting one")
+
+        if not hasattr(cls, "validate") and hasattr(cls, validate_fn):
+            setattr(cls, "validate", getattr(cls, validate_fn))
+        elif hasattr(cls, "validate") and setup_fn != "validate":
+            warnings.warn("Found already exisiting validate function in class, so will use the exisiting one")
+
+        if not hasattr(cls, "end") and hasattr(cls, end_fn):
+            setattr(cls, "end", getattr(cls, end_fn))
+        elif hasattr(cls, "end") and end_fn != "end":
+            warnings.warn("Found already exisiting end function in class, so will use the exisiting one")
+
+        if not hasattr(cls, "test") and hasattr(cls, test_fn):
+            setattr(cls, "test", getattr(cls, test_fn))
+        elif hasattr(cls, "test") and test_fn != "test":
+            warnings.warn("Found already exisiting test function in class, so will use the exisiting one")
+
+        ### Copy methods from PyTorchExperiment into the original class
+        for elem in dir(PyTorchExperiment):
+            if not hasattr(cls, elem):
+                trans_fn = getattr(PyTorchExperiment, elem)
+                setattr(cls, elem, trans_fn)
+
+        return cls
+    return wrap
