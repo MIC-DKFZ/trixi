@@ -121,7 +121,8 @@ class Experiment(object):
 
 class PyTorchExperiment(Experiment):
     def __init__(self, config=None, name=None, n_epochs=None, seed=None, base_dir=None, globs=None, resume=None,
-                 ignore_resume_config=False, parse_sys_argv=False):
+                 ignore_resume_config=False, resume_save_types=("model", "optimizer", "simple", "th_vars", "results"),
+                 parse_sys_argv=False):
         """Inits an algo with a config, config needs to a n_epochs, name, output_folder and seed !"""
         # super(PyTorchExperiment, self).__init__()
         Experiment.__init__(self)
@@ -173,6 +174,7 @@ class PyTorchExperiment(Experiment):
         self.results = dict()
 
         self.resume_path = None
+        self.resume_save_types = resume_save_types
         self.ignore_resume_config = ignore_resume_config
         if resume is not None:
             if isinstance(resume, str):
@@ -376,7 +378,7 @@ class PyTorchExperiment(Experiment):
                 self.elog.print("Loaded existing config from:", base_dir)
 
         if checkpoint_file:
-            self.load_checkpoint(name="", path=checkpoint_file)
+            self.load_checkpoint(name="", path=checkpoint_file, save_types=self.resume_save_types)
             self.resume_path = checkpoint_file
             shutil.copyfile(checkpoint_file, os.path.join(self.elog.checkpoint_dir, "0_checkpoint.pth.tar"))
             self.elog.print("Loaded existing checkpoint from:", checkpoint_file)
@@ -487,4 +489,5 @@ def experimentify(setup_fn="setup", train_fn="train", validate_fn="validate", en
                 setattr(cls, elem, trans_fn)
 
         return cls
+
     return wrap
