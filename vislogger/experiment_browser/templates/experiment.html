@@ -9,6 +9,8 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
   </head>
 
 
@@ -22,7 +24,10 @@
 
     <hr>
 
-        <div class="jumbotron">
+        {% for graph in graphs %}
+            {{ graph }}
+        {% endfor %}
+        <!--<div class="jumbotron">
             <h4>Images</h4>
             <div class="pre-scrollable">
                 {% for img in images %}
@@ -49,7 +54,7 @@
                    {{ model }} <br>
                 {% endfor %}
             </div>
-        </div>
+        </div>-->
 
 
 
