@@ -1,12 +1,18 @@
 import ast
-import importlib
 import json
 import string
 import subprocess as subp
+from types import FunctionType, ModuleType
+
+import importlib
+import os
+import portalocker
 import random
 import re
-import os
-from types import ModuleType, FunctionType
+import time
+from hashlib import sha256
+from tempfile import gettempdir
+
 
 class CustomJSONEncoder(json.JSONEncoder):
 
@@ -156,7 +162,6 @@ class Singleton:
 
 
 def git_info(file_):
-
     old_dir = os.getcwd()
     file_path = os.path.abspath(file_)
     os.chdir(os.path.dirname(file_path))
@@ -197,7 +202,6 @@ def create_folder(path):
 
 
 def name_and_iter_to_filename(name, n_iter, ending, iter_format="{:05d}", prefix=False):
-
     iter_str = iter_format.format(n_iter)
     if prefix:
         name = iter_str + "_" + name + ending
@@ -208,29 +212,59 @@ def name_and_iter_to_filename(name, n_iter, ending, iter_format="{:05d}", prefix
 
 
 def update_model(original_model, update_dict, exclude_layers=(), warnings=True):
+    # also allow loading of partially pretrained net
+    model_dict = original_model.state_dict()
 
-        # also allow loading of partially pretrained net
-        model_dict = original_model.state_dict()
+    # 1. Give warnings for unused update values
+    unused = set(update_dict.keys()) - set(exclude_layers) - set(model_dict.keys())
+    not_updated = set(model_dict.keys()) - set(exclude_layers) - set(update_dict.keys())
+    for item in unused:
+        warnings.warn("Update layer {} not used.".format(item))
+    for item in not_updated:
+        warnings.warn("{} layer not updated.".format(item))
 
-        # 1. Give warnings for unused update values
-        unused = set(update_dict.keys()) - set(exclude_layers) - set(model_dict.keys())
-        not_updated = set(model_dict.keys()) - set(exclude_layers) - set(update_dict.keys())
-        for item in unused:
-            warnings.warn("Update layer {} not used.".format(item))
-        for item in not_updated:
-            warnings.warn("{} layer not updated.".format(item))
+    # 2. filter out unnecessary keys
+    update_dict = {k: v for k, v in update_dict.items() if
+                   k in model_dict and k not in exclude_layers}
 
-        # 2. filter out unnecessary keys
-        update_dict = {k: v for k, v in update_dict.items() if
-                       k in model_dict and k not in exclude_layers}
+    # 3. overwrite entries in the existing state dict
+    model_dict.update(update_dict)
 
-        # 3. overwrite entries in the existing state dict
-        model_dict.update(update_dict)
-
-        # 4. load the new state dict
-        original_model.load_state_dict(model_dict)
+    # 4. load the new state dict
+    original_model.load_state_dict(model_dict)
 
 
 class SafeDict(dict):
     def __missing__(self, key):
         return "{" + key + "}"
+
+
+class PyLock(object):
+    def __init__(self, name, timeout, check_interval=0.25):
+        self._timeout = timeout
+        self._check_interval = check_interval
+
+        lock_directory = gettempdir()
+        unique_token = sha256(name.encode()).hexdigest()
+        self._filepath = os.path.join(lock_directory, 'ilock-' + unique_token + '.lock')
+
+    def __enter__(self):
+
+        current_time = call_time = time.time()
+        while call_time + self._timeout > current_time:
+            self._lockfile = open(self._filepath, 'w')
+            try:
+                portalocker.lock(self._lockfile, portalocker.constants.LOCK_NB | portalocker.constants.LOCK_EX)
+                return self
+            except portalocker.exceptions.LockException:
+                pass
+
+            current_time = time.time()
+            check_interval = self._check_interval if self._timeout > self._check_interval else self._timeout
+            time.sleep(check_interval)
+
+        raise RuntimeError('Timeout was reached')
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        portalocker.unlock(self._lockfile)
+        self._lockfile.close()

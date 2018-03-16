@@ -16,7 +16,8 @@ class NumpyVisdomLogger(AbstractLogger):
     Visual logger, inherits the AbstractLogger and plots/ logs numpy arrays/ values on a Visdom server.
     """
 
-    def __init__(self, name="main", server="http://localhost", port=8080, auto_close=True, **kwargs):
+    def __init__(self, name="main", server="http://localhost", port=8080, auto_close=True, auto_start=False,
+                 auto_start_ports=(8080, 8000), **kwargs):
         """
         Creates a new NumpyVisdomLogger object.
 
@@ -26,6 +27,12 @@ class NumpyVisdomLogger(AbstractLogger):
         :param auto_close: Close all objects and kill process at the end of the python script
         """
         super(NumpyVisdomLogger, self).__init__(**kwargs)
+
+        if auto_start:
+            auto_port = start_visdom(auto_start_ports)
+            if auto_port != -1:
+                port = auto_port
+                server = "http://localhost"
 
         self.name = name
         self.server = server
@@ -808,3 +815,59 @@ class NumpyVisdomLogger(AbstractLogger):
         "add": __add_to_graph,
         "data": __send_data,
     }
+
+
+def start_visdom(port_list=(8080, 8000)):
+    import time
+    from multiprocessing import Process
+    import visdom.server
+
+    from vislogger.util import PyLock
+
+    lock_id = "visdom_lock"
+
+    def is_port_available(port, verbose=False):
+
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.bind(("127.0.0.1", port))
+        except socket.error as e:
+            if e.errno == 98:
+                if verbose:
+                    print("Port {} is already in use".format(port))
+            else:
+                if verbose:
+                    print(e)
+            s.close()
+            return False
+        s.close()
+        return True
+
+    def _start_visdom(port):
+        p = Process(target=visdom.server.start_server, kwargs={"port": port})
+        atexit.register(p.terminate)
+        p.start()
+        time.sleep(20)
+        return True
+
+    lock = PyLock(lock_id, timeout=10)
+
+    i = 0
+    while i < len(port_list):
+        port = port_list[i]
+
+        try:
+            lock.__enter__()
+            if is_port_available(port):
+                if _start_visdom(port):
+                    print("Started Visdom on Port:", port)
+                    lock.__exit__(0, 0, 0)
+                    return port
+            else:
+                i += 1
+        except Exception:
+            pass
+
+    return -1
+
