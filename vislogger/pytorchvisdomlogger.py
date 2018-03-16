@@ -1,3 +1,4 @@
+import atexit
 import tempfile
 from multiprocessing import Process
 
@@ -307,6 +308,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                                                          n_neigh=n_neigh,
                                                          **meth_args
                                                          ))
+        atexit.register(p.terminate)
         p.start()
 
 
@@ -327,6 +329,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                                                          labels=labels,
                                                          name=name
                                                          ))
+        atexit.register(p.terminate)
         p.start()
 
     @convert_params
@@ -345,6 +348,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                                                          labels=labels,
                                                          name=name
                                                          ))
+        atexit.register(p.terminate)
         p.start()
 
 
@@ -382,4 +386,5 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                                                          name=name,
                                                          metric=metric
                                                          ))
+        atexit.register(p.terminate)
         p.start()
