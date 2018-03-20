@@ -1,6 +1,5 @@
 import json
 import traceback
-from collections import defaultdict
 
 import atexit
 import fnmatch
@@ -12,6 +11,7 @@ import time
 import torch
 import vislogger
 import warnings
+from collections import defaultdict
 from vislogger import Config
 from vislogger.sourcepacker import SourcePacker
 from vislogger.util import name_and_iter_to_filename
@@ -129,9 +129,24 @@ class Experiment(object):
 
 
 class PyTorchExperiment(Experiment):
-    def __init__(self, config=None, name=None, n_epochs=None, seed=None, base_dir=None, globs=None, resume=None,
-                 ignore_resume_config=False, resume_save_types=("model", "optimizer", "simple", "th_vars", "results"),
-                 parse_sys_argv=False):
+    def __init__(self,
+                 config=None,
+                 name=None,
+                 n_epochs=None,
+                 seed=None,
+                 base_dir=None,
+                 globs=None,
+                 resume=None,
+                 ignore_resume_config=False,
+                 resume_save_types=("model", "optimizer", "simple", "th_vars", "results"),
+                 parse_sys_argv=False,
+                 checkpoint_to_cpu=True,
+                 use_vislogger=True,
+                 vislogger_kwargs=None,
+                 vislogger_c_freq=1,
+                 use_explogger=True,
+                 explogger_kwargs=None,
+                 explogger_c_freq=100):
         """Inits an algo with a config, config needs to a n_epochs, name, output_folder and seed !"""
         # super(PyTorchExperiment, self).__init__()
         Experiment.__init__(self)
@@ -174,9 +189,23 @@ class PyTorchExperiment(Experiment):
         if "base_dir" in config:
             base_dir = config.base_dir
 
-        self.vlog = vislogger.pytorchvisdomlogger.PytorchVisdomLogger(name=self.exp_name, auto_start=False)
-        self.elog = vislogger.pytorchexperimentlogger.PytorchExperimentLogger(base_dir=base_dir, experiment_name=name)
-        self.clog = vislogger.CombinedLogger((self.vlog, 1), (self.elog, 100))
+        self.checkpoint_to_cpu = checkpoint_to_cpu
+
+        logger_list = []
+        if use_vislogger:
+            if vislogger_kwargs is None:
+                vislogger_kwargs = {}
+            self.vlog = vislogger.pytorchvisdomlogger.PytorchVisdomLogger(name=self.exp_name, **vislogger_kwargs)
+            logger_list.append((self.vlog, vislogger_c_freq))
+        if use_explogger:
+            if explogger_kwargs is None:
+                explogger_kwargs = {}
+            self.elog = vislogger.pytorchexperimentlogger.PytorchExperimentLogger(base_dir=base_dir,
+                                                                                  experiment_name=name,
+                                                                                  **explogger_kwargs)
+            logger_list.append((self.elog, explogger_c_freq))
+
+        self.clog = vislogger.CombinedLogger(*logger_list)
 
         set_seed(self.seed)
 
@@ -295,7 +324,8 @@ class PyTorchExperiment(Experiment):
 
         checkpoint_dict = {**model_dict, **optimizer_dict, **simple_dict, **th_vars_dict, **results_dict}
 
-        self.elog.save_checkpoint(name=name, n_iter=n_iter, iter_format=iter_format, prefix=prefix, **checkpoint_dict)
+        self.elog.save_checkpoint(name=name, n_iter=n_iter, iter_format=iter_format, prefix=prefix,
+                                  move_to_cpu=self.checkpoint_to_cpu, **checkpoint_dict)
 
     def load_checkpoint(self, name="checkpoint", save_types=("model", "optimizer", "simple", "th_vars", "results"),
                         n_iter=None, iter_format="{:05d}", prefix=False, path=None):
@@ -426,7 +456,6 @@ class PyTorchExperiment(Experiment):
                 tag = name
                 legend = tag
             self.clog.show_value(value=value, name=plt_name, tag=tag, counter=counter)
-
 
     def get_result(self, name):
         val_list = self.results[name]
