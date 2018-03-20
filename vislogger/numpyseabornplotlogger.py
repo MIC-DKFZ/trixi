@@ -33,7 +33,7 @@ class NumpySeabornPlotLogger(AbstractLogger):
         return figure
 
     @convert_params
-    def show_value(self, value, name, line_name=None, show=True, *args, **kwargs):
+    def show_value(self, value, name, counter=None, tag=None, show=True, *args, **kwargs):
         """A method which should handle and somehow log/ store a value"""
         figure = self.get_figure(name)
         plt.clf()
@@ -41,12 +41,15 @@ class NumpySeabornPlotLogger(AbstractLogger):
         seaborn.set_style("whitegrid")
 
 
-        if line_name is None:
-            line_name = name
+        if tag is None:
+            tag = name
 
-        max_val = max(self.max_values[name], len(self.values[name][line_name]) + 1)
+        if counter is None:
+            counter = len(self.values[name][tag]) + 1
+
+        max_val = max(self.max_values[name], counter)
         self.max_values[name] = max_val
-        self.values[name][line_name].append((value, max_val))
+        self.values[name][tag].append((value, max_val))
 
         for y_name in self.values[name]:
 
