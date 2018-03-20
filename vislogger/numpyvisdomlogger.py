@@ -1,5 +1,7 @@
 from __future__ import division, print_function
 
+from collections import defaultdict
+
 import atexit
 import multiprocessing as mp
 import sys
@@ -16,7 +18,8 @@ class NumpyVisdomLogger(AbstractLogger):
     Visual logger, inherits the AbstractLogger and plots/ logs numpy arrays/ values on a Visdom server.
     """
 
-    def __init__(self, name="main", server="http://localhost", port=8080, auto_close=True, **kwargs):
+    def __init__(self, name="main", server="http://localhost", port=8080, auto_close=True, auto_start=False,
+                 auto_start_ports=(8080, 8000), **kwargs):
         """
         Creates a new NumpyVisdomLogger object.
 
@@ -27,13 +30,19 @@ class NumpyVisdomLogger(AbstractLogger):
         """
         super(NumpyVisdomLogger, self).__init__(**kwargs)
 
+        if auto_start:
+            auto_port = start_visdom(auto_start_ports)
+            if auto_port != -1:
+                port = auto_port
+                server = "http://localhost"
+
         self.name = name
         self.server = server
         self.port = port
 
         self.vis = ExtraVisdom(env=self.name, server=self.server, port=self.port)
 
-        self._value_counter = dict()
+        self._value_counter = defaultdict(dict)
         self._3d_histograms = dict()
 
         self._queue = mp.Queue()
@@ -165,7 +174,8 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
-    def show_value(self, value, name=None, env_appendix="", opts=None, **kwargs):
+    def show_value(self, value, name=None, count=None, tag=None, show_legend=True, env_appendix="", opts=None,
+                   **kwargs):
         """
         Creates a line plot that is automatically appended with new values.
 
@@ -181,12 +191,15 @@ class NumpyVisdomLogger(AbstractLogger):
             "type": "value",
             "value": value,
             "name": name,
+            "count": count,
+            "tag": tag,
+            "show_legend": show_legend,
             "env_appendix": env_appendix,
             "opts": opts
         }
         self._queue.put_nowait(vis_task)
 
-    def __show_value(self, value, name=None, env_appendix="", opts=None, **kwargs):
+    def __show_value(self, value, name=None, count=None, tag=None, show_legend=True,  env_appendix="", opts=None, **kwargs):
         """
        Internal show_value method, called by the internal process.
        This function does all the magic.
@@ -200,18 +213,30 @@ class NumpyVisdomLogger(AbstractLogger):
             value = np.asarray([value])
         else:
             value = np.asarray([value])
+        if tag is None:
+            tag = ""
+            if name is not None:
+                tag = name
+        if "showlegend" not in opts and show_legend:
+            opts["showlegend"] = True
 
+
+        up_str = None
         if name is not None and name in self._value_counter:
-            self._value_counter[name] += 1
             up_str = "append"
 
-        else:
-            if value_dim == 1:
-                self._value_counter[name] = np.array([0])
+        if name is not None and name in self._value_counter and tag in self._value_counter[name]:
+            if count is None:
+                self._value_counter[name][tag] += 1
             else:
-
-                self._value_counter[name] = np.array([[0] * value_dim])
-            up_str = None
+                self._value_counter[name][tag] += count - self._value_counter[name][tag]
+        else:
+            if count is None:
+                count = 0
+            if value_dim == 1:
+                self._value_counter[name][tag] = np.array([count])
+            else:
+                self._value_counter[name][tag] = np.array([[count] * value_dim])
 
         opts = opts.copy()
         opts.update(dict(
@@ -220,8 +245,9 @@ class NumpyVisdomLogger(AbstractLogger):
 
         win = self.vis.line(
             Y=value,
-            X=self._value_counter[name],
+            X=self._value_counter[name][tag],
             win=name,
+            name=tag,
             update=up_str,
             env=self.name + env_appendix,
             opts=opts
@@ -808,3 +834,59 @@ class NumpyVisdomLogger(AbstractLogger):
         "add": __add_to_graph,
         "data": __send_data,
     }
+
+
+def start_visdom(port_list=(8080, 8000)):
+    import time
+    from multiprocessing import Process
+    import visdom.server
+
+    from vislogger.util import PyLock
+
+    lock_id = "visdom_lock"
+
+    def is_port_available(port, verbose=False):
+
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.bind(("127.0.0.1", port))
+        except socket.error as e:
+            if e.errno == 98:
+                if verbose:
+                    print("Port {} is already in use".format(port))
+            else:
+                if verbose:
+                    print(e)
+            s.close()
+            return False
+        s.close()
+        return True
+
+    def _start_visdom(port):
+        p = Process(target=visdom.server.start_server, kwargs={"port": port})
+        atexit.register(p.terminate)
+        p.start()
+        time.sleep(20)
+        return True
+
+    lock = PyLock(lock_id, timeout=10)
+
+    i = 0
+    while i < len(port_list):
+        port = port_list[i]
+
+        try:
+            lock.__enter__()
+            if is_port_available(port):
+                if _start_visdom(port):
+                    print("Started Visdom on Port:", port)
+                    lock.__exit__(0, 0, 0)
+                    return port
+            else:
+                i += 1
+        except Exception:
+            pass
+
+    return -1
+

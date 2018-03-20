@@ -1,16 +1,17 @@
+import json
+import traceback
+
 import atexit
 import fnmatch
-import json
+import numpy as np
 import os.path
 import random
 import shutil
 import time
-import traceback
-import warnings
-
-import numpy as np
 import torch
 import vislogger
+import warnings
+from collections import defaultdict
 from vislogger import Config
 from vislogger.sourcepacker import SourcePacker
 from vislogger.util import name_and_iter_to_filename
@@ -24,6 +25,7 @@ class Experiment(object):
         self.exp_state = "Preparing"
         self.time_start = ""
         self.time_end = ""
+        self.epoch_idx = 0
 
     def run(self):
         """This method runs the experiment"""
@@ -34,9 +36,11 @@ class Experiment(object):
 
             self.setup()
             self._setup_internal()
+            self.prepare()
 
             self.exp_state = "Started"
             for epoch in range(self.n_epochs):
+                self.epoch_idx = epoch
                 self.train(epoch=epoch)
                 self.validate(epoch=epoch)
                 self._end_epoch_internal(epoch=epoch)
@@ -67,6 +71,7 @@ class Experiment(object):
             if setup:
                 self.setup()
                 self._setup_internal()
+                self.prepare()
 
             self.exp_state = "Testing"
             self.test()
@@ -118,10 +123,30 @@ class Experiment(object):
         """Is called at the end of each experiment test"""
         pass
 
+    def prepare(self):
+        """This method is called directly before the experiment training starts"""
+        pass
+
 
 class PyTorchExperiment(Experiment):
-    def __init__(self, config=None, name=None, n_epochs=None, seed=None, base_dir=None, port=8080,
-                 globs=None, resume=None, ignore_resume_config=False, parse_sys_argv=False):
+    def __init__(self,
+                 config=None,
+                 name=None,
+                 n_epochs=None,
+                 seed=None,
+                 base_dir=None,
+                 globs=None,
+                 resume=None,
+                 ignore_resume_config=False,
+                 resume_save_types=("model", "optimizer", "simple", "th_vars", "results"),
+                 parse_sys_argv=False,
+                 checkpoint_to_cpu=True,
+                 use_vislogger=True,
+                 vislogger_kwargs=None,
+                 vislogger_c_freq=1,
+                 use_explogger=True,
+                 explogger_kwargs=None,
+                 explogger_c_freq=100):
         """Inits an algo with a config, config needs to a n_epochs, name, output_folder and seed !"""
         # super(PyTorchExperiment, self).__init__()
         Experiment.__init__(self)
@@ -164,15 +189,30 @@ class PyTorchExperiment(Experiment):
         if "base_dir" in config:
             base_dir = config.base_dir
 
-        self.vlog = vislogger.pytorchvisdomlogger.PytorchVisdomLogger(name=self.exp_name, port=port)
-        self.elog = vislogger.pytorchexperimentlogger.PytorchExperimentLogger(base_dir=base_dir, experiment_name=name)
-        self.clog = vislogger.CombinedLogger((self.vlog, 1), (self.elog, 100))
+        self.checkpoint_to_cpu = checkpoint_to_cpu
+
+        logger_list = []
+        if use_vislogger:
+            if vislogger_kwargs is None:
+                vislogger_kwargs = {}
+            self.vlog = vislogger.pytorchvisdomlogger.PytorchVisdomLogger(name=self.exp_name, **vislogger_kwargs)
+            logger_list.append((self.vlog, vislogger_c_freq))
+        if use_explogger:
+            if explogger_kwargs is None:
+                explogger_kwargs = {}
+            self.elog = vislogger.pytorchexperimentlogger.PytorchExperimentLogger(base_dir=base_dir,
+                                                                                  experiment_name=name,
+                                                                                  **explogger_kwargs)
+            logger_list.append((self.elog, explogger_c_freq))
+
+        self.clog = vislogger.CombinedLogger(*logger_list)
 
         set_seed(self.seed)
 
-        self.results = dict()
+        self.results = defaultdict(list)
 
         self.resume_path = None
+        self.resume_save_types = resume_save_types
         self.ignore_resume_config = ignore_resume_config
         if resume is not None:
             if isinstance(resume, str):
@@ -239,7 +279,7 @@ class PyTorchExperiment(Experiment):
 
     def save_results(self, name="results.json"):
         with open(os.path.join(self.elog.result_dir, name), "w") as file_:
-            json.dump(self.results, file_)
+            json.dump(self.results, file_, indent=4)
 
     def save_pytorch_models(self):
         pyth_modules = self.get_pytorch_modules()
@@ -284,7 +324,8 @@ class PyTorchExperiment(Experiment):
 
         checkpoint_dict = {**model_dict, **optimizer_dict, **simple_dict, **th_vars_dict, **results_dict}
 
-        self.elog.save_checkpoint(name=name, n_iter=n_iter, iter_format=iter_format, prefix=prefix, **checkpoint_dict)
+        self.elog.save_checkpoint(name=name, n_iter=n_iter, iter_format=iter_format, prefix=prefix,
+                                  move_to_cpu=self.checkpoint_to_cpu, **checkpoint_dict)
 
     def load_checkpoint(self, name="checkpoint", save_types=("model", "optimizer", "simple", "th_vars", "results"),
                         n_iter=None, iter_format="{:05d}", prefix=False, path=None):
@@ -376,12 +417,13 @@ class PyTorchExperiment(Experiment):
                 self.elog.print("Loaded existing config from:", base_dir)
 
         if checkpoint_file:
-            self.load_checkpoint(name="", path=checkpoint_file, save_types=("model", "simple", "th_vars", "results"))
+            self.load_checkpoint(name="", path=checkpoint_file, save_types=self.resume_save_types)
             self.resume_path = checkpoint_file
             shutil.copyfile(checkpoint_file, os.path.join(self.elog.checkpoint_dir, "0_checkpoint.pth.tar"))
             self.elog.print("Loaded existing checkpoint from:", checkpoint_file)
 
     def _end_epoch_internal(self, epoch):
+        self.save_results()
         self.save_temp_checkpoint()
 
     def save_temp_checkpoint(self):
@@ -389,6 +431,44 @@ class PyTorchExperiment(Experiment):
 
     def save_end_checkpoint(self):
         self.save_checkpoint(name="checkpoint_last")
+
+    def add_result(self, value, name, label=None, counter=None, plot_result=True):
+
+        if len(self.results[name]) < self.epoch_idx:
+            count_idx = self.epoch_idx
+        else:
+            count_idx = len(self.results[name])
+        if counter is not None:
+            count_idx = counter
+        lable_name = label
+        if lable_name is None:
+            lable_name = name
+
+        self.results[name].append(dict(data=value, label=lable_name, counter=count_idx, epoch=self.epoch_idx))
+
+        if plot_result:
+            if label is None:
+                plt_name = name
+                tag = None
+                legend = plt_name
+            else:
+                plt_name = label
+                tag = name
+                legend = tag
+            self.clog.show_value(value=value, name=plt_name, tag=tag, counter=counter)
+
+    def get_result(self, name):
+        val_list = self.results[name]
+        if len(val_list) > 0:
+            return val_list[-1].get("data")
+        else:
+            return None
+
+    def add_result_without_epoch(self, val, name):
+        self.results[name] = val
+
+    def get_result_without_epoch(self, name):
+        return self.results.get(name)
 
 
 def get_last_file(dir_, name=None):
@@ -489,4 +569,5 @@ def experimentify(setup_fn="setup", train_fn="train", validate_fn="validate", en
                 setattr(cls, elem, trans_fn)
 
         return cls
+
     return wrap
