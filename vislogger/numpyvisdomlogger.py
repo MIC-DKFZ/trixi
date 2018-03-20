@@ -1,5 +1,7 @@
 from __future__ import division, print_function
 
+from collections import defaultdict
+
 import atexit
 import multiprocessing as mp
 import sys
@@ -40,7 +42,7 @@ class NumpyVisdomLogger(AbstractLogger):
 
         self.vis = ExtraVisdom(env=self.name, server=self.server, port=self.port)
 
-        self._value_counter = dict()
+        self._value_counter = defaultdict(dict)
         self._3d_histograms = dict()
 
         self._queue = mp.Queue()
@@ -172,7 +174,8 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
-    def show_value(self, value, name=None, env_appendix="", opts=None, **kwargs):
+    def show_value(self, value, name=None, count=None, tag=None, show_legend=True, env_appendix="", opts=None,
+                   **kwargs):
         """
         Creates a line plot that is automatically appended with new values.
 
@@ -188,12 +191,15 @@ class NumpyVisdomLogger(AbstractLogger):
             "type": "value",
             "value": value,
             "name": name,
+            "count": count,
+            "tag": tag,
+            "show_legend": show_legend,
             "env_appendix": env_appendix,
             "opts": opts
         }
         self._queue.put_nowait(vis_task)
 
-    def __show_value(self, value, name=None, env_appendix="", opts=None, **kwargs):
+    def __show_value(self, value, name=None, count=None, tag=None, show_legend=True,  env_appendix="", opts=None, **kwargs):
         """
        Internal show_value method, called by the internal process.
        This function does all the magic.
@@ -207,18 +213,30 @@ class NumpyVisdomLogger(AbstractLogger):
             value = np.asarray([value])
         else:
             value = np.asarray([value])
+        if tag is None:
+            tag = ""
+            if name is not None:
+                tag = name
+        if "showlegend" not in opts and show_legend:
+            opts["showlegend"] = True
 
+
+        up_str = None
         if name is not None and name in self._value_counter:
-            self._value_counter[name] += 1
             up_str = "append"
 
-        else:
-            if value_dim == 1:
-                self._value_counter[name] = np.array([0])
+        if name is not None and name in self._value_counter and tag in self._value_counter[name]:
+            if count is None:
+                self._value_counter[name][tag] += 1
             else:
-
-                self._value_counter[name] = np.array([[0] * value_dim])
-            up_str = None
+                self._value_counter[name][tag] += count - self._value_counter[name][tag]
+        else:
+            if count is None:
+                count = 0
+            if value_dim == 1:
+                self._value_counter[name][tag] = np.array([count])
+            else:
+                self._value_counter[name][tag] = np.array([[count] * value_dim])
 
         opts = opts.copy()
         opts.update(dict(
@@ -227,8 +245,9 @@ class NumpyVisdomLogger(AbstractLogger):
 
         win = self.vis.line(
             Y=value,
-            X=self._value_counter[name],
+            X=self._value_counter[name][tag],
             win=name,
+            name=tag,
             update=up_str,
             env=self.name + env_appendix,
             opts=opts
