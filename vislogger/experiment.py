@@ -1,16 +1,17 @@
+import json
+import traceback
+from collections import defaultdict
+
 import atexit
 import fnmatch
-import json
+import numpy as np
 import os.path
 import random
 import shutil
 import time
-import traceback
-import warnings
-
-import numpy as np
 import torch
 import vislogger
+import warnings
 from vislogger import Config
 from vislogger.sourcepacker import SourcePacker
 from vislogger.util import name_and_iter_to_filename
@@ -24,6 +25,7 @@ class Experiment(object):
         self.exp_state = "Preparing"
         self.time_start = ""
         self.time_end = ""
+        self.epoch_idx = 0
 
     def run(self):
         """This method runs the experiment"""
@@ -34,9 +36,11 @@ class Experiment(object):
 
             self.setup()
             self._setup_internal()
+            self.prepare()
 
             self.exp_state = "Started"
             for epoch in range(self.n_epochs):
+                self.epoch_idx = epoch
                 self.train(epoch=epoch)
                 self.validate(epoch=epoch)
                 self._end_epoch_internal(epoch=epoch)
@@ -67,6 +71,7 @@ class Experiment(object):
             if setup:
                 self.setup()
                 self._setup_internal()
+                self.prepare()
 
             self.exp_state = "Testing"
             self.test()
@@ -118,6 +123,10 @@ class Experiment(object):
         """Is called at the end of each experiment test"""
         pass
 
+    def prepare(self):
+        """This method is called directly before the experiment training starts"""
+        pass
+
 
 class PyTorchExperiment(Experiment):
     def __init__(self, config=None, name=None, n_epochs=None, seed=None, base_dir=None, globs=None, resume=None,
@@ -165,13 +174,13 @@ class PyTorchExperiment(Experiment):
         if "base_dir" in config:
             base_dir = config.base_dir
 
-        self.vlog = vislogger.pytorchvisdomlogger.PytorchVisdomLogger(name=self.exp_name)
+        self.vlog = vislogger.pytorchvisdomlogger.PytorchVisdomLogger(name=self.exp_name, auto_start=False)
         self.elog = vislogger.pytorchexperimentlogger.PytorchExperimentLogger(base_dir=base_dir, experiment_name=name)
         self.clog = vislogger.CombinedLogger((self.vlog, 1), (self.elog, 100))
 
         set_seed(self.seed)
 
-        self.results = dict()
+        self.results = defaultdict(list)
 
         self.resume_path = None
         self.resume_save_types = resume_save_types
@@ -241,7 +250,7 @@ class PyTorchExperiment(Experiment):
 
     def save_results(self, name="results.json"):
         with open(os.path.join(self.elog.result_dir, name), "w") as file_:
-            json.dump(self.results, file_)
+            json.dump(self.results, file_, indent=4)
 
     def save_pytorch_models(self):
         pyth_modules = self.get_pytorch_modules()
@@ -384,6 +393,7 @@ class PyTorchExperiment(Experiment):
             self.elog.print("Loaded existing checkpoint from:", checkpoint_file)
 
     def _end_epoch_internal(self, epoch):
+        self.save_results()
         self.save_temp_checkpoint()
 
     def save_temp_checkpoint(self):
@@ -391,6 +401,45 @@ class PyTorchExperiment(Experiment):
 
     def save_end_checkpoint(self):
         self.save_checkpoint(name="checkpoint_last")
+
+    def add_result(self, value, name, label=None, counter=None, plot_result=True):
+
+        if len(self.results[name]) < self.epoch_idx:
+            count_idx = self.epoch_idx
+        else:
+            count_idx = len(self.results[name])
+        if counter is not None:
+            count_idx = counter
+        lable_name = label
+        if lable_name is None:
+            lable_name = name
+
+        self.results[name].append(dict(data=value, label=lable_name, counter=count_idx, epoch=self.epoch_idx))
+
+        if plot_result:
+            if label is None:
+                plt_name = name
+                tag = None
+                legend = plt_name
+            else:
+                plt_name = label
+                tag = name
+                legend = tag
+            self.clog.show_value(value=value, name=plt_name, tag=tag, counter=counter)
+
+
+    def get_result(self, name):
+        val_list = self.results[name]
+        if len(val_list) > 0:
+            return val_list[-1].get("data")
+        else:
+            return None
+
+    def add_result_without_epoch(self, val, name):
+        self.results[name] = val
+
+    def get_result_without_epoch(self, name):
+        return self.results.get(name)
 
 
 def get_last_file(dir_, name=None):
