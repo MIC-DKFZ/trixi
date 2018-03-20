@@ -120,8 +120,8 @@ class Experiment(object):
 
 
 class PyTorchExperiment(Experiment):
-    def __init__(self, config=None, name=None, n_epochs=None, seed=None, base_dir=None, globs=None, resume=None,
-                 ignore_resume_config=False, parse_sys_argv=False):
+    def __init__(self, config=None, name=None, n_epochs=None, seed=None, base_dir=None, port=8080,
+                 globs=None, resume=None, ignore_resume_config=False, parse_sys_argv=False):
         """Inits an algo with a config, config needs to a n_epochs, name, output_folder and seed !"""
         # super(PyTorchExperiment, self).__init__()
         Experiment.__init__(self)
@@ -164,7 +164,7 @@ class PyTorchExperiment(Experiment):
         if "base_dir" in config:
             base_dir = config.base_dir
 
-        self.vlog = vislogger.pytorchvisdomlogger.PytorchVisdomLogger(name=self.exp_name)
+        self.vlog = vislogger.pytorchvisdomlogger.PytorchVisdomLogger(name=self.exp_name, port=port)
         self.elog = vislogger.pytorchexperimentlogger.PytorchExperimentLogger(base_dir=base_dir, experiment_name=name)
         self.clog = vislogger.CombinedLogger((self.vlog, 1), (self.elog, 100))
 
@@ -376,7 +376,7 @@ class PyTorchExperiment(Experiment):
                 self.elog.print("Loaded existing config from:", base_dir)
 
         if checkpoint_file:
-            self.load_checkpoint(name="", path=checkpoint_file)
+            self.load_checkpoint(name="", path=checkpoint_file, save_types=("model", "simple", "th_vars", "results"))
             self.resume_path = checkpoint_file
             shutil.copyfile(checkpoint_file, os.path.join(self.elog.checkpoint_dir, "0_checkpoint.pth.tar"))
             self.elog.print("Loaded existing checkpoint from:", checkpoint_file)
@@ -399,6 +399,8 @@ def get_last_file(dir_, name=None):
 
     for root, dirs, files in os.walk(dir_):
         for filename in fnmatch.filter(files, name):
+            if 'last' in filename:
+                return os.path.join(root, filename)
             checkpoint_file = os.path.join(root, filename)
             dir_files.append(checkpoint_file)
 
