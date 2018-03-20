@@ -1,12 +1,12 @@
 import argparse
-import json
 import numpy as np
 import os
-from scipy.ndimage.filters import gaussian_filter1d
+from scipy.signal import savgol_filter
 
-from flask import Flask, render_template, request, Blueprint, Markup
+from flask import Flask, render_template, request, Blueprint, Markup, abort
 from plotly.offline import plot
 import plotly.graph_objs as go
+import colorlover as cl
 
 from .experiment import Experiment
 
@@ -22,6 +22,8 @@ IGNORE_KEYS = ("experiment_name",
                "result_dir",
                "init_time",
                "note")
+
+COLORMAP = cl.scales["8"]["qual"]["Dark2"]
 
 ### Read in base directory
 parser = argparse.ArgumentParser()
@@ -67,46 +69,60 @@ def process_base_dir(base_dir):
                     str(getattr(exp.config, "note", "----")),
                     sub_row))
 
-
-
     return {"cols": sorted_keys, "rows": rows}
 
 def get_experiment_content(experiment_dir):
 
     exp = Experiment(experiment_dir)
-
-    #images = exp.get_images()
-    #plots = exp.get_plots()
-    #models = exp.get_checkpoints()
-
-    results, spacings = exp.get_results()
+    results, _ = exp.get_results()
 
     graphs = []
     for key in results:
         if np.issubdtype(results[key].dtype, np.number):
-            graphs.append(make_graph(key, results[key], spacings[key], smoothing=100.))
+            graphs.append(make_graph(key, results[key]))
 
     return {"graphs": graphs}
 
     #return {'images': images, 'plots': plots, 'models': models}
 
-def make_graph(name, y, x_scale=1., trace_options=None, smoothing=False):
+def make_graph(name, y, x=None, labels=None, trace_options=None, layout_options=None):
+
+    print(name, y.shape)
+
+    if x is None: x = np.arange(1, y.shape[0]+1)
+    if trace_options is None: trace_options = {}
+    if layout_options is None: layout_options = {}
+
+    filter_ = lambda x: savgol_filter(x, 2 * (len(y) // 200) + 1, 3)
 
     traces = []
-    x = np.arange(1, y.shape[0]+1) * x_scale
-    if trace_options is None: trace_options = {}
-
-    if smoothing:
-        filter_ = lambda x: gaussian_filter1d(x, smoothing)
-    else:
-        filter_ = lambda x: x
 
     if y.ndim == 1:
-        traces.append(go.Scatter(x=x, y=filter_(y), **trace_options))
+
+        if labels is None:
+            labels = ["Data", "Smoothed"]
+        else:
+            if isinstance(labels, str):
+                labels = [labels, labels + " smoothed"]
+            else:
+                labels = [labels[0], labels[0] + " smoothed"]
+
+        traces.append(go.Scatter(x=x, y=y, opacity=0.2, name=labels[0], **trace_options,
+                                 line=dict(color=COLORMAP[0])))
+        traces.append(go.Scatter(x=x, y=filter_(y), name=labels[1], **trace_options,
+                                 line=dict(color=COLORMAP[0])))
 
     elif y.ndim == 2:
+
+        if labels is None: labels = [str(x) for x in range(y.shape[1])]
+        labels = [labels[i//2] if i%2==0 else labels[i//2] + " smoothed" for i in range(2*len(labels))]
+
         for t in range(y.shape[1]):
-            traces.append(go.Scatter(x=x, y=filter_(y[:,t]), **trace_options))
+
+            traces.append(go.Scatter(x=x, y=y[:,t],opacity=0.2, name=labels[2*t], **trace_options,
+                                     line=dict(color=COLORMAP[t])))
+            traces.append(go.Scatter(x=x, y=filter_(y[:,t]), name=labels[2*t+1], **trace_options,
+                                     line=dict(color=COLORMAP[t])))
 
     else:
         print("ERR: can only create plots for arrays with ndim <= 3.")
@@ -122,18 +138,29 @@ def make_graph(name, y, x_scale=1., trace_options=None, smoothing=False):
 
 @app.route("/")
 def overview():
-    base_info = process_base_dir(base_dir)
-    return render_template("overview.html", title=base_dir, **base_info)
+
+    try:
+        base_info = process_base_dir(base_dir)
+        base_info["title"] = base_dir
+        return render_template("overview.html", **base_info)
+    except Exception as e:
+        print(e.__repr__())
+        abort(500)
 
 @app.route('/experiment/<experiment_name>', methods=['GET'])
 def experiment(experiment_name):
-    experiment_dir = os.path.join(base_dir, experiment_name)
 
+    experiment_dir = os.path.join(base_dir, experiment_name)
     if not os.path.exists(experiment_dir) or not os.path.isdir(experiment_dir):
-        return "ERR: Please give a valid experiment directory"
+        print("ERR: Please give a valid experiment directory")
+        abort(404)
+
+    smooth = request.args.getlist("smooth")
 
     experiment_content = get_experiment_content(experiment_dir)
-    return render_template('experiment.html', title=experiment_name, **experiment_content)
+    experiment_content["title"] = experiment_name
+
+    return render_template('experiment.html', **experiment_content)
 
 if __name__ == "__main__":
     app.run()

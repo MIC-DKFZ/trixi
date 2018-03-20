@@ -1,0 +1,94 @@
+{
+    "brats_best_val_dice": [
+        {
+            "label": null,
+            "data": 0.2532205283641815,
+            "counter": 0,
+            "epoche": 0
+        },
+        {
+            "label": null,
+            "data": 0.5143883228302002,
+            "counter": 1,
+            "epoche": 1
+        }
+    ],
+    "datatime": [
+        {
+            "label": "Time",
+            "data": 0.00020170211791992188,
+            "counter": 0,
+            "epoche": 0
+        },
+        {
+            "label": "Time",
+            "data": 0.0002503395080566406,
+            "counter": 1,
+            "epoche": 0
+        },
+        {
+            "label": "Time",
+            "data": 0.019438505172729492,
+            "counter": 2,
+            "epoche": 1
+        },
+        {
+            "label": "Time",
+            "data": 0.0002834796905517578,
+            "counter": 3,
+            "epoche": 1
+        }
+    ],
+    "Err": [
+        {
+            "label": null,
+            "data": 0.5262500047683716,
+            "counter": 0,
+            "epoche": 0
+        },
+        {
+            "label": null,
+            "data": 0.3089335560798645,
+            "counter": 1,
+            "epoche": 0
+        },
+        {
+            "label": null,
+            "data": 0.37322717905044556,
+            "counter": 2,
+            "epoche": 1
+        },
+        {
+            "label": null,
+            "data": 0.3616144061088562,
+            "counter": 3,
+            "epoche": 1
+        }
+    ],
+    "batchtime": [
+        {
+            "label": "Time",
+            "data": 0.32414817810058594,
+            "counter": 0,
+            "epoche": 0
+        },
+        {
+            "label": "Time",
+            "data": 0.3303401470184326,
+            "counter": 1,
+            "epoche": 0
+        },
+        {
+            "label": "Time",
+            "data": 0.8729879856109619,
+            "counter": 2,
+            "epoche": 1
+        },
+        {
+            "label": "Time",
+            "data": 0.33122920989990234,
+            "counter": 3,
+            "epoche": 1
+        }
+    ]
+}
