@@ -1,0 +1,9 @@
+{
+    "experiment_name": "test_experiment",
+    "note": "This is only to test the experiment browser",
+    "init_time": "20180221-163831",
+    "patch_size": "__tuple__((128, 128, 128))",
+    "batch_size": 3,
+    "num_epochs": 2000,
+    "another_entry": "something something"
+}

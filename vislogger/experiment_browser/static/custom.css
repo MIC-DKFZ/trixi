@@ -1,0 +1,19 @@
+h1, h2, h3 {
+    margin: 15px;
+}
+
+div.button-list {
+    margin: 12px;
+}
+
+input {
+    text-indent: 5px;
+}
+
+a.toggle-vis {
+    margin: 3px;
+}
+
+a.go-back {
+    margin-right: 15px;
+}

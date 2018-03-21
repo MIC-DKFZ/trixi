@@ -1,0 +1,75 @@
+<html>
+
+<head>
+    <title>{{ title }}</title>
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='custom.css') }}" />
+    <link href="https://use.fontawesome.com/releases/v5.0.8/css/all.css" rel="stylesheet">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+</head>
+
+
+<body>
+
+    <div class="container">
+
+        <div class="header clearfix">
+            <h3 class="text-muted"><a role="button" class="btn btn-light go-back"><i class="fas fa-arrow-left"></i></a>{{ title }}</h3>
+        </div>
+
+        <hr> {% for graph in graphs %} {{ graph }} {% endfor %}
+        <!--<div class="jumbotron">
+            <h4>Images</h4>
+            <div class="pre-scrollable">
+                {% for img in images %}
+                    <img src="{{ img }}" alt="{{ img }}" title="{{ img }}" class="img-rounded"  width="300px"
+                         align="middle" style="margin:10px 10px">
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="jumbotron">
+            <h4>Plots</h4>
+            <div class="pre-scrollable">
+                {% for plot in plots %}
+                    <img src="..{{ plot }}" alt="{{ plot }}" alt="{{ title }}" class="img-rounded"  width="300px"
+                         align="middle" style="margin:10px 10px">
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="jumbotron">
+            <h4>Models</h4>
+            <div class="pre-scrollable">
+                {% for model in models %}
+                   {{ model }} <br>
+                {% endfor %}
+            </div>
+        </div>-->
+
+
+
+    </div>
+    <!-- /container -->
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script>
+        $(document).ready(function() {
+
+            $('a.go-back').on('click', function(e) {
+                e.preventDefault();
+                window.history.back();
+            });
+
+        });
+    </script>
+
+</body>
+
+</html>
