@@ -49,34 +49,28 @@ class Experiment(object):
 
     def get_results(self):
 
-        try:
-            n_digits = "{" + str(len(str(self.config.num_epochs))) + "}"
-        except:
-            n_digits = "+"
-        epoch_pattern = ".*\d" + n_digits + ".*\.json"
+        with open(os.path.join(self.result_dir, "results-log.json"), "r") as results_file:
+            results = json.load(results_file)
+        results_merged = {}
 
-        result_files = filter(lambda x: re.search(epoch_pattern, x), sorted(os.listdir(self.result_dir)))
-        results = {}
-        epoch_spacings = {}
-
-        def update_results(new_dict, results_dict, spacings_dict, counter):
-            for k in new_dict.keys():
-                if isinstance(new_dict[k], dict):
-                    flat = {"{}.{}".format(k, key): val for key, val in new_dict[k].items()}
-                    update_results(flat, results_dict, spacings_dict, counter)
+        for result in results:
+            for key in result.keys():
+                counter = result[key]["counter"]
+                data = result[key]["data"]
+                epoch = result[key]["epoch"]
+                label = result[key]["label"]
+                if label not in results_merged:
+                    results_merged[label] = {}
+                if key not in results_merged[label]:
+                    results_merged[label][key] = {}
+                    results_merged[label][key]["data"] = [data]
+                    results_merged[label][key]["epoch"] = [epoch]
                 else:
-                    if k not in results_dict.keys():
-                        results_dict[k] = [new_dict[k]]
-                        spacings_dict[k] = counter
+                    if counter < len(results_merged[label][key]["data"]):
+                        raise IndexError("Tried to insert element with counter {} into {}.{}.data, but there are already {} elements.".format(
+                            counter, label, key, results_merged[label][key]["data"]))
                     else:
-                        results[k].append(new_dict[k])
+                        results_merged[label][key]["data"].append(data)
+                        results_merged[label][key]["epoch"].append(epoch)
 
-        for f, file_ in enumerate(result_files):
-            with open(os.path.join(self.result_dir, file_), "r") as infile:
-                current = json.load(infile)
-                update_results(current, results, epoch_spacings, f+1)
-
-        for k in results.keys():
-            results[k] = np.array(results[k])
-
-        return results, epoch_spacings
+        return results_merged
