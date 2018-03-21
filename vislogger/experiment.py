@@ -14,7 +14,7 @@ import warnings
 from collections import defaultdict
 from vislogger import Config
 from vislogger.sourcepacker import SourcePacker
-from vislogger.util import name_and_iter_to_filename
+from vislogger.util import name_and_iter_to_filename, ResultLogDict, ResultElement
 
 
 class Experiment(object):
@@ -190,7 +190,9 @@ class PyTorchExperiment(Experiment):
             base_dir = config.base_dir
 
         self.checkpoint_to_cpu = checkpoint_to_cpu
+        self.results = dict()
 
+        # Init loggers
         logger_list = []
         if use_vislogger:
             if vislogger_kwargs is None:
@@ -205,12 +207,15 @@ class PyTorchExperiment(Experiment):
                                                                                   **explogger_kwargs)
             logger_list.append((self.elog, explogger_c_freq))
 
+            # Set results log dict to the right path
+            self.results = ResultLogDict("results-log.json", base_dir=self.elog.result_dir)
+            self.results.print_to_file("[")
+
         self.clog = vislogger.CombinedLogger(*logger_list)
 
         set_seed(self.seed)
 
-        self.results = defaultdict(list)
-
+        # Do the resume stuff
         self.resume_path = None
         self.resume_save_types = resume_save_types
         self.ignore_resume_config = ignore_resume_config
@@ -293,12 +298,12 @@ class PyTorchExperiment(Experiment):
 
     def log_simple_vars(self):
         simple_vars = self.get_simple_variables()
-        with open(os.path.join(self.elog.log_dir, "simple_vars.log"), "w") as file_:
+        with open(os.path.join(self.elog.log_dir, "simple_vars.json"), "w") as file_:
             json.dump(simple_vars, file_)
 
     def load_simple_vars(self):
         simple_vars = {}
-        with open(os.path.join(self.elog.log_dir, "simple_vars.log"), "r") as file_:
+        with open(os.path.join(self.elog.log_dir, "simple_vars.json"), "r") as file_:
             simple_vars = json.load(file_)
         self.update_attributes(simple_vars)
 
@@ -367,6 +372,8 @@ class PyTorchExperiment(Experiment):
         self.update_attributes(restore_dict)
 
     def end(self):
+        if isinstance(self.results, ResultLogDict):
+            self.results.print_to_file("]")
         self.save_results()
         self.save_end_checkpoint()
         self.elog.print("Experiment ended. Checkpoints stored =)")
@@ -377,7 +384,9 @@ class PyTorchExperiment(Experiment):
 
     def at_exit_func(self):
         if self.exp_state not in ("Ended", "Tested"):
-            self.save_results(name="results-" + self.exp_state + ".log")
+            if isinstance(self.results, ResultLogDict):
+                self.results.print_to_file("]")
+            self.save_results(name="results-" + self.exp_state + ".json")
             self.save_checkpoint(name="checkpoint_exit-" + self.exp_state)
             self.elog.print("Experiment exited. Checkpoints stored =)")
 
@@ -434,35 +443,27 @@ class PyTorchExperiment(Experiment):
 
     def add_result(self, value, name, label=None, counter=None, plot_result=True):
 
-        if len(self.results[name]) < self.epoch_idx:
-            count_idx = self.epoch_idx
-        else:
-            count_idx = len(self.results[name])
-        if counter is not None:
-            count_idx = counter
         lable_name = label
         if lable_name is None:
             lable_name = name
 
-        self.results[name].append(dict(data=value, label=lable_name, counter=count_idx, epoch=self.epoch_idx))
+        r_elem = ResultElement(data=value, label=lable_name, epoch=self.epoch_idx, counter=counter)
+
+        self.results[name] = r_elem
 
         if plot_result:
             if label is None:
                 plt_name = name
                 tag = None
-                legend = plt_name
+                legend = False
             else:
                 plt_name = label
                 tag = name
-                legend = tag
-            self.clog.show_value(value=value, name=plt_name, tag=tag, counter=counter)
+                legend = True
+            self.clog.show_value(value=value, name=plt_name, tag=tag, counter=counter, show_legend=legend)
 
     def get_result(self, name):
-        val_list = self.results[name]
-        if len(val_list) > 0:
-            return val_list[-1].get("data")
-        else:
-            return None
+        return self.results.get(name)
 
     def add_result_without_epoch(self, val, name):
         self.results[name] = val
