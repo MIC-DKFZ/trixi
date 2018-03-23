@@ -386,8 +386,8 @@ class PyTorchExperiment(Experiment):
         if self.exp_state not in ("Ended", "Tested"):
             if isinstance(self.results, ResultLogDict):
                 self.results.print_to_file("]")
-            self.save_results(name="results-" + self.exp_state + ".json")
             self.save_checkpoint(name="checkpoint_exit-" + self.exp_state)
+            self.save_results(name="results-" + self.exp_state + ".json")
             self.elog.print("Experiment exited. Checkpoints stored =)")
 
     def _setup_internal(self):

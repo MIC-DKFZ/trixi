@@ -1,19 +1,20 @@
 import ast
+import importlib
 import json
 import logging
-import string
-import subprocess as subp
-from types import FunctionType, ModuleType
-
-import importlib
 import os
-import portalocker
 import random
 import re
+import string
+import subprocess as subp
 import time
+import warnings
 from collections import defaultdict
 from hashlib import sha256
 from tempfile import gettempdir
+from types import FunctionType, ModuleType
+
+import portalocker
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -213,7 +214,7 @@ def name_and_iter_to_filename(name, n_iter, ending, iter_format="{:05d}", prefix
     return name
 
 
-def update_model(original_model, update_dict, exclude_layers=(), warnings=True):
+def update_model(original_model, update_dict, exclude_layers=(), do_warnings=True):
     # also allow loading of partially pretrained net
     model_dict = original_model.state_dict()
 
