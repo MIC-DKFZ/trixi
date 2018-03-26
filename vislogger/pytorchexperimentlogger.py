@@ -74,7 +74,7 @@ class PytorchExperimentLogger(ExperimentLogger):
 
     @staticmethod
     @threaded
-    def save_checkpoint_static(checkpoint_dir, name, **kwargs):
+    def save_checkpoint_static(checkpoint_dir, name, move_to_cpu=False, **kwargs):
         for key, value in kwargs.items():
             if isinstance(value, torch.nn.Module) or isinstance(value, torch.optim.Optimizer):
                 kwargs[key] = value.state_dict()
@@ -89,7 +89,11 @@ class PytorchExperimentLogger(ExperimentLogger):
             else:
                 return obj
 
-        torch.save(to_cpu(kwargs), checkpoint_file)
+        if move_to_cpu:
+            torch.save(to_cpu(kwargs), checkpoint_file)
+        else:
+            torch.save(kwargs, checkpoint_file)
+
 
     def save_checkpoint(self, name, n_iter=None, iter_format="{:05d}", prefix=False, **kwargs):
 
