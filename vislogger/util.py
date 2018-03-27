@@ -1,17 +1,20 @@
 import ast
-import json
-import string
-import subprocess as subp
-from types import FunctionType, ModuleType
-
 import importlib
+import json
+import logging
 import os
-import portalocker
 import random
 import re
+import string
+import subprocess as subp
 import time
+import warnings
+from collections import defaultdict
 from hashlib import sha256
 from tempfile import gettempdir
+from types import FunctionType, ModuleType
+
+import portalocker
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -211,7 +214,7 @@ def name_and_iter_to_filename(name, n_iter, ending, iter_format="{:05d}", prefix
     return name
 
 
-def update_model(original_model, update_dict, exclude_layers=(), warnings=True):
+def update_model(original_model, update_dict, exclude_layers=(), do_warnings=True):
     # also allow loading of partially pretrained net
     model_dict = original_model.state_dict()
 
@@ -268,3 +271,76 @@ class PyLock(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         portalocker.unlock(self._lockfile)
         self._lockfile.close()
+
+
+class LogDict(dict):
+    def __init__(self, file_name, base_dir=None):
+        """Initilaizes a new Dict which can logs to a given target_file."""
+
+        super(LogDict, self).__init__()
+
+        self.file_name = file_name
+        if base_dir is not None:
+            self.file_name = os.path.join(base_dir, file_name)
+
+        self.logging_identifier = random_string(15)
+        self.logger = logging.getLogger("logdict-" + self.logging_identifier)
+        self.logger.setLevel(logging.INFO)
+        file_handler_formatter = logging.Formatter('')
+
+        file_handler = logging.FileHandler(self.file_name)
+        file_handler.setFormatter(file_handler_formatter)
+        self.logger.addHandler(file_handler)
+
+    def __setitem__(self, key, item):
+        super(LogDict, self).__setitem__(key, item)
+
+    def log_complete_content(self):
+        """Logs the current content of the dict to the output file as a whole."""
+        self.logger.info(str(self))
+
+
+class ResultLogDict(LogDict):
+    def __init__(self, file_name, base_dir=None):
+        """Initilaizes a new Dict which directly logs value chnages to a given target_file."""
+        super(ResultLogDict, self).__init__(file_name=file_name, base_dir=base_dir)
+
+        self.is_init = False
+        self.cntr_dict = defaultdict(int)
+        self.is_init = True
+
+    def __setitem__(self, key, item):
+
+        if key == "cntr_dict":
+            raise ValueError("In ResultLogDict you can not add a item with key 'cntr_dict'")
+
+        data = item
+        if isinstance(item, dict) and "data" in item and "label" in item and "epoch" in item:
+            data = item["data"]
+            if "count" in item and item["count"] is not None:
+                self.cntr_dict[key] = item["count"]
+            json_dict = {key: dict(data=data, label=item["label"], epoch=item["epoch"],
+                                   counter=self.cntr_dict[key])}
+        else:
+            json_dict = {key: dict(data=data, counter=self.cntr_dict[key])}
+        self.cntr_dict[key] += 1
+        self.logger.info(json.dumps(json_dict) + ",")
+
+        super(ResultLogDict, self).__setitem__(key, data)
+
+    def print_to_file(self, text):
+        self.logger.info(text)
+
+
+class ResultElement(dict):
+    def __init__(self, data=None, label=None, epoch=None, counter=None):
+        super(ResultElement, self).__init__()
+
+        if data is not None:
+            self["data"] = data
+        if label is not None:
+            self["label"] = label
+        if epoch is not None:
+            self["epoch"] = epoch
+        if counter is not None:
+            self["counter"] = counter

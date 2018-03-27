@@ -11,6 +11,11 @@ def create_function(self, sub_methods):
             method_cntr = self.log_methods_cntr[sub_method]
             method_freq = self.log_methods_freq[sub_method]
 
+            use_name = False
+            if "name" in kwargs and not ("ignore_name_in_args" in kwargs and kwargs["ignore_name_in_args"] is True):
+                method_cntr = self.log_methods_name_cntr[sub_method][kwargs["name"]]
+                use_name = True
+
             if "log_all" in kwargs and kwargs["log_all"] is True:
                 sub_method(*args, **kwargs)
                 continue
@@ -23,7 +28,10 @@ def create_function(self, sub_methods):
                     sub_method(*args, **kwargs)
                 kwargs["do_not_increase"] = True
 
-            if "do_not_increase" not in kwargs or ("do_not_increase" in kwargs and kwargs["do_not_increase"] is False):
+            if use_name:
+                self.log_methods_name_cntr[sub_method][kwargs["name"]] += 1
+            elif "do_not_increase" not in kwargs or ("do_not_increase" in kwargs and kwargs["do_not_increase"] is
+                                                     False):
                 self.log_methods_cntr[sub_method] += 1
 
     return surrogate_fn
@@ -42,8 +50,9 @@ class CombinedLogger(object):
                 raise ValueError("All frequencies must be at least one.")
 
         self.logger_methods = defaultdict(list)
-        self.log_methods_cntr = defaultdict(int)
+        self.log_methods_cntr = defaultdict(dict)
         self.log_methods_freq = defaultdict(int)
+        self.log_methods_name_cntr = defaultdict(int)
 
         for logger, freq in zip(self.loggers, self.frequencies):
 
@@ -54,6 +63,7 @@ class CombinedLogger(object):
                     self.logger_methods[el].append(getattr(logger, el))
                     self.log_methods_cntr[getattr(logger, el)] = 0
                     self.log_methods_freq[getattr(logger, el)] = freq
+                    self.log_methods_name_cntr[getattr(logger, el)] = defaultdict(int)
 
         for method_name, sub_methods in self.logger_methods.items():
             setattr(self, method_name, create_function(self, sub_methods))
