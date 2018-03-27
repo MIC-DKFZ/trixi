@@ -136,8 +136,26 @@ def overview():
         print(e.__repr__())
         abort(500)
 
+@app.route('/experiment/', methods=['GET'])
+def experiment():
+
+    experiments = request.args.getlist('exp')
+
+    results = []
+    for experiment in experiments:
+        exp = Experiment(os.path.join(base_dir, experiment))
+        results.append(exp.get_results())
+    # results = merge_results(results)
+
+    content = {}
+    # content["graphs"] = make_graphs(results)
+    content["title"] = experiments
+
+    return render_template('experiment.html', **content)
+
+
 @app.route('/experiment/<experiment_name>', methods=['GET'])
-def experiment(experiment_name):
+def experiment_(experiment_name):
 
     experiment_dir = os.path.join(base_dir, experiment_name)
     if not os.path.exists(experiment_dir) or not os.path.isdir(experiment_dir):
