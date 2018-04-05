@@ -38,6 +38,8 @@ class Experiment(object):
             self.prepare()
 
             self.exp_state = "Started"
+            self.elog.print("Experiment started.")
+
             for epoch in range(self.n_epochs):
                 self.epoch_idx = epoch
                 self.train(epoch=epoch)
@@ -45,10 +47,11 @@ class Experiment(object):
                 self._end_epoch_internal(epoch=epoch)
 
             self.exp_state = "Trained"
+            self.elog.print("Training complete.")
 
-            print("Trained.")
             self.end()
             self.exp_state = "Ended"
+            self.elog.print("Experiment ended.")
 
             self.time_end = time.strftime("%y-%m-%d_%H:%M:%S", time.localtime(time.time()))
 
@@ -73,11 +76,13 @@ class Experiment(object):
                 self.prepare()
 
             self.exp_state = "Testing"
+            self.elog.print("Start test.")
+
             self.test()
             self.end_test()
-            self.exp_state = "Tested"
 
-            print("Tested.")
+            self.exp_state = "Tested"
+            self.elog.print("Testing complete.")
 
         except Exception as e:
 
@@ -236,7 +241,6 @@ class PyTorchExperiment(Experiment):
 
     def process_err(self, e):
         self.elog.text_logger.log_to("\n".join(traceback.format_tb(e.__traceback__)), "err")
-        print("err", "\n".join(traceback.format_tb(e.__traceback__)))
 
     def update_attributes(self, var_dict, ignore=()):
         for key, val in var_dict.items():
@@ -382,6 +386,7 @@ class PyTorchExperiment(Experiment):
         self.elog.print("Testing ended. Results stored =)")
 
     def at_exit_func(self):
+        print("at_exit_func called, state is {}".format(self.exp_state))
         if self.exp_state not in ("Ended", "Tested"):
             if isinstance(self.results, ResultLogDict):
                 self.results.print_to_file("]")
@@ -442,11 +447,11 @@ class PyTorchExperiment(Experiment):
 
     def add_result(self, value, name, counter=None, label=None, plot_result=True):
 
-        lable_name = label
-        if lable_name is None:
-            lable_name = name
+        label_name = label
+        if label_name is None:
+            label_name = name
 
-        r_elem = ResultElement(data=value, label=lable_name, epoch=self.epoch_idx, counter=counter)
+        r_elem = ResultElement(data=value, label=label_name, epoch=self.epoch_idx, counter=counter)
 
         self.results[name] = r_elem
 

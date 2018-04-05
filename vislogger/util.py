@@ -293,7 +293,7 @@ class ResultLogDict(LogDict):
     def __setitem__(self, key, item):
 
         if key == "cntr_dict":
-            raise ValueError("In ResultLogDict you can not add a item with key 'cntr_dict'")
+            raise ValueError("In ResultLogDict you can not add an item with key 'cntr_dict'")
 
         data = item
         if isinstance(item, dict) and "data" in item and "label" in item and "epoch" in item:

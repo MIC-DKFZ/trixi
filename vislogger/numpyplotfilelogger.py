@@ -26,7 +26,6 @@ class NumpyPlotFileLogger(NumpySeabornPlotLogger):
     def show_value(self, value, name, count=None, tag=None, file_format=".png", *args, **kwargs):
         """Abstract method which should handle and somehow log/ store a value"""
         figure = NumpySeabornPlotLogger.show_value(self, value, name, count, tag, show=False)
-        print("name:", name)
         threaded(figure.savefig)(os.path.join(self.plot_dir, name) + file_format)
 
     @convert_params
