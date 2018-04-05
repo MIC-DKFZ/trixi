@@ -377,7 +377,7 @@ class PyTorchExperiment(Experiment):
     def end(self):
         if isinstance(self.results, ResultLogDict):
             self.results.print_to_file("]")
-        self.save_results(name="results-last.json")
+        self.save_results()
         self.save_end_checkpoint()
         self.elog.print("Experiment ended. Checkpoints stored =)")
 
@@ -392,6 +392,7 @@ class PyTorchExperiment(Experiment):
             self.save_checkpoint(name="checkpoint_exit-" + self.exp_state)
             self.save_results(name="results-" + self.exp_state + ".json")
             self.elog.print("Experiment exited. Checkpoints stored =)")
+        time.sleep(2)  # allow checkpoint saving to finish
 
     def _setup_internal(self):
         self.prepare_resume()
