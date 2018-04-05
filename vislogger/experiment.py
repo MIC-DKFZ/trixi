@@ -11,7 +11,6 @@ import time
 import torch
 import vislogger
 import warnings
-from collections import defaultdict
 from vislogger import Config
 from vislogger.sourcepacker import SourcePacker
 from vislogger.util import name_and_iter_to_filename, ResultLogDict, ResultElement
@@ -146,7 +145,7 @@ class PyTorchExperiment(Experiment):
                  vislogger_c_freq=1,
                  use_explogger=True,
                  explogger_kwargs=None,
-                 explogger_c_freq=100):
+                 explogger_c_freq=1):
         """Inits an algo with a config, config needs to a n_epochs, name, output_folder and seed !"""
         # super(PyTorchExperiment, self).__init__()
         Experiment.__init__(self)
@@ -175,7 +174,7 @@ class PyTorchExperiment(Experiment):
         self.seed = seed
         if "seed" in config:
             self.seed = config.seed
-        if seed is None:
+        if self.seed is None:
             random_data = os.urandom(4)
             seed = int.from_bytes(random_data, byteorder="big")
             config.seed = seed
@@ -441,7 +440,7 @@ class PyTorchExperiment(Experiment):
     def save_end_checkpoint(self):
         self.save_checkpoint(name="checkpoint_last")
 
-    def add_result(self, value, name, label=None, counter=None, plot_result=True):
+    def add_result(self, value, name, counter=None, label=None, plot_result=True):
 
         lable_name = label
         if lable_name is None:

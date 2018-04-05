@@ -70,7 +70,7 @@ class NumpyVisdomLogger(AbstractLogger):
                 show_fn = self.show_funcs[vis_task["type"]]
                 show_fn(self, **vis_task)
 
-            except:
+            except Exception as e:
 
                 error = sys.exc_info()[0]
                 msg = traceback.format_exc()
@@ -219,7 +219,6 @@ class NumpyVisdomLogger(AbstractLogger):
                 tag = name
         if "showlegend" not in opts and show_legend:
             opts["showlegend"] = True
-
 
         up_str = None
         if name is not None and name in self._value_counter:
@@ -889,4 +888,3 @@ def start_visdom(port_list=(8080, 8000)):
             pass
 
     return -1
-
