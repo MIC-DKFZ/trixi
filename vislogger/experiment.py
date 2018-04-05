@@ -38,7 +38,7 @@ class Experiment(object):
             self.prepare()
 
             self.exp_state = "Started"
-            self.elog.print("Experiment started.")
+            print("Experiment started.")
 
             for epoch in range(self.n_epochs):
                 self.epoch_idx = epoch
@@ -47,11 +47,11 @@ class Experiment(object):
                 self._end_epoch_internal(epoch=epoch)
 
             self.exp_state = "Trained"
-            self.elog.print("Training complete.")
+            print("Training complete.")
 
             self.end()
             self.exp_state = "Ended"
-            self.elog.print("Experiment ended.")
+            print("Experiment ended.")
 
             self.time_end = time.strftime("%y-%m-%d_%H:%M:%S", time.localtime(time.time()))
 
@@ -76,13 +76,13 @@ class Experiment(object):
                 self.prepare()
 
             self.exp_state = "Testing"
-            self.elog.print("Start test.")
+            print("Start test.")
 
             self.test()
             self.end_test()
 
             self.exp_state = "Tested"
-            self.elog.print("Testing complete.")
+            print("Testing complete.")
 
         except Exception as e:
 
@@ -377,7 +377,7 @@ class PyTorchExperiment(Experiment):
     def end(self):
         if isinstance(self.results, ResultLogDict):
             self.results.print_to_file("]")
-        self.save_results()
+        self.save_results(name="results-last.json")
         self.save_end_checkpoint()
         self.elog.print("Experiment ended. Checkpoints stored =)")
 
@@ -386,7 +386,6 @@ class PyTorchExperiment(Experiment):
         self.elog.print("Testing ended. Results stored =)")
 
     def at_exit_func(self):
-        print("at_exit_func called, state is {}".format(self.exp_state))
         if self.exp_state not in ("Ended", "Tested"):
             if isinstance(self.results, ResultLogDict):
                 self.results.print_to_file("]")
