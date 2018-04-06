@@ -63,6 +63,7 @@ class NumpyVisdomLogger(AbstractLogger):
         """
 
         while True:
+
             vis_task = queue.get()
 
             try:
