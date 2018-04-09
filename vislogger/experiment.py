@@ -11,7 +11,6 @@ import time
 import torch
 import vislogger
 import warnings
-from collections import defaultdict
 from vislogger import Config
 from vislogger.sourcepacker import SourcePacker
 from vislogger.util import name_and_iter_to_filename, ResultLogDict, ResultElement
@@ -39,6 +38,8 @@ class Experiment(object):
             self.prepare()
 
             self.exp_state = "Started"
+            print("Experiment started.")
+
             for epoch in range(self.n_epochs):
                 self.epoch_idx = epoch
                 self.train(epoch=epoch)
@@ -46,10 +47,11 @@ class Experiment(object):
                 self._end_epoch_internal(epoch=epoch)
 
             self.exp_state = "Trained"
+            print("Training complete.")
 
-            print("Trained.")
             self.end()
             self.exp_state = "Ended"
+            print("Experiment ended.")
 
             self.time_end = time.strftime("%y-%m-%d_%H:%M:%S", time.localtime(time.time()))
 
@@ -74,11 +76,13 @@ class Experiment(object):
                 self.prepare()
 
             self.exp_state = "Testing"
+            print("Start test.")
+
             self.test()
             self.end_test()
-            self.exp_state = "Tested"
 
-            print("Tested.")
+            self.exp_state = "Tested"
+            print("Testing complete.")
 
         except Exception as e:
 
@@ -146,7 +150,7 @@ class PyTorchExperiment(Experiment):
                  vislogger_c_freq=1,
                  use_explogger=True,
                  explogger_kwargs=None,
-                 explogger_c_freq=100):
+                 explogger_c_freq=1):
         """Inits an algo with a config, config needs to a n_epochs, name, output_folder and seed !"""
         # super(PyTorchExperiment, self).__init__()
         Experiment.__init__(self)
@@ -175,7 +179,7 @@ class PyTorchExperiment(Experiment):
         self.seed = seed
         if "seed" in config:
             self.seed = config.seed
-        if seed is None:
+        if self.seed is None:
             random_data = os.urandom(4)
             seed = int.from_bytes(random_data, byteorder="big")
             config.seed = seed
@@ -237,7 +241,6 @@ class PyTorchExperiment(Experiment):
 
     def process_err(self, e):
         self.elog.text_logger.log_to("\n".join(traceback.format_tb(e.__traceback__)), "err")
-        print("err", "\n".join(traceback.format_tb(e.__traceback__)))
 
     def update_attributes(self, var_dict, ignore=()):
         for key, val in var_dict.items():
@@ -389,6 +392,7 @@ class PyTorchExperiment(Experiment):
             self.save_checkpoint(name="checkpoint_exit-" + self.exp_state)
             self.save_results(name="results-" + self.exp_state + ".json")
             self.elog.print("Experiment exited. Checkpoints stored =)")
+        time.sleep(2)  # allow checkpoint saving to finish
 
     def _setup_internal(self):
         self.prepare_resume()
@@ -441,13 +445,13 @@ class PyTorchExperiment(Experiment):
     def save_end_checkpoint(self):
         self.save_checkpoint(name="checkpoint_last")
 
-    def add_result(self, value, name, label=None, counter=None, plot_result=True):
+    def add_result(self, value, name, counter=None, label=None, plot_result=True):
 
-        lable_name = label
-        if lable_name is None:
-            lable_name = name
+        label_name = label
+        if label_name is None:
+            label_name = name
 
-        r_elem = ResultElement(data=value, label=lable_name, epoch=self.epoch_idx, counter=counter)
+        r_elem = ResultElement(data=value, label=label_name, epoch=self.epoch_idx, counter=counter)
 
         self.results[name] = r_elem
 

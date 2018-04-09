@@ -33,21 +33,20 @@ class NumpySeabornPlotLogger(AbstractLogger):
         return figure
 
     @convert_params
-    def show_value(self, value, name, counter=None, tag=None, show=True, *args, **kwargs):
+    def show_value(self, value, name, count=None, tag=None, show=True, *args, **kwargs):
         """A method which should handle and somehow log/ store a value"""
         figure = self.get_figure(name)
         plt.clf()
 
         seaborn.set_style("whitegrid")
 
-
         if tag is None:
             tag = name
 
-        if counter is None:
-            counter = len(self.values[name][tag]) + 1
+        if count is None:
+            count = len(self.values[name][tag]) + 1
 
-        max_val = max(self.max_values[name], counter)
+        max_val = max(self.max_values[name], count)
         self.max_values[name] = max_val
         self.values[name][tag].append((value, max_val))
 
@@ -61,8 +60,6 @@ class NumpySeabornPlotLogger(AbstractLogger):
             plt.pause(0.01)
 
         return figure
-
-
 
     @convert_params
     def show_barplot(self, array, name, show=True, *args, **kwargs):
@@ -135,7 +132,6 @@ class NumpySeabornPlotLogger(AbstractLogger):
             plt.pause(0.01)
 
         return figure
-
 
     def get_figure(self, name):
         """

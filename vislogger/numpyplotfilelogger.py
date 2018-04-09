@@ -8,6 +8,7 @@ if use_agg: matplotlib.use("Agg")
 from vislogger.numpyseabornplotlogger import NumpySeabornPlotLogger
 from vislogger.abstractlogger import convert_params, threaded
 
+
 class NumpyPlotFileLogger(NumpySeabornPlotLogger):
 
     def __init__(self, img_dir, plot_dir, **kwargs):
@@ -22,9 +23,9 @@ class NumpyPlotFileLogger(NumpySeabornPlotLogger):
         threaded(figure.savefig)(os.path.join(self.image_dir, name) + file_format)
 
     @convert_params
-    def show_value(self, value, name, file_format=".png", *args, **kwargs):
+    def show_value(self, value, name, count=None, tag=None, file_format=".png", *args, **kwargs):
         """Abstract method which should handle and somehow log/ store a value"""
-        figure = NumpySeabornPlotLogger.show_value(self, value, name, show=False)
+        figure = NumpySeabornPlotLogger.show_value(self, value, name, count, tag, show=False)
         threaded(figure.savefig)(os.path.join(self.plot_dir, name) + file_format)
 
     @convert_params
