@@ -288,6 +288,8 @@ class NumpyVisdomLogger(AbstractLogger):
        This function does all the magic.
         """
 
+        text = text.replace("\n", "<br>")
+
         if opts is None:
             opts = {}
         win = self.vis.text(
