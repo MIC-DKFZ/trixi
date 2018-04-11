@@ -94,7 +94,9 @@ class Config(dict):
 
         return Config(config=conv_config)
 
-
+    def __str__(self):
+        json_str = json.dumps(self, cls=ModuleMultiTypeEncoder, indent=4, sort_keys=True)
+        return json_str
 
 
 def update_from_sys_argv(config):

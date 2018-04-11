@@ -1,4 +1,5 @@
 import json
+import string
 import traceback
 
 import atexit
@@ -150,7 +151,8 @@ class PyTorchExperiment(Experiment):
                  vislogger_c_freq=1,
                  use_explogger=True,
                  explogger_kwargs=None,
-                 explogger_c_freq=1):
+                 explogger_c_freq=1,
+                 append_rnd_to_name=False):
         """Inits an algo with a config, config needs to a n_epochs, name, output_folder and seed !"""
         # super(PyTorchExperiment, self).__init__()
         Experiment.__init__(self)
@@ -162,15 +164,15 @@ class PyTorchExperiment(Experiment):
             if resume_path:
                 resume = resume_path
 
-        self.__config_raw = None
+        self._config_raw = None
         if isinstance(config, str):
-            self.__config_raw = Config(file_=config, update_from_argv=True)
+            self._config_raw = Config(file_=config, update_from_argv=True)
         elif isinstance(config, Config):
-            self.__config_raw = config
+            self._config_raw = config
         elif isinstance(config, dict):
-            self.__config_raw = Config(config=config)
+            self._config_raw = Config(config=config)
         else:
-            self.__config_raw = Config(update_from_argv=True)
+            self._config_raw = Config(update_from_argv=True)
 
         self.n_epochs = n_epochs
         if "n_epochs" in config:
@@ -189,6 +191,10 @@ class PyTorchExperiment(Experiment):
         if "name" in config:
             name = config.name
             self.exp_name = config.name
+        if append_rnd_to_name:
+            rnd_str = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(5))
+            self.exp_name += "-"+rnd_str
+        print("Experiment: ", self.exp_name)
 
         if "base_dir" in config:
             base_dir = config.base_dir
@@ -235,7 +241,7 @@ class PyTorchExperiment(Experiment):
             SourcePacker.zip_sources(globs, zip_name)
 
         # Init objects in config
-        self.config = Config.init_objects(self.__config_raw)
+        self.config = Config.init_objects(self._config_raw)
 
         atexit.register(self.at_exit_func)
 
@@ -396,7 +402,7 @@ class PyTorchExperiment(Experiment):
 
     def _setup_internal(self):
         self.prepare_resume()
-        self.elog.save_config(self.__config_raw, "config")
+        self.elog.save_config(self._config_raw, "config")
 
     def prepare_resume(self):
         checkpoint_file = ""
@@ -425,8 +431,8 @@ class PyTorchExperiment(Experiment):
             if not self.ignore_resume_config:
                 load_config = Config()
                 load_config.load(os.path.join(base_dir, "config/config.json"))
-                self.__config_raw = load_config
-                self.config = Config.init_objects(self.__config_raw)
+                self._config_raw = load_config
+                self.config = Config.init_objects(self._config_raw)
                 self.elog.print("Loaded existing config from:", base_dir)
 
         if checkpoint_file:
