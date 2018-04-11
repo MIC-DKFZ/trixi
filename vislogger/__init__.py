@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use("agg")
+
 from vislogger.config import Config
 from vislogger.abstractlogger import AbstractLogger
 from vislogger.combinedlogger import CombinedLogger
