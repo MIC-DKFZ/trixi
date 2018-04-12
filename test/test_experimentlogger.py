@@ -46,13 +46,24 @@ class TestExperimentLogger(unittest.TestCase):
                                    err_msg="loading checkpoint did not restore model values")
 
     def test_net_save_and_load_with_optimizer(self):
-        net = Net()
-        criterion = torch.nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(net.parameters(), lr=1e-9, eps=1e-7, weight_decay=1e-4, betas=(0.3,0.4))
+        self._test_load_save(test_with_cuda=False)
 
+    def test_net_save_and_load_with_optimizer_with_cuda(self):
+        self._test_load_save(test_with_cuda=True)
+
+    def _test_load_save(self, test_with_cuda):
+        # small testing net
+        net = Net()
         # fake values for fake step
         random_input = np_to_var(np.random.randn(28*28).reshape((1,1, 28, 28)))
         fake_labels = np_to_var(np.array([2])).long()
+
+        if test_with_cuda:
+            net.cuda()
+            random_input, fake_labels = random_input.cuda(), fake_labels.cuda()
+
+        criterion = torch.nn.CrossEntropyLoss()
+        optimizer = torch.optim.Adam(net.parameters(), lr=1e-9, eps=1e-7, weight_decay=1e-4, betas=(0.3,0.4))
 
         # do a fake forward/backward/step pass
         pred = net(random_input)
@@ -65,22 +76,32 @@ class TestExperimentLogger(unittest.TestCase):
         save_fn(n_iter=1)
         # give some time before loading, so saving has finished
         time.sleep(1)
-        net2 = Net()
-        optimizer2 = torch.optim.Adam(net2.parameters(), lr=1e-10)
-        self.experimentLogger.load_last_checkpoint(dir="test_dir/test/checkpoint/", net=net2, optimizer=optimizer2)
 
-        pg1 = optimizer.param_groups[0]
-        pg2 = optimizer2.param_groups[0]
+        loaded_network = Net()
+        if test_with_cuda:
+            loaded_network.cuda()
+
+        loaded_optimizer = torch.optim.Adam(loaded_network.parameters(), lr=1e-10)
+        self.experimentLogger.load_last_checkpoint(dir="test_dir/test/checkpoint/", net=loaded_network, optimizer=loaded_optimizer)
+
+        saved_pg = optimizer.param_groups[0]
+        loaded_pg = loaded_optimizer.param_groups[0]
 
         # assert optimizer values have been correctly saved/loaded
-        self.assertAlmostEqual(pg1["lr"], pg2["lr"], "learning rate not correctly saved")
-        self.assertAlmostEqual(pg1["eps"], pg2["eps"], "eps not correctly saved")
-        self.assertAlmostEqual(pg1["weight_decay"], pg2["weight_decay"], "weight_decay not correctly saved")
-        self.assertAlmostEqual(pg1["betas"][0], pg2["betas"][0], "beta 0 not correctly saved")
-        self.assertAlmostEqual(pg1["betas"][1], pg2["betas"][1], "beta 1 not correctly saved")
-        for p1, p2 in zip(pg1["params"], pg2["params"]):
-            np.testing.assert_allclose(p1.data.numpy(), p2.data.numpy(),
+        self.assertAlmostEqual(saved_pg["lr"], loaded_pg["lr"], "learning rate not correctly saved")
+        self.assertAlmostEqual(saved_pg["eps"], loaded_pg["eps"], "eps not correctly saved")
+        self.assertAlmostEqual(saved_pg["weight_decay"], loaded_pg["weight_decay"], "weight_decay not correctly saved")
+        self.assertAlmostEqual(saved_pg["betas"][0], loaded_pg["betas"][0], "beta 0 not correctly saved")
+        self.assertAlmostEqual(saved_pg["betas"][1], loaded_pg["betas"][1], "beta 1 not correctly saved")
+        for saved_parameter, loaded_parameter in zip(saved_pg["params"], loaded_pg["params"]):
+            np.testing.assert_allclose(saved_parameter.data.cpu().numpy(), loaded_parameter.data.cpu().numpy(),
                                        err_msg="loading checkpoint did not restore optimizer param values")
+
+        # do a fake forward/backward/step pass with loaded stuff
+        pred = loaded_network(random_input)
+        err = criterion(pred, fake_labels)
+        err.backward()
+        loaded_optimizer.step()  # this could raise an error, which is why there is no assert but just the execution
 
     def tearDown(self):
         remove_if_exists(test_dir)
