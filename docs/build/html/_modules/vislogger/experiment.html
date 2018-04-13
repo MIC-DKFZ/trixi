@@ -1,0 +1,800 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>vislogger.experiment &mdash; TRIXI 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> TRIXI
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Sphinx Setup</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../sphinx.html">Sphinx Setup</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Package Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">vislogger3</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">TRIXI</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>vislogger.experiment</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for vislogger.experiment</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">string</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+
+<span class="kn">import</span> <span class="nn">atexit</span>
+<span class="kn">import</span> <span class="nn">fnmatch</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">vislogger</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">vislogger</span> <span class="k">import</span> <span class="n">Config</span>
+<span class="kn">from</span> <span class="nn">vislogger.sourcepacker</span> <span class="k">import</span> <span class="n">SourcePacker</span>
+<span class="kn">from</span> <span class="nn">vislogger.util</span> <span class="k">import</span> <span class="n">name_and_iter_to_filename</span><span class="p">,</span> <span class="n">ResultLogDict</span><span class="p">,</span> <span class="n">ResultElement</span>
+
+
+<div class="viewcode-block" id="Experiment"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.Experiment">[docs]</a><span class="k">class</span> <span class="nc">Experiment</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="c1"># super(Experiment, self).__init__()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_epochs</span> <span class="o">=</span> <span class="n">n_epochs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exp_state</span> <span class="o">=</span> <span class="s2">&quot;Preparing&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_start</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_end</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epoch_idx</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="Experiment.run"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.Experiment.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This method runs the experiment&quot;&quot;&quot;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%y-%m-</span><span class="si">%d</span><span class="s2">_%H:%M:%S&quot;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_end</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_setup_internal</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">prepare</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">exp_state</span> <span class="o">=</span> <span class="s2">&quot;Started&quot;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Experiment started.&quot;</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_epochs</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">epoch_idx</span> <span class="o">=</span> <span class="n">epoch</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_end_epoch_internal</span><span class="p">(</span><span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">exp_state</span> <span class="o">=</span> <span class="s2">&quot;Trained&quot;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Training complete.&quot;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exp_state</span> <span class="o">=</span> <span class="s2">&quot;Ended&quot;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Experiment ended.&quot;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%y-%m-</span><span class="si">%d</span><span class="s2">_%H:%M:%S&quot;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+
+            <span class="c1"># run_error = e</span>
+            <span class="c1"># run_error_traceback = traceback.format_tb(e.__traceback__)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exp_state</span> <span class="o">=</span> <span class="s2">&quot;Error&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">process_err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%y-%m-</span><span class="si">%d</span><span class="s2">_%H:%M:%S&quot;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">localtime</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))</span>
+
+            <span class="k">raise</span> <span class="n">e</span></div>
+
+<div class="viewcode-block" id="Experiment.run_test"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.Experiment.run_test">[docs]</a>    <span class="k">def</span> <span class="nf">run_test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">setup</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This method runs the experiment&quot;&quot;&quot;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+
+            <span class="k">if</span> <span class="n">setup</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_setup_internal</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">prepare</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">exp_state</span> <span class="o">=</span> <span class="s2">&quot;Testing&quot;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Start test.&quot;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">end_test</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">exp_state</span> <span class="o">=</span> <span class="s2">&quot;Tested&quot;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Testing complete.&quot;</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+
+            <span class="c1"># run_error = e</span>
+            <span class="c1"># run_error_traceback = traceback.format_tb(e.__traceback__)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exp_state</span> <span class="o">=</span> <span class="s2">&quot;Error&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">process_err</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+            <span class="k">raise</span> <span class="n">e</span></div>
+
+<div class="viewcode-block" id="Experiment.setup"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.Experiment.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Is called at the beginning of each experiment run to setup the basic components needed for a run&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Experiment.train"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.Experiment.train">[docs]</a>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The training part of the experiment, it is called once for each epoch&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Experiment.validate"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.Experiment.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The evaluation/valdiation part of the experiment, it is called once for each epoch (after the training</span>
+<span class="sd">        part)&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Experiment.test"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.Experiment.test">[docs]</a>    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The testing part of the experiment&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Experiment.process_err"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.Experiment.process_err">[docs]</a>    <span class="k">def</span> <span class="nf">process_err</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+    <span class="k">def</span> <span class="nf">_setup_internal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_end_epoch_internal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="Experiment.end"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.Experiment.end">[docs]</a>    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Is called at the end of each experiment&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Experiment.end_test"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.Experiment.end_test">[docs]</a>    <span class="k">def</span> <span class="nf">end_test</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Is called at the end of each experiment test&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Experiment.prepare"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.Experiment.prepare">[docs]</a>    <span class="k">def</span> <span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This method is called directly before the experiment training starts&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div></div>
+
+
+<div class="viewcode-block" id="PyTorchExperiment"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment">[docs]</a><span class="k">class</span> <span class="nc">PyTorchExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">n_epochs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">base_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">globs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">resume</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">ignore_resume_config</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">resume_save_types</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;optimizer&quot;</span><span class="p">,</span> <span class="s2">&quot;simple&quot;</span><span class="p">,</span> <span class="s2">&quot;th_vars&quot;</span><span class="p">,</span> <span class="s2">&quot;results&quot;</span><span class="p">),</span>
+                 <span class="n">parse_sys_argv</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">checkpoint_to_cpu</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">use_vislogger</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">vislogger_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">vislogger_c_freq</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">use_explogger</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">explogger_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">explogger_c_freq</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">append_rnd_to_name</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Inits an algo with a config, config needs to a n_epochs, name, output_folder and seed !&quot;&quot;&quot;</span>
+        <span class="c1"># super(PyTorchExperiment, self).__init__()</span>
+        <span class="n">Experiment</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">parse_sys_argv</span><span class="p">:</span>
+            <span class="n">config_path</span><span class="p">,</span> <span class="n">resume_path</span> <span class="o">=</span> <span class="n">get_vars_from_sys_argv</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">config_path</span><span class="p">:</span>
+                <span class="n">config</span> <span class="o">=</span> <span class="n">config_path</span>
+            <span class="k">if</span> <span class="n">resume_path</span><span class="p">:</span>
+                <span class="n">resume</span> <span class="o">=</span> <span class="n">resume_path</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_config_raw</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_config_raw</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="n">file_</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">update_from_argv</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">Config</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_config_raw</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_config_raw</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_config_raw</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="n">update_from_argv</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_epochs</span> <span class="o">=</span> <span class="n">n_epochs</span>
+        <span class="k">if</span> <span class="s2">&quot;n_epochs&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_epochs</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">n_epochs</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span>
+        <span class="k">if</span> <span class="s2">&quot;seed&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">seed</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">random_data</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">urandom</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+            <span class="n">seed</span> <span class="o">=</span> <span class="nb">int</span><span class="o">.</span><span class="n">from_bytes</span><span class="p">(</span><span class="n">random_data</span><span class="p">,</span> <span class="n">byteorder</span><span class="o">=</span><span class="s2">&quot;big&quot;</span><span class="p">)</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">exp_name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">if</span> <span class="s2">&quot;name&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">name</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exp_name</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">if</span> <span class="n">append_rnd_to_name</span><span class="p">:</span>
+            <span class="n">rnd_str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span> <span class="o">+</span> <span class="n">string</span><span class="o">.</span><span class="n">digits</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exp_name</span> <span class="o">+=</span> <span class="s2">&quot;-&quot;</span><span class="o">+</span><span class="n">rnd_str</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Experiment: &quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">&quot;base_dir&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+            <span class="n">base_dir</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">base_dir</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_to_cpu</span> <span class="o">=</span> <span class="n">checkpoint_to_cpu</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+        <span class="c1"># Init loggers</span>
+        <span class="n">logger_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">use_vislogger</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">vislogger_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">vislogger_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vlog</span> <span class="o">=</span> <span class="n">vislogger</span><span class="o">.</span><span class="n">pytorchvisdomlogger</span><span class="o">.</span><span class="n">PytorchVisdomLogger</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">exp_name</span><span class="p">,</span> <span class="o">**</span><span class="n">vislogger_kwargs</span><span class="p">)</span>
+            <span class="n">logger_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">vlog</span><span class="p">,</span> <span class="n">vislogger_c_freq</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">use_explogger</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">explogger_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">explogger_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">elog</span> <span class="o">=</span> <span class="n">vislogger</span><span class="o">.</span><span class="n">pytorchexperimentlogger</span><span class="o">.</span><span class="n">PytorchExperimentLogger</span><span class="p">(</span><span class="n">base_dir</span><span class="o">=</span><span class="n">base_dir</span><span class="p">,</span>
+                                                                                  <span class="n">experiment_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                                                                                  <span class="o">**</span><span class="n">explogger_kwargs</span><span class="p">)</span>
+            <span class="n">logger_list</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="p">,</span> <span class="n">explogger_c_freq</span><span class="p">))</span>
+
+            <span class="c1"># Set results log dict to the right path</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="o">=</span> <span class="n">ResultLogDict</span><span class="p">(</span><span class="s2">&quot;results-log.json&quot;</span><span class="p">,</span> <span class="n">base_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">result_dir</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">print_to_file</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">clog</span> <span class="o">=</span> <span class="n">vislogger</span><span class="o">.</span><span class="n">CombinedLogger</span><span class="p">(</span><span class="o">*</span><span class="n">logger_list</span><span class="p">)</span>
+
+        <span class="n">set_seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
+
+        <span class="c1"># Do the resume stuff</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resume_path</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resume_save_types</span> <span class="o">=</span> <span class="n">resume_save_types</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ignore_resume_config</span> <span class="o">=</span> <span class="n">ignore_resume_config</span>
+        <span class="k">if</span> <span class="n">resume</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resume</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">resume_path</span> <span class="o">=</span> <span class="n">resume</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resume</span><span class="p">,</span> <span class="n">PyTorchExperiment</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">resume_path</span> <span class="o">=</span> <span class="n">resume</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">base_dir</span>
+
+        <span class="c1"># self.elog.save_config(self.config, &quot;config_pre&quot;)</span>
+        <span class="k">if</span> <span class="n">globs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">zip_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span> <span class="s2">&quot;sources.zip&quot;</span><span class="p">)</span>
+            <span class="n">SourcePacker</span><span class="o">.</span><span class="n">zip_sources</span><span class="p">(</span><span class="n">globs</span><span class="p">,</span> <span class="n">zip_name</span><span class="p">)</span>
+
+        <span class="c1"># Init objects in config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">Config</span><span class="o">.</span><span class="n">init_objects</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config_raw</span><span class="p">)</span>
+
+        <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">at_exit_func</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PyTorchExperiment.process_err"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.process_err">[docs]</a>    <span class="k">def</span> <span class="nf">process_err</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">text_logger</span><span class="o">.</span><span class="n">log_to</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_tb</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">__traceback__</span><span class="p">)),</span> <span class="s2">&quot;err&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.update_attributes"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.update_attributes">[docs]</a>    <span class="k">def</span> <span class="nf">update_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_dict</span><span class="p">,</span> <span class="n">ignore</span><span class="o">=</span><span class="p">()):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">var_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">ignore</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.get_pytorch_modules"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.get_pytorch_modules">[docs]</a>    <span class="k">def</span> <span class="nf">get_pytorch_modules</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns all pytorch (nn) modules stored in the algo in a dict&quot;&quot;&quot;</span>
+        <span class="n">pyth_modules</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+                <span class="n">pyth_modules</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">return</span> <span class="n">pyth_modules</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.get_pytorch_optimizers"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.get_pytorch_optimizers">[docs]</a>    <span class="k">def</span> <span class="nf">get_pytorch_optimizers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns all pytorch optimizers stored in the algo in a dict&quot;&quot;&quot;</span>
+        <span class="n">pyth_optimizers</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">):</span>
+                <span class="n">pyth_optimizers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">return</span> <span class="n">pyth_optimizers</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.get_simple_variables"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.get_simple_variables">[docs]</a>    <span class="k">def</span> <span class="nf">get_simple_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ignore</span><span class="o">=</span><span class="p">()):</span>
+        <span class="sd">&quot;&quot;&quot;Returns all variables in the experiment which might be interesting&quot;&quot;&quot;</span>
+        <span class="n">simple_vars</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">ignore</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+                <span class="n">simple_vars</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">return</span> <span class="n">simple_vars</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.get_pytorch_variables"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.get_pytorch_variables">[docs]</a>    <span class="k">def</span> <span class="nf">get_pytorch_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ignore</span><span class="o">=</span><span class="p">()):</span>
+        <span class="sd">&quot;&quot;&quot;Returns all variables in the experiment which might be interesting&quot;&quot;&quot;</span>
+        <span class="n">pytorch_vars</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">ignore</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="p">(</span><span class="o">*</span><span class="n">torch</span><span class="o">.</span><span class="n">_tensor_classes</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">Variable</span><span class="p">)):</span>
+                <span class="n">pytorch_vars</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">return</span> <span class="n">pytorch_vars</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.save_results"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.save_results">[docs]</a>    <span class="k">def</span> <span class="nf">save_results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;results.json&quot;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">result_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="n">file_</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.save_pytorch_models"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.save_pytorch_models">[docs]</a>    <span class="k">def</span> <span class="nf">save_pytorch_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">pyth_modules</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pytorch_modules</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">pyth_modules</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">save_model</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.load_pytorch_models"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.load_pytorch_models">[docs]</a>    <span class="k">def</span> <span class="nf">load_pytorch_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">pyth_modules</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pytorch_modules</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">pyth_modules</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.log_simple_vars"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.log_simple_vars">[docs]</a>    <span class="k">def</span> <span class="nf">log_simple_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">simple_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_simple_variables</span><span class="p">()</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">log_dir</span><span class="p">,</span> <span class="s2">&quot;simple_vars.json&quot;</span><span class="p">),</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">simple_vars</span><span class="p">,</span> <span class="n">file_</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.load_simple_vars"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.load_simple_vars">[docs]</a>    <span class="k">def</span> <span class="nf">load_simple_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">simple_vars</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">log_dir</span><span class="p">,</span> <span class="s2">&quot;simple_vars.json&quot;</span><span class="p">),</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file_</span><span class="p">:</span>
+            <span class="n">simple_vars</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file_</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_attributes</span><span class="p">(</span><span class="n">simple_vars</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.save_checkpoint"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.save_checkpoint">[docs]</a>    <span class="k">def</span> <span class="nf">save_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;checkpoint&quot;</span><span class="p">,</span> <span class="n">save_types</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;optimizer&quot;</span><span class="p">,</span> <span class="s2">&quot;simple&quot;</span><span class="p">,</span> <span class="s2">&quot;th_vars&quot;</span><span class="p">,</span> <span class="s2">&quot;results&quot;</span><span class="p">),</span>
+                        <span class="n">n_iter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iter_format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{:05d}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+        <span class="n">model_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">optimizer_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">simple_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">th_vars_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">results_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="s2">&quot;model&quot;</span> <span class="ow">in</span> <span class="n">save_types</span><span class="p">:</span>
+            <span class="n">model_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pytorch_modules</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s2">&quot;optimizer&quot;</span> <span class="ow">in</span> <span class="n">save_types</span><span class="p">:</span>
+            <span class="n">optimizer_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pytorch_optimizers</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s2">&quot;simple&quot;</span> <span class="ow">in</span> <span class="n">save_types</span><span class="p">:</span>
+            <span class="n">simple_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_simple_variables</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s2">&quot;th_vars&quot;</span> <span class="ow">in</span> <span class="n">save_types</span><span class="p">:</span>
+            <span class="n">th_vars_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pytorch_variables</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s2">&quot;results&quot;</span> <span class="ow">in</span> <span class="n">save_types</span><span class="p">:</span>
+            <span class="n">results_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="p">}</span>
+
+        <span class="n">checkpoint_dict</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">model_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">optimizer_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">simple_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">th_vars_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">results_dict</span><span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">=</span><span class="n">n_iter</span><span class="p">,</span> <span class="n">iter_format</span><span class="o">=</span><span class="n">iter_format</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+                                  <span class="n">move_to_cpu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_to_cpu</span><span class="p">,</span> <span class="o">**</span><span class="n">checkpoint_dict</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.load_checkpoint"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.load_checkpoint">[docs]</a>    <span class="k">def</span> <span class="nf">load_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;checkpoint&quot;</span><span class="p">,</span> <span class="n">save_types</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;optimizer&quot;</span><span class="p">,</span> <span class="s2">&quot;simple&quot;</span><span class="p">,</span> <span class="s2">&quot;th_vars&quot;</span><span class="p">,</span> <span class="s2">&quot;results&quot;</span><span class="p">),</span>
+                        <span class="n">n_iter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iter_format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{:05d}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+        <span class="n">model_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">optimizer_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">simple_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">th_vars_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">results_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="s2">&quot;model&quot;</span> <span class="ow">in</span> <span class="n">save_types</span><span class="p">:</span>
+            <span class="n">model_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pytorch_modules</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s2">&quot;optimizer&quot;</span> <span class="ow">in</span> <span class="n">save_types</span><span class="p">:</span>
+            <span class="n">optimizer_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pytorch_optimizers</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s2">&quot;simple&quot;</span> <span class="ow">in</span> <span class="n">save_types</span><span class="p">:</span>
+            <span class="n">simple_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_simple_variables</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s2">&quot;th_vars&quot;</span> <span class="ow">in</span> <span class="n">save_types</span><span class="p">:</span>
+            <span class="n">th_vars_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pytorch_variables</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s2">&quot;results&quot;</span> <span class="ow">in</span> <span class="n">save_types</span><span class="p">:</span>
+            <span class="n">results_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="p">}</span>
+
+        <span class="n">checkpoint_dict</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">model_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">optimizer_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">simple_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">th_vars_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">results_dict</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">n_iter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">name_and_iter_to_filename</span><span class="p">(</span><span class="n">name</span><span class="p">,</span>
+                                             <span class="n">n_iter</span><span class="p">,</span>
+                                             <span class="s2">&quot;.pth.tar&quot;</span><span class="p">,</span>
+                                             <span class="n">iter_format</span><span class="o">=</span><span class="n">iter_format</span><span class="p">,</span>
+                                             <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">restore_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">load_checkpoint</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">checkpoint_dict</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">checkpoint_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">):</span>
+                <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="n">checkpoint_path</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">restore_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">load_checkpoint_static</span><span class="p">(</span><span class="n">checkpoint_file</span><span class="o">=</span><span class="n">checkpoint_path</span><span class="p">,</span> <span class="o">**</span><span class="n">checkpoint_dict</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_attributes</span><span class="p">(</span><span class="n">restore_dict</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.end"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.end">[docs]</a>    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="n">ResultLogDict</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">print_to_file</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_results</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_end_checkpoint</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="s2">&quot;Experiment ended. Checkpoints stored =)&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.end_test"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.end_test">[docs]</a>    <span class="k">def</span> <span class="nf">end_test</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_results</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;results-test&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="s2">&quot;Testing ended. Results stored =)&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.at_exit_func"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.at_exit_func">[docs]</a>    <span class="k">def</span> <span class="nf">at_exit_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_state</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;Ended&quot;</span><span class="p">,</span> <span class="s2">&quot;Tested&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="n">ResultLogDict</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">print_to_file</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;checkpoint_exit-&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_state</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_results</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;results-&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_state</span> <span class="o">+</span> <span class="s2">&quot;.json&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="s2">&quot;Experiment exited. Checkpoints stored =)&quot;</span><span class="p">)</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># allow checkpoint saving to finish</span></div>
+
+    <span class="k">def</span> <span class="nf">_setup_internal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prepare_resume</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">save_config</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config_raw</span><span class="p">,</span> <span class="s2">&quot;config&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PyTorchExperiment.prepare_resume"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.prepare_resume">[docs]</a>    <span class="k">def</span> <span class="nf">prepare_resume</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">checkpoint_file</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">base_dir</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resume_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resume_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resume_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.pth.tar&quot;</span><span class="p">):</span>
+                    <span class="n">checkpoint_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resume_path</span>
+                    <span class="n">base_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">checkpoint_file</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">resume_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;checkpoint&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">resume_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;checkpoint/&quot;</span><span class="p">):</span>
+                    <span class="n">checkpoint_file</span> <span class="o">=</span> <span class="n">get_last_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resume_path</span><span class="p">)</span>
+                    <span class="n">base_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">checkpoint_file</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="s2">&quot;checkpoint&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resume_path</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;config&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resume_path</span><span class="p">):</span>
+                    <span class="n">checkpoint_file</span> <span class="o">=</span> <span class="n">get_last_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resume_path</span><span class="p">)</span>
+                    <span class="n">base_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resume_path</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;You have not selected a valid experiment folder, will search all sub folders&quot;</span><span class="p">,</span>
+                                  <span class="ne">UserWarning</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">text_logger</span><span class="o">.</span><span class="n">log_to</span><span class="p">(</span><span class="s2">&quot;You have not selected a valid experiment folder, will search all &quot;</span>
+                                                 <span class="s2">&quot;sub folders&quot;</span><span class="p">,</span> <span class="s2">&quot;warnings&quot;</span><span class="p">)</span>
+                    <span class="n">checkpoint_file</span> <span class="o">=</span> <span class="n">get_last_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resume_path</span><span class="p">)</span>
+                    <span class="n">base_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">checkpoint_file</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">base_dir</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ignore_resume_config</span><span class="p">:</span>
+                <span class="n">load_config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">()</span>
+                <span class="n">load_config</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="s2">&quot;config/config.json&quot;</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_config_raw</span> <span class="o">=</span> <span class="n">load_config</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">Config</span><span class="o">.</span><span class="n">init_objects</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config_raw</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="s2">&quot;Loaded existing config from:&quot;</span><span class="p">,</span> <span class="n">base_dir</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">checkpoint_file</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">load_checkpoint</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">checkpoint_file</span><span class="p">,</span> <span class="n">save_types</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">resume_save_types</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">resume_path</span> <span class="o">=</span> <span class="n">checkpoint_file</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">checkpoint_file</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="p">,</span> <span class="s2">&quot;0_checkpoint.pth.tar&quot;</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">elog</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="s2">&quot;Loaded existing checkpoint from:&quot;</span><span class="p">,</span> <span class="n">checkpoint_file</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_end_epoch_internal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_results</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_temp_checkpoint</span><span class="p">()</span>
+
+<div class="viewcode-block" id="PyTorchExperiment.save_temp_checkpoint"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.save_temp_checkpoint">[docs]</a>    <span class="k">def</span> <span class="nf">save_temp_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;checkpoint_current&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.save_end_checkpoint"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.save_end_checkpoint">[docs]</a>    <span class="k">def</span> <span class="nf">save_end_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;checkpoint_last&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.add_result"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.add_result">[docs]</a>    <span class="k">def</span> <span class="nf">add_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">counter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot_result</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+
+        <span class="n">label_name</span> <span class="o">=</span> <span class="n">label</span>
+        <span class="k">if</span> <span class="n">label_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">label_name</span> <span class="o">=</span> <span class="n">name</span>
+
+        <span class="n">r_elem</span> <span class="o">=</span> <span class="n">ResultElement</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label_name</span><span class="p">,</span> <span class="n">epoch</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">epoch_idx</span><span class="p">,</span> <span class="n">counter</span><span class="o">=</span><span class="n">counter</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">r_elem</span>
+
+        <span class="k">if</span> <span class="n">plot_result</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">label</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">plt_name</span> <span class="o">=</span> <span class="n">name</span>
+                <span class="n">tag</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">legend</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">plt_name</span> <span class="o">=</span> <span class="n">label</span>
+                <span class="n">tag</span> <span class="o">=</span> <span class="n">name</span>
+                <span class="n">legend</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clog</span><span class="o">.</span><span class="n">show_value</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">plt_name</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span> <span class="n">counter</span><span class="o">=</span><span class="n">counter</span><span class="p">,</span> <span class="n">show_legend</span><span class="o">=</span><span class="n">legend</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.get_result"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.get_result">[docs]</a>    <span class="k">def</span> <span class="nf">get_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.add_result_without_epoch"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.add_result_without_epoch">[docs]</a>    <span class="k">def</span> <span class="nf">add_result_without_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span></div>
+
+<div class="viewcode-block" id="PyTorchExperiment.get_result_without_epoch"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.PyTorchExperiment.get_result_without_epoch">[docs]</a>    <span class="k">def</span> <span class="nf">get_result_without_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="get_last_file"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.get_last_file">[docs]</a><span class="k">def</span> <span class="nf">get_last_file</span><span class="p">(</span><span class="n">dir_</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;*checkpoint*.pth.tar&quot;</span>
+
+    <span class="n">dir_files</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">dirs</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">dir_</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s1">&#39;last&#39;</span> <span class="ow">in</span> <span class="n">filename</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+            <span class="n">checkpoint_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+            <span class="n">dir_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">checkpoint_file</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dir_files</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="n">last_file</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">dir_files</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">last_file</span></div>
+
+
+<div class="viewcode-block" id="get_vars_from_sys_argv"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.get_vars_from_sys_argv">[docs]</a><span class="k">def</span> <span class="nf">get_vars_from_sys_argv</span><span class="p">():</span>
+    <span class="kn">import</span> <span class="nn">sys</span>
+    <span class="kn">import</span> <span class="nn">argparse</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
+
+        <span class="c1"># parse just config keys</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;config_path&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;resume_path&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+
+        <span class="c1"># parse args</span>
+        <span class="n">param</span><span class="p">,</span> <span class="n">unknown</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_known_args</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">unknown</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Called with unknown arguments: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">unknown</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">)</span>
+
+        <span class="c1"># update dict</span>
+        <span class="k">return</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;config_path&quot;</span><span class="p">),</span> <span class="n">param</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;resume_path&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="set_seed"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.set_seed">[docs]</a><span class="k">def</span> <span class="nf">set_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Sets the seed&quot;&quot;&quot;</span>
+    <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">manual_seed_all</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="experimentify"><a class="viewcode-back" href="../../vislogger.html#vislogger.experiment.experimentify">[docs]</a><span class="k">def</span> <span class="nf">experimentify</span><span class="p">(</span><span class="n">setup_fn</span><span class="o">=</span><span class="s2">&quot;setup&quot;</span><span class="p">,</span> <span class="n">train_fn</span><span class="o">=</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="n">validate_fn</span><span class="o">=</span><span class="s2">&quot;validate&quot;</span><span class="p">,</span> <span class="n">end_fn</span><span class="o">=</span><span class="s2">&quot;end&quot;</span><span class="p">,</span> <span class="n">test_fn</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">decoargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">wrap</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+
+        <span class="c1">### Initilaize both Classes (as original class)</span>
+        <span class="n">prev_init</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__init__</span>
+
+        <span class="k">def</span> <span class="nf">new_init</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">prev_init</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">decoargs</span><span class="p">)</span>
+            <span class="n">PyTorchExperiment</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">cls</span><span class="o">.</span><span class="fm">__init__</span> <span class="o">=</span> <span class="n">new_init</span>
+
+        <span class="c1">### Set new Experiment methods</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;setup&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">setup_fn</span><span class="p">):</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;setup&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">setup_fn</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;setup&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">setup_fn</span> <span class="o">!=</span> <span class="s2">&quot;setup&quot;</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Found already exisiting setup function in class, so will use the exisiting one&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;train&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">train_fn</span><span class="p">):</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">train_fn</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;train&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">setup_fn</span> <span class="o">!=</span> <span class="s2">&quot;train&quot;</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Found already exisiting train function in class, so will use the exisiting one&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;validate&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">validate_fn</span><span class="p">):</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;validate&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">validate_fn</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;validate&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">setup_fn</span> <span class="o">!=</span> <span class="s2">&quot;validate&quot;</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Found already exisiting validate function in class, so will use the exisiting one&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">end_fn</span><span class="p">):</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">end_fn</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">end_fn</span> <span class="o">!=</span> <span class="s2">&quot;end&quot;</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Found already exisiting end function in class, so will use the exisiting one&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">test_fn</span><span class="p">):</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">test_fn</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">test_fn</span> <span class="o">!=</span> <span class="s2">&quot;test&quot;</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Found already exisiting test function in class, so will use the exisiting one&quot;</span><span class="p">)</span>
+
+        <span class="c1">### Copy methods from PyTorchExperiment into the original class</span>
+        <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">PyTorchExperiment</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">elem</span><span class="p">):</span>
+                <span class="n">trans_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">PyTorchExperiment</span><span class="p">,</span> <span class="n">elem</span><span class="p">)</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">elem</span><span class="p">,</span> <span class="n">trans_fn</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">cls</span>
+
+    <span class="k">return</span> <span class="n">wrap</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, MIC.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.1',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>
