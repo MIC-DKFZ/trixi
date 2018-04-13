@@ -43,10 +43,8 @@ class TelegramLogger(AbstractLogger):
 
         :param value: Value to be sent to the chat.
         :param counter: Optional counter to be sent in conjunction with the value.
-        :param value_tag: Tag to be used for value.
-        :type value_tag: str
-        :param counter_tag: Tag to be used for counter.
-        :type counter_tag: str
+        :param tag: Tag to be used for value.
+        :type tag: str
         """
         if tag is None:
             tag = 'Value'
