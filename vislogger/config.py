@@ -88,7 +88,48 @@ class Config(dict):
 
         return Config(config=conv_config)
 
+    def difference_dict(self, other_config):
+        return self.difference_dict_static(self, other_config)
 
+    @staticmethod
+    def difference_dict_static(config1, config2):
+        """Make a dict of all elements that differ between two configs.
+
+        The resulting dict looks like this:
+
+            {key: (config1[key], config2[key])}
+
+        If the key is missing, None will be inserted. The inputs will not be
+        modified.
+
+        Args:
+            config1 (Config): First config
+            config2 (Config): Second config
+
+        Returns:
+            dict: Possibly empty
+        """
+
+        difference_dict = {}
+        all_keys = set(config1.keys()) | set(config2.keys())
+
+        for key in all_keys:
+
+            if key in config1 and key in config2:
+
+                if config1[key] == config2[key]:
+                    continue
+                else:
+                    difference_dict[key] = (config1[key], config2[key])
+
+            else:
+
+                if key in config1:
+                    difference_dict[key] = (config1[key], None)
+                else:
+                    difference_dict[key] = (None, config2[key])
+
+        return difference_dict
 
 
 def update_from_sys_argv(config):
@@ -172,4 +213,3 @@ def update_from_sys_argv(config):
 
         # update dict
         update_keys(config, vars(param))
-

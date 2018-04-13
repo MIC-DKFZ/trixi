@@ -5,15 +5,17 @@ import re
 from itertools import tee, filterfalse
 from vislogger import Config
 
+
 def partition(pred, iterable):
     t1, t2 = tee(iterable)
     return filter(pred, t1), filterfalse(pred, t2)
 
-class Experiment(object):
+
+class ExperimentHelper(object):
 
     def __init__(self, work_dir, *args, **kwargs):
 
-        super(Experiment, self).__init__(*args, **kwargs)
+        super(ExperimentHelper, self).__init__(*args, **kwargs)
 
         self.work_dir = os.path.abspath(work_dir)
         self.config_dir = os.path.join(self.work_dir, "config")

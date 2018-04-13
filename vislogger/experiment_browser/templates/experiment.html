@@ -1,10 +1,9 @@
 <html>
 
 <head>
-    <title>{{ title }}</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='custom.css') }}"/>
-    <link rel="stylesheet" type="text/css"
-          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"/>
+
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='custom.css') }}" />
     <link href="https://use.fontawesome.com/releases/v5.0.8/css/all.css" rel="stylesheet">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -13,6 +12,7 @@
 
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
+    <title>TRIXI - Comparing experiments</title>
 </head>
 
 
@@ -59,6 +59,9 @@
     </div>
 </div>
 
+
+<hr>
+{% for graph in graphs %} {{ graph }} {% endfor %}
 
 <script src="{{ url_for('static', filename='scripts.js') }}"></script>
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>

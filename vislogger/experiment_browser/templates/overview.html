@@ -6,6 +6,7 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.5.1/css/buttons.bootstrap4.min.css" />
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.2.5/css/select.bootstrap4.min.css" />
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='custom.css') }}" />
+    <title>TRIXI - {{ title }}</title>
 </head>
 
 <body>
@@ -18,7 +19,7 @@
                 <th>Directory</th>
                 <th>Name</th>
                 <th>Time</th>
-                <th>Note</th>
+                <th>Description</th>
                 {% for c in cols %}
                 <th>{{ c }}</th>
                 {% endfor %}
@@ -29,18 +30,18 @@
                 <th>Dir</th>
                 <th>Name</th>
                 <th>Time</th>
-                <th>Note</th>
+                <th>Description</th>
                 {% for c in cols %}
                 <th>{{ c }}</th>
                 {% endfor %}
             </tr>
             <tbody>
-                {% for dir, name, time, note, row in rows %}
+                {% for dir, name, time, desc, row in rows %}
                 <tr>
                     <td><a href="/experiment/{{ dir }}">{{ dir }}</a></td>
                     <td>{{ name }}</td>
                     <td>{{ time }}</td>
-                    <td>{{ note }}</td>
+                    <td>{{ desc }}</td>
                     {% for el, el_short in row %}
                     <td title="{{ el }}">{{ el_short }}</td>
                     {% endfor %}
