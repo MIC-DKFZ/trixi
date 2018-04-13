@@ -8,8 +8,7 @@ from plotly.offline import plot
 import plotly.graph_objs as go
 import colorlover as cl
 
-from .experiment import Experiment
-
+from vislogger.experiment_browser.experimenthelper import ExperimentHelper
 
 
 IGNORE_KEYS = ("experiment_name",
@@ -23,24 +22,26 @@ IGNORE_KEYS = ("experiment_name",
                "save_dir",
                "result_dir",
                "init_time",
-               "note")
+               "description")
 
 COLORMAP = cl.scales["8"]["qual"]["Dark2"]
 
-
-
-### Read in base directory
+# Read in base directory
 parser = argparse.ArgumentParser()
 parser.add_argument("base_directory",
                     help="Give the path to the base directory of your project files",
                     type=str)
+parser.add_argument("-d", "--debug", action="store_true",
+                    help="Turn debug mode on, eg. for live reloading.")
 args = parser.parse_args()
 base_dir = args.base_directory
 
+# The actual flask app lives in the package directory. The blueprint allows us
+# to specify an additional static folder and we use that to allow access to the
+# experiment files
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), "static"))
 blueprint = Blueprint("data", __name__, static_url_path=base_dir, static_folder=base_dir)
 app.register_blueprint(blueprint)
-
 
 
 def process_base_dir(base_dir):
@@ -53,7 +54,7 @@ def process_base_dir(base_dir):
         dir_path = os.path.join(base_dir, sub_dir)
         if os.path.isdir(dir_path):
 
-            exp = Experiment(dir_path)
+            exp = ExperimentHelper(dir_path)
             keys.update(list(exp.config.keys()))
             exps.append(exp)
 
@@ -70,23 +71,12 @@ def process_base_dir(base_dir):
             attr_strng = str(getattr(exp.config, key, "----"))
             sub_row.append((attr_strng, attr_strng[:25]))
         rows.append((os.path.basename(exp.work_dir),
-                    str(getattr(exp.config, "experiment_name", "----")),
-                    str(getattr(exp.config, "init_time", "----")),
-                    str(getattr(exp.config, "note", "----")),
-                    sub_row))
+                     str(getattr(exp.config, "experiment_name", "----")),
+                     str(getattr(exp.config, "init_time", "----")),
+                     str(getattr(exp.config, "description", "----")),
+                     sub_row))
 
     return {"cols": sorted_keys, "rows": rows}
-
-
-
-def get_experiment_content(experiment_dir):
-
-    exp = Experiment(experiment_dir)
-    results = exp.get_results()
-    graphs = make_graphs(results)
-
-    return {"graphs": graphs}
-
 
 
 def make_graphs(results, trace_options=None, layout_options=None):
@@ -110,19 +100,34 @@ def make_graphs(results, trace_options=None, layout_options=None):
             opacity = 0.2 if do_filter else 1.
 
             traces.append(go.Scatter(x=x, y=y, opacity=opacity, name=result,
-                                     line=dict(color=COLORMAP[r%len(COLORMAP)]), **trace_options))
+                                     line=dict(color=COLORMAP[r % len(COLORMAP)]), **trace_options))
             if do_filter:
-                filter_ = lambda x: savgol_filter(x, max(5, 2 * (len(y) // 50) + 1), 3)
+                def filter_(x):
+                    return savgol_filter(x, max(5, 2 * (len(y) // 50) + 1), 3)
                 traces.append(go.Scatter(x=x, y=filter_(y), name=result+" smoothed",
-                                         line=dict(color=COLORMAP[r%len(COLORMAP)]), **trace_options))
+                                         line=dict(color=COLORMAP[r % len(COLORMAP)]), **trace_options))
 
         graphs.append(Markup(plot({"data": traces, "layout": layout},
-                             output_type="div",
-                             include_plotlyjs=False,
-                             show_link=False)))
+                                  output_type="div",
+                                  include_plotlyjs=False,
+                                  show_link=False)))
 
     return graphs
 
+
+def merge_results(experiment_names, result_list):
+
+    merged_results = {}
+
+    for r, result in enumerate(result_list):
+        for label in result.keys():
+            if label not in merged_results:
+                merged_results[label] = {}
+            for key in result[label].keys():
+                new_key = "_".join([experiment_names[r], key])
+                merged_results[label][new_key] = result[label][key]
+
+    return merged_results
 
 
 @app.route("/")
@@ -136,6 +141,7 @@ def overview():
         print(e.__repr__())
         abort(500)
 
+
 @app.route('/experiment/', methods=['GET'])
 def experiment():
 
@@ -143,29 +149,17 @@ def experiment():
 
     results = []
     for experiment in experiments:
-        exp = Experiment(os.path.join(base_dir, experiment))
+        exp = ExperimentHelper(os.path.join(base_dir, experiment))
         results.append(exp.get_results())
-    # results = merge_results(results)
+    results = merge_results(experiments, results)
 
     content = {}
-    # content["graphs"] = make_graphs(results)
+    content["graphs"] = make_graphs(results)
     content["title"] = experiments
 
     return render_template('experiment.html', **content)
 
 
-@app.route('/experiment/<experiment_name>', methods=['GET'])
-def experiment_(experiment_name):
-
-    experiment_dir = os.path.join(base_dir, experiment_name)
-    if not os.path.exists(experiment_dir) or not os.path.isdir(experiment_dir):
-        print("ERR: Please give a valid experiment directory")
-        abort(404)
-
-    experiment_content = get_experiment_content(experiment_dir)
-    experiment_content["title"] = experiment_name
-
-    return render_template('experiment.html', **experiment_content)
-
 if __name__ == "__main__":
-    app.run()
+
+    app.run(debug=args.debug)

@@ -1,7 +1,6 @@
 <html>
 
 <head>
-    <title>{{ title }}</title>
     <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" />
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='custom.css') }}" />
     <link href="https://use.fontawesome.com/releases/v5.0.8/css/all.css" rel="stylesheet">
@@ -12,6 +11,7 @@
 
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
+    <title>TRIXI - Comparing experiments</title>
 </head>
 
 
@@ -25,7 +25,7 @@
     </div>
 
         <hr>
-        <!--{% for graph in graphs %} {{ graph }} {% endfor %}-->
+        {% for graph in graphs %} {{ graph }} {% endfor %}
 
     </div>
 
