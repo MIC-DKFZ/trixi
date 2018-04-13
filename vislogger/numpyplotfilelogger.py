@@ -26,9 +26,9 @@ class NumpyPlotFileLogger(NumpySeabornPlotLogger):
         threaded(savefig_and_close)(figure, outname)
 
     @convert_params
-    def show_value(self, value, name, count=None, tag=None, file_format=".png", *args, **kwargs):
+    def show_value(self, value, name, counter=None, tag=None, file_format=".png", *args, **kwargs):
         """Abstract method which should handle and somehow log/ store a value"""
-        figure = NumpySeabornPlotLogger.show_value(self, value, name, count, tag, show=False)
+        figure = NumpySeabornPlotLogger.show_value(self, value, name, counter, tag, show=False)
         outname = os.path.join(self.plot_dir, name) + file_format
         os.makedirs(os.path.dirname(outname), exist_ok=True)
         threaded(savefig_and_close)(figure, outname)
