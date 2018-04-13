@@ -11,7 +11,7 @@ from scipy.signal import savgol_filter
 
 from vislogger.experiment_browser.experimenthelper import ExperimentHelper
 
-IGNORE_KEYS = ("experiment_name",
+IGNORE_KEYS = ("exp_name",
                "experiment_dir",
                "work_dir",
                "config_dir",
@@ -69,7 +69,7 @@ def process_base_dir(base_dir):
             attr_strng = str(getattr(exp.config, key, "----"))
             sub_row.append((attr_strng, attr_strng[:25]))
         rows.append((os.path.basename(exp.work_dir),
-                     str(getattr(exp.config, "experiment_name", "----")),
+                     str(getattr(exp.config, "exp_name", "----")),
                      str(getattr(exp.config, "init_time", "----")),
                      str(getattr(exp.config, "description", "----")),
                      sub_row))
@@ -165,24 +165,45 @@ def overview():
 
 @app.route('/experiment/', methods=['GET'])
 def experiment():
-    experiments = request.args.getlist('exp')
+    experiment_paths = request.args.getlist('exp')
 
-    results = []
-    images = {}
-    i = 0
-    for experiment in experiments:
-        exp = ExperimentHelper(os.path.join(base_dir, experiment))
-        results.append(exp.get_results())
-        exp_images = exp.get_images()
-        images["exp"+str(i)] = group_images(exp_images)
-        i += 1
+    experiments = []
 
-    results = merge_results(experiments, results)
+    # Get all Experiments
+    for experiment_path in experiment_paths:
+        exp = ExperimentHelper(os.path.join(base_dir, experiment_path), name=experiment_path)
+        experiments.append(exp)
 
+    # Assign unique names
+    exp_names = [exp.exp_name for exp in experiments]
+    if len(exp_names) > len(set(exp_names)):
+        for i, exp in enumerate(experiments):
+            exp.exp_name += str(i)
+    exp_names = [exp.exp_name for exp in experiments]
+
+    # Site Content
     content = {}
+
+    # Get images
+    images = {}
+    image_keys = []
+    image_path = exp.img_dir
+    for exp in experiments:
+        exp_images = exp.get_images()
+        img_groups = group_images(exp_images)
+        images[exp.exp_name] = img_groups
+        image_keys += (list(img_groups.keys()))
+    image_keys.sort()
+
+    # Get plot results
+    results = []
+    for exp in experiments:
+        results.append(exp.get_results())
+    results = merge_results(exp_names, results)
+
     content["graphs"] = make_graphs(results)
     content["title"] = experiments
-    content["images"] = images
+    content["images"] = {"img_path": image_path, "imgs": images, "img_keys": image_keys}
 
     return render_template('experiment.html', **content)
 

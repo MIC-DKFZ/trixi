@@ -10,12 +10,11 @@ def partition(pred, iterable):
     t1, t2 = tee(iterable)
     return filter(pred, t1), filterfalse(pred, t2)
 
-
 class ExperimentHelper(object):
 
-    def __init__(self, work_dir, *args, **kwargs):
+    def __init__(self, work_dir, name=None):
 
-        super(ExperimentHelper, self).__init__(*args, **kwargs)
+        super(ExperimentHelper, self).__init__()
 
         self.work_dir = os.path.abspath(work_dir)
         self.config_dir = os.path.join(self.work_dir, "config")
@@ -28,6 +27,13 @@ class ExperimentHelper(object):
 
         self.config = Config()
         self.config.load(os.path.join(self.config_dir, "config.json"))
+
+        if name is not None:
+            self.exp_name = name
+        elif "exp_name" in self.config:
+            self.exp_name = self.config.exp_name
+        else:
+            self.exp_name = "experiments"
 
     def get_file_contents(self, folder):
 
