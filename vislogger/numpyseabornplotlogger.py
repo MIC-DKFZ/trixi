@@ -16,14 +16,16 @@ class NumpySeabornPlotLogger(AbstractLogger):
     def __init__(self, **kwargs):
         super(NumpySeabornPlotLogger, self).__init__(**kwargs)
 
-        self.figures = {}
         self.values = defaultdict(lambda: defaultdict(list))
         self.max_values = defaultdict(int)
 
     @convert_params
     def show_image(self, image, name, show=True, *args, **kwargs):
         """A method which creats an image plot"""
+
         figure = self.get_figure(name)
+        plt.clf()
+
         plt.imshow(image)
         plt.axis("off")
         if show:
@@ -33,8 +35,9 @@ class NumpySeabornPlotLogger(AbstractLogger):
         return figure
 
     @convert_params
-    def show_value(self, value, name, count=None, tag=None, show=True, *args, **kwargs):
+    def show_value(self, value, name, counter=None, tag=None, show=True, *args, **kwargs):
         """A method which should handle and somehow log/ store a value"""
+
         figure = self.get_figure(name)
         plt.clf()
 
@@ -43,10 +46,10 @@ class NumpySeabornPlotLogger(AbstractLogger):
         if tag is None:
             tag = name
 
-        if count is None:
-            count = len(self.values[name][tag]) + 1
+        if counter is None:
+            counter = len(self.values[name][tag]) + 1
 
-        max_val = max(self.max_values[name], count)
+        max_val = max(self.max_values[name], counter)
         self.max_values[name] = max_val
         self.values[name][tag].append((value, max_val))
 
@@ -64,6 +67,7 @@ class NumpySeabornPlotLogger(AbstractLogger):
     @convert_params
     def show_barplot(self, array, name, show=True, *args, **kwargs):
         """A method which should handle and somehow log/ store a barplot"""
+
         figure = self.get_figure(name)
 
         y = array
@@ -102,7 +106,7 @@ class NumpySeabornPlotLogger(AbstractLogger):
 
         if not isinstance(array, np.ndarray):
             raise TypeError("Array must be numpy arrays (this class is called NUMPY seaborn logger, and seaborn"
-                            " can only handle numpy array -.- .__. )")
+                            " can only handle numpy arrays -.- .__. )")
 
         x, y = zip(*array)
         x, y = np.asarray(x), np.asarray(y)
@@ -142,7 +146,5 @@ class NumpySeabornPlotLogger(AbstractLogger):
         :param name: Name of the figure
         :return: A figure with the given name
         """
-        #        if name not in self.figures:
-        self.figures[name] = plt.figure(name)
 
-        return self.figures[name]
+        return plt.figure(name)

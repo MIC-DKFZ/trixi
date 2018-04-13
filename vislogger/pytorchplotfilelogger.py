@@ -58,6 +58,7 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
                                              prefix=prefix)
 
         img_file = os.path.join(image_dir, name)
+        os.makedirs(os.path.dirname(img_file), exist_ok=True)
         tv_save_image(tensor=tensor, filename=img_file, **image_args)
 
     def save_image(self,
@@ -143,6 +144,8 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
 
         if image_args is None:
             image_args = {}
+
+        os.makedirs(os.path.dirname(img_file), exist_ok=True)
 
         tv_save_image(tensor=tensor,
                       filename=img_file,
