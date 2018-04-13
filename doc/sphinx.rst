@@ -22,7 +22,6 @@ Setup
 
 Notes
 -----
-* rerun apidoc each time you added new modules
 * rerun make html each time existing modules are updated
 * DO NOT forget indent or blank lines
 * Code with no classes or functions is not automatically captured using apidoc

@@ -16,7 +16,7 @@ Welcome to TRIXI's documentation!
    :maxdepth: 2
    :caption: Readme
 
-   Readme.rst
+   readme_link.rst
 
 .. toctree::
    :maxdepth: 3

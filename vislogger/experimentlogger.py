@@ -74,10 +74,9 @@ class ExperimentLogger(AbstractLogger):
         """
         This function shows an image.
 
-        :param image: image to be shown
-        :type image: np.ndarray
-        :param name: image title
-        :type name: str
+        Args:
+            image(np.ndarray): image to be shown
+            name(str): image title
         """
         self.plot_logger.show_image(image, name, file_format=".png", **kwargs)
 
