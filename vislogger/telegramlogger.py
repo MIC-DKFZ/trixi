@@ -11,7 +11,9 @@ class TelegramLogger(AbstractLogger):
         Creates a new TelegramLogger object.
 
         :param token: The token of the Telegram bot used.
+        :type token: str
         :param chat_id: The chat ID for the chat between the user and the Telegram bot.
+        :type chat_id: str
         """
         super(TelegramLogger, self).__init__(**kwargs)
 
@@ -23,6 +25,7 @@ class TelegramLogger(AbstractLogger):
         """
         Sends a text to a chat using an existing Telegram bot.
         :param text: Text message to be sent to the bot.
+        :type text: str
         """
         self.bot.send_message(chat_id=self.chat_id, text=text)
 
@@ -30,7 +33,26 @@ class TelegramLogger(AbstractLogger):
         """
         Sends an image file to a chat using an existing Telegram bot.
         :param image_path: Path to the image file to be sent to the chat.
+        :type image_path: str
         """
         self.bot.send_photo(chat_id=self.chat_id, photo=open(image_path, 'rb'))
 
+    def show_value(self, value, counter=None, tag=None, **kwargs):
+        """
+        Sends a value to a chat using an existing Telegram bot.
 
+        :param value: Value to be sent to the chat.
+        :param counter: Optional counter to be sent in conjunction with the value.
+        :param value_tag: Tag to be used for value.
+        :type value_tag: str
+        :param counter_tag: Tag to be used for counter.
+        :type counter_tag: str
+        """
+        if tag is None:
+            tag = 'Value'
+
+        message = tag+': ' + str(value)
+        if counter is not None:
+            message += ', Counter:' + str(counter)
+
+        self.show_text(text=message)
