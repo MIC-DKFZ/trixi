@@ -2,8 +2,9 @@
 
 <head>
 
-    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" />
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='custom.css') }}" />
+    <link rel="stylesheet" type="text/css"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='custom.css') }}"/>
     <link href="https://use.fontawesome.com/releases/v5.0.8/css/all.css" rel="stylesheet">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -17,6 +18,8 @@
 
 
 <body>
+<script src="{{ url_for('static', filename='scripts.js') }}"></script>
+
 
 <!--<div class="container-fluid">-->
 <!--<a role="button" class="btn btn-light go-back"><i class="fas fa-arrow-left"></i></a><br/>-->
@@ -30,10 +33,21 @@
 
 
 <!-- Slideshow container -->
-<div style="width:40%">
+
+{% for exps in images %}
+
+<p>{{ exps }}</p>
+
+{% for group in images[exps] %}
+
+<p>{{ group }}</p>
+<br>
+
+
+<div style="width:40%" id="{{exps}}-{{group}}">
     <div class="slideshow-container">
 
-        {% for img in images %}
+        {% for img in images[exps][group] %}
         <div class="mySlides">
             <div class="numbertext">{{ loop.index }} / {{ loop.length }}</div>
             <img class="lazyimg" src="" lazysrc="{{ img }}" style="width:100%" alt="">
@@ -43,27 +57,39 @@
 
 
         <!-- Next and previous buttons -->
-        <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
-        <a class="next" onclick="plusSlides(1)">&#10095;</a>
+        <a class="prev" onclick="plusSlides('{{exps}}-{{group}}' ,-1)">&#10094;</a>
+        <a class="next" onclick="plusSlides('{{exps}}-{{group}}' , 1)">&#10095;</a>
     </div>
     <div>
         <p style="text-align:center;">
-            <input id="number" type="number" value="1" onchange="numberChange()" style="width:25%"> / {{images|length}}
+            <input class="number" type="number" value="1" min="1" max="{{images[exps][group]|length}}" onchange="numberChange('{{exps}}-{{group}}')"
+                   style="width:25%"> /
+            {{images[exps][group]|length}}
         </p>
     </div>
     <!--&lt;!&ndash; The dots/circles &ndash;&gt;-->
     <div style="text-align:center; overflow-x: scroll; white-space:nowrap;">
-        {% for img in images %}
+        {% for img in images[exps][group] %}
         <span class="dot" onclick="currentSlide({{ loop.index0 }})" title="{{ loop.index }}">{{ loop.index }}</span>
         {% endfor %}
     </div>
 </div>
 
 
-<hr>
-{% for graph in graphs %} {{ graph }} {% endfor %}
+<script>
+    showSlides("{{exps}}-{{group}}")
+</script>
+{% endfor %}
 
-<script src="{{ url_for('static', filename='scripts.js') }}"></script>
+<hr>
+
+{% endfor %}
+
+<hr>
+<div style="width:40%">
+    {% for graph in graphs %} {{ graph }} {% endfor %}
+</div>
+
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 <script>
     $(document).ready(function () {

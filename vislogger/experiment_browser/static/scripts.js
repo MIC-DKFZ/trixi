@@ -1,12 +1,13 @@
-var slideIndex = 0;
-showSlides(slideIndex);
+var slideIndex = {};
 
-function plusSlides(n) {
-    showSlides(slideIndex += n);
+function plusSlides(tag, n) {
+    slideIndex[tag] += n;
+    showSlides(tag);
 }
 
-function currentSlide(n) {
-    showSlides(slideIndex = n);
+function currentSlide(tag, n) {
+    slideIndex[tag] = n;
+    showSlides(tag);
 }
 
 
@@ -22,17 +23,24 @@ function loadImageLazily(img)
 }
 
 
-function showSlides(n) {
-    var i;
-    var slides = document.getElementsByClassName("mySlides");
-    var dots = document.getElementsByClassName("dot");
-    var number = document.getElementById("number");
+function showSlides(tag) {
 
-    if (n >= slides.length) {
-        slideIndex = 0
+    if(!(tag in slideIndex)){
+        slideIndex[tag] = 0
     }
-    if (n < 0) {
-        slideIndex = slides.length - 1
+
+    var part = document.getElementById(tag);
+
+    var i;
+    var slides = part.getElementsByClassName("mySlides");
+    var dots = part.getElementsByClassName("dot");
+    var number = part.getElementsByClassName("number")[0];
+
+    if (slideIndex[tag] >= slides.length) {
+        slideIndex[tag] = 0;
+    }
+    if (slideIndex[tag] < 0) {
+        slideIndex[tag] = slides.length - 1;
     }
     for (i = 0; i < slides.length; i++) {
         slides[i].style.display = "none";
@@ -42,22 +50,23 @@ function showSlides(n) {
     }
 
     console.log("New Index: ");
-    console.log(n);
-    console.log(slideIndex);
+    console.log(slideIndex[tag]);
 
-    slides[slideIndex].style.display = "block";
+    slides[slideIndex[tag]].style.display = "block";
 
-    var img = document.getElementsByClassName("mySlides")[slideIndex].getElementsByClassName("lazyimg")[0];
+    var img = part.getElementsByClassName("mySlides")[slideIndex[tag]].getElementsByClassName("lazyimg")[0];
     loadImageLazily(img);
 
-    dots[slideIndex].className += " active";
+    dots[slideIndex[tag]].className += " active";
 
-    number.setAttribute("value", slideIndex+1)
+    number.value = slideIndex[tag]+1
 }
 
-function numberChange() {
-    var number = document.getElementById("number");
+function numberChange(tag) {
+    var part = document.getElementById(tag);
+    var number = part.getElementsByClassName("number")[0];
     console.log(number.value);
-    showSlides(slideIndex = parseInt(number.value) - 1);
+    slideIndex[tag] = parseInt(number.value) - 1;
+    showSlides(tag);
 
 }

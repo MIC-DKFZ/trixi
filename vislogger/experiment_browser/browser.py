@@ -1,15 +1,15 @@
 import argparse
-import numpy as np
 import os
+from collections import defaultdict
+
+import colorlover as cl
+import numpy as np
+import plotly.graph_objs as go
+from flask import Blueprint, Flask, Markup, abort, render_template, request
+from plotly.offline import plot
 from scipy.signal import savgol_filter
 
-from flask import Flask, render_template, request, Blueprint, Markup, abort
-from plotly.offline import plot
-import plotly.graph_objs as go
-import colorlover as cl
-
 from vislogger.experiment_browser.experimenthelper import ExperimentHelper
-
 
 IGNORE_KEYS = ("experiment_name",
                "experiment_dir",
@@ -45,7 +45,6 @@ app.register_blueprint(blueprint)
 
 
 def process_base_dir(base_dir):
-
     keys = set()
     exps = []
 
@@ -53,7 +52,6 @@ def process_base_dir(base_dir):
     for sub_dir in sorted(os.listdir(base_dir)):
         dir_path = os.path.join(base_dir, sub_dir)
         if os.path.isdir(dir_path):
-
             exp = ExperimentHelper(dir_path)
             keys.update(list(exp.config.keys()))
             exps.append(exp)
@@ -79,22 +77,34 @@ def process_base_dir(base_dir):
     return {"cols": sorted_keys, "rows": rows}
 
 
+# def get_experiment_content(experiment_dir):
+#
+#     exp = ExperimentHelper(experiment_dir)
+#     results = exp.get_results()
+#     graphs = make_graphs(results)
+#     images = exp.get_images()
+#
+#     return {"graphs": graphs, "images": images}
 
-def get_experiment_content(experiment_dir):
 
-    exp = ExperimentHelper(experiment_dir)
-    results = exp.get_results()
-    graphs = make_graphs(results)
-    images = exp.get_images()
+def group_images(images):
+    images.sort()
+    group_dict = defaultdict(list)
 
-    return {"graphs": graphs, "images": images}
+    for img in images:
+        base_name = os.path.splitext(os.path.basename(img))[0]
+        base_name = ''.join(e for e in base_name if e.isalpha())
 
+        group_dict[base_name].append(img)
+
+    return group_dict
 
 
 def make_graphs(results, trace_options=None, layout_options=None):
-
-    if trace_options is None: trace_options = {}
-    if layout_options is None: layout_options = {}
+    if trace_options is None:
+        trace_options = {}
+    if layout_options is None:
+        layout_options = {}
 
     graphs = []
 
@@ -116,7 +126,8 @@ def make_graphs(results, trace_options=None, layout_options=None):
             if do_filter:
                 def filter_(x):
                     return savgol_filter(x, max(5, 2 * (len(y) // 50) + 1), 3)
-                traces.append(go.Scatter(x=x, y=filter_(y), name=result+" smoothed",
+
+                traces.append(go.Scatter(x=x, y=filter_(y), name=result + " smoothed",
                                          line=dict(color=COLORMAP[r % len(COLORMAP)]), **trace_options))
 
         graphs.append(Markup(plot({"data": traces, "layout": layout},
@@ -128,7 +139,6 @@ def make_graphs(results, trace_options=None, layout_options=None):
 
 
 def merge_results(experiment_names, result_list):
-
     merged_results = {}
 
     for r, result in enumerate(result_list):
@@ -144,7 +154,6 @@ def merge_results(experiment_names, result_list):
 
 @app.route("/")
 def overview():
-
     try:
         base_info = process_base_dir(base_dir)
         base_info["title"] = base_dir
@@ -156,16 +165,17 @@ def overview():
 
 @app.route('/experiment/', methods=['GET'])
 def experiment():
-
     experiments = request.args.getlist('exp')
 
     results = []
+    images = {}
+    i = 0
     for experiment in experiments:
         exp = ExperimentHelper(os.path.join(base_dir, experiment))
         results.append(exp.get_results())
-        images = exp.get_images()
-
-
+        exp_images = exp.get_images()
+        images["exp"+str(i)] = group_images(exp_images)
+        i += 1
 
     results = merge_results(experiments, results)
 
