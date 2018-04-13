@@ -8,7 +8,7 @@ from plotly.offline import plot
 import plotly.graph_objs as go
 import colorlover as cl
 
-from .experiment import Experiment
+from vislogger.experiment_browser.experiment import Experiment
 
 
 
@@ -84,8 +84,9 @@ def get_experiment_content(experiment_dir):
     exp = Experiment(experiment_dir)
     results = exp.get_results()
     graphs = make_graphs(results)
+    images = exp.get_images()
 
-    return {"graphs": graphs}
+    return {"graphs": graphs, "images": images}
 
 
 
@@ -168,4 +169,4 @@ def experiment_(experiment_name):
     return render_template('experiment.html', **experiment_content)
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
