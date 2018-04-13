@@ -71,6 +71,14 @@ class ExperimentLogger(AbstractLogger):
             self.img_dir, self.plot_dir, **plot_logger_args)
 
     def show_image(self, image, name, file_format=".png", **kwargs):
+        """
+        This function shows an image.
+
+        :param image: image to be shown
+        :type image: np.ndarray
+        :param name: image title
+        :type name: str
+        """
         self.plot_logger.show_image(image, name, file_format=".png", **kwargs)
 
     def show_barplot(self, array, name, file_format=".png", **kwargs):
