@@ -1,0 +1,606 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>vislogger.pytorchvisdomlogger &mdash; TRIXI 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> TRIXI
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Sphinx Setup</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../sphinx.html">Sphinx Setup</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Package Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">vislogger3</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">TRIXI</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>vislogger.pytorchvisdomlogger</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for vislogger.pytorchvisdomlogger</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">atexit</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="k">import</span> <span class="n">Process</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">graphviz</span> <span class="k">import</span> <span class="n">Digraph</span>
+<span class="kn">from</span> <span class="nn">torch.autograd</span> <span class="k">import</span> <span class="n">Variable</span>
+<span class="kn">from</span> <span class="nn">torchvision.utils</span> <span class="k">import</span> <span class="n">make_grid</span>
+
+<span class="kn">from</span> <span class="nn">vislogger</span> <span class="k">import</span> <span class="n">NumpyVisdomLogger</span>
+<span class="kn">from</span> <span class="nn">vislogger.abstractlogger</span> <span class="k">import</span> <span class="n">convert_params</span>
+
+
+<div class="viewcode-block" id="PytorchVisdomLogger"><a class="viewcode-back" href="../../vislogger.html#vislogger.pytorchvisdomlogger.PytorchVisdomLogger">[docs]</a><span class="k">class</span> <span class="nc">PytorchVisdomLogger</span><span class="p">(</span><span class="n">NumpyVisdomLogger</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Visual logger, inherits the NumpyVisdomLogger and plots/ logs pytorch tensors and variables on a Visdom server.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PytorchVisdomLogger</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PytorchVisdomLogger.process_params"><a class="viewcode-back" href="../../vislogger.html#vislogger.pytorchvisdomlogger.PytorchVisdomLogger.process_params">[docs]</a>    <span class="k">def</span> <span class="nf">process_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inherited &quot;decorator&quot;: convert Pytorch variables and Tensors to numpy arrays</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1">### convert args</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">else</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Variable</span><span class="p">)</span> <span class="k">else</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
+
+        <span class="c1">### convert kwargs</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">Variable</span><span class="p">):</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PytorchVisdomLogger.plot_model_statistics"><a class="viewcode-back" href="../../vislogger.html#vislogger.pytorchvisdomlogger.PytorchVisdomLogger.plot_model_statistics">[docs]</a>    <span class="k">def</span> <span class="nf">plot_model_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">plot_grad</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plots statstics (mean, std, abs(max)) of the weights or the corresponding gradients of a model as a barplot</span>
+
+<span class="sd">        :param model: Model with the weights</span>
+<span class="sd">        :param env_appendix: visdom environment name appendix, if none is given, it uses &quot;-histogram&quot;</span>
+<span class="sd">        :param model_name: Name of the model (is used as window name)</span>
+<span class="sd">        :param plot_grad: If false plots weight statistics, if true plot the gradients of the weights</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">env_appendix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">env_appendix</span> <span class="o">=</span> <span class="s2">&quot;-histogram&quot;</span>
+
+        <span class="n">means</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">stds</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">maxmin</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">legendary</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">m_param_name</span><span class="p">,</span> <span class="n">m_param</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">()):</span>
+            <span class="n">win_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">_params&quot;</span> <span class="o">%</span> <span class="n">model_name</span>
+            <span class="k">if</span> <span class="n">plot_grad</span><span class="p">:</span>
+                <span class="n">m_param</span> <span class="o">=</span> <span class="n">m_param</span><span class="o">.</span><span class="n">grad</span>
+                <span class="n">win_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">_grad&quot;</span> <span class="o">%</span> <span class="n">model_name</span>
+
+            <span class="k">if</span> <span class="n">m_param</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">param_mean</span> <span class="o">=</span> <span class="n">m_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+                <span class="n">param_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">m_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">var</span><span class="p">())</span>
+
+                <span class="n">means</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">param_mean</span><span class="p">)</span>
+                <span class="n">stds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">param_std</span><span class="p">)</span>
+                <span class="n">maxmin</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">m_param</span><span class="p">))</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">legendary</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">m_param_name</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">show_barplot</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">win_name</span><span class="p">,</span> <span class="n">array</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">means</span><span class="p">,</span> <span class="n">stds</span><span class="p">,</span> <span class="n">maxmin</span><span class="p">]),</span> <span class="n">legend</span><span class="o">=</span><span class="n">legendary</span><span class="p">,</span>
+                          <span class="n">rownames</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">],</span> <span class="n">env_appendix</span><span class="o">=</span><span class="n">env_appendix</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PytorchVisdomLogger.plot_model_statistics_weights"><a class="viewcode-back" href="../../vislogger.html#vislogger.pytorchvisdomlogger.PytorchVisdomLogger.plot_model_statistics_weights">[docs]</a>    <span class="k">def</span> <span class="nf">plot_model_statistics_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plots statstics (mean, std, abs(max)) of the weights of a model as a barplot (uses plot model statistics with</span>
+<span class="sd">        plot_grad=False  )</span>
+
+<span class="sd">        :param model: Model with the weights</span>
+<span class="sd">        :param env_appendix: visdom environment name appendix, if none is given, it uses &quot;-histogram&quot;</span>
+<span class="sd">        :param model_name: Name of the model (is used as window name)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_model_statistics</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="n">env_appendix</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span> <span class="n">plot_grad</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PytorchVisdomLogger.plot_model_statistics_grads"><a class="viewcode-back" href="../../vislogger.html#vislogger.pytorchvisdomlogger.PytorchVisdomLogger.plot_model_statistics_grads">[docs]</a>    <span class="k">def</span> <span class="nf">plot_model_statistics_grads</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plots statstics (mean, std, abs(max)) of the gradients of a model as a barplot (uses plot model statistics with</span>
+<span class="sd">        plot_grad=True )</span>
+
+<span class="sd">        :param model: Model with the weights and the corresponding gradients (have to calculated previously)</span>
+<span class="sd">        :param env_appendix: visdom environment name appendix, if none is given, it uses &quot;-histogram&quot;</span>
+<span class="sd">        :param model_name: Name of the model (is used as window name)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_model_statistics</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="n">env_appendix</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span> <span class="n">plot_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PytorchVisdomLogger.plot_mutliple_models_statistics_weights"><a class="viewcode-back" href="../../vislogger.html#vislogger.pytorchvisdomlogger.PytorchVisdomLogger.plot_mutliple_models_statistics_weights">[docs]</a>    <span class="k">def</span> <span class="nf">plot_mutliple_models_statistics_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_dict</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given models in a dict, plots the weight statistics of the models.</span>
+
+<span class="sd">        :param model_dict: Dict with models, the key is assumed to be the name, while the value is the model</span>
+<span class="sd">        :param env_appendix: visdom environment name appendix, if none is given, it uses &quot;-histogram&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">model_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plot_model_statistics_weights</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="n">env_appendix</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PytorchVisdomLogger.plot_mutliple_models_statistics_grads"><a class="viewcode-back" href="../../vislogger.html#vislogger.pytorchvisdomlogger.PytorchVisdomLogger.plot_mutliple_models_statistics_grads">[docs]</a>    <span class="k">def</span> <span class="nf">plot_mutliple_models_statistics_grads</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_dict</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given models in a dict, plots the gradient statistics of the models.</span>
+
+<span class="sd">        :param model_dict: Dict with models, the key is assumed to be the name, while the value is the model</span>
+<span class="sd">        :param env_appendix: visdom environment name appendix, if none is given, it uses &quot;-histogram&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">model_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plot_model_statistics_grads</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="n">env_appendix</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PytorchVisdomLogger.plot_model_structure"><a class="viewcode-back" href="../../vislogger.html#vislogger.pytorchvisdomlogger.PytorchVisdomLogger.plot_model_structure">[docs]</a>    <span class="k">def</span> <span class="nf">plot_model_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">input_size</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_cuda</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">delete_tmp_on_close</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plots the model structure/ model graph of a pytorch module (this only works correctly with pytorch 0.2.0).</span>
+
+<span class="sd">        :param model: The graph of this model will be plotted</span>
+<span class="sd">        :param input_size: Input size of the model (with batch dim)</span>
+<span class="sd">        :param name: The name of the window in the visdom env</span>
+<span class="sd">        :param use_cuda: Perform model dimension calculations on the gpu (cuda)</span>
+<span class="sd">        :param delete_tmp_on_close: Determines if the tmp file will be deleted on close. If set true, can cause problems</span>
+<span class="sd">        due to the multi threadded plotting.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">make_dot</span><span class="p">(</span><span class="n">output_var</span><span class="p">,</span> <span class="n">state_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot; Produces Graphviz representation of PyTorch autograd graph</span>
+<span class="sd">            Blue nodes are the Variables that require grad, orange are Tensors</span>
+<span class="sd">            saved for backward in torch.autograd.Function</span>
+<span class="sd">            Args:</span>
+<span class="sd">                output_var: output Variable</span>
+<span class="sd">                state_dict: dict of (name, parameter) to add names to node that require grad</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="n">state_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># assert isinstance(params.values()[0], Variable)</span>
+                <span class="n">param_map</span> <span class="o">=</span> <span class="p">{</span><span class="nb">id</span><span class="p">(</span><span class="n">v</span><span class="p">):</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+            <span class="n">node_attr</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s1">&#39;filled&#39;</span><span class="p">,</span>
+                             <span class="n">shape</span><span class="o">=</span><span class="s1">&#39;box&#39;</span><span class="p">,</span>
+                             <span class="n">align</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span>
+                             <span class="n">fontsize</span><span class="o">=</span><span class="s1">&#39;12&#39;</span><span class="p">,</span>
+                             <span class="n">ranksep</span><span class="o">=</span><span class="s1">&#39;0.1&#39;</span><span class="p">,</span>
+                             <span class="n">height</span><span class="o">=</span><span class="s1">&#39;0.2&#39;</span><span class="p">)</span>
+            <span class="n">dot</span> <span class="o">=</span> <span class="n">Digraph</span><span class="p">(</span><span class="n">node_attr</span><span class="o">=</span><span class="n">node_attr</span><span class="p">,</span> <span class="n">graph_attr</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="s2">&quot;12,12&quot;</span><span class="p">),</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;svg&quot;</span><span class="p">)</span>
+            <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+            <span class="k">def</span> <span class="nf">size_to_str</span><span class="p">(</span><span class="n">size</span><span class="p">):</span>
+                <span class="k">return</span> <span class="s1">&#39;(&#39;</span> <span class="o">+</span> <span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">size</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;)&#39;</span>
+
+            <span class="k">def</span> <span class="nf">add_nodes</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
+                        <span class="n">dot</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">var</span><span class="p">)),</span> <span class="n">size_to_str</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">size</span><span class="p">()),</span> <span class="n">fillcolor</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="s1">&#39;variable&#39;</span><span class="p">):</span>
+                        <span class="n">u</span> <span class="o">=</span> <span class="n">var</span><span class="o">.</span><span class="n">variable</span>
+                        <span class="k">if</span> <span class="n">state_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">id</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="ow">in</span> <span class="n">param_map</span><span class="p">:</span>
+                            <span class="n">node_name</span> <span class="o">=</span> <span class="n">param_map</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">data</span><span class="p">)]</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">node_name</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                        <span class="n">node_name</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="se">\n</span><span class="s1"> </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">node_name</span><span class="p">,</span> <span class="n">size_to_str</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">size</span><span class="p">()))</span>
+                        <span class="n">dot</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">var</span><span class="p">)),</span> <span class="n">node_name</span><span class="p">,</span> <span class="n">fillcolor</span><span class="o">=</span><span class="s1">&#39;lightblue&#39;</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">node_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">var</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">node_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;Backward&quot;</span><span class="p">):</span>
+                            <span class="n">node_name</span> <span class="o">=</span> <span class="n">node_name</span><span class="p">[:</span><span class="o">-</span><span class="mi">8</span><span class="p">]</span>
+                        <span class="n">dot</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">var</span><span class="p">)),</span> <span class="n">node_name</span><span class="p">)</span>
+                    <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="s1">&#39;next_functions&#39;</span><span class="p">):</span>
+                        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">var</span><span class="o">.</span><span class="n">next_functions</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">u</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                                <span class="n">dot</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="mi">0</span><span class="p">])),</span> <span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">var</span><span class="p">)))</span>
+                                <span class="n">add_nodes</span><span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="s1">&#39;saved_tensors&#39;</span><span class="p">):</span>
+                        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">var</span><span class="o">.</span><span class="n">saved_tensors</span><span class="p">:</span>
+                            <span class="n">dot</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">t</span><span class="p">)),</span> <span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">var</span><span class="p">)))</span>
+                            <span class="n">add_nodes</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+            <span class="n">add_nodes</span><span class="p">(</span><span class="n">output_var</span><span class="o">.</span><span class="n">grad_fn</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">dot</span>
+
+        <span class="c1"># Create input</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">input_size</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">use_cuda</span><span class="p">:</span>
+            <span class="n">inputs</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+
+        <span class="c1"># get output</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+
+        <span class="c1"># get temp file to store svg in</span>
+        <span class="n">fp</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.svg&quot;</span><span class="p">,</span> <span class="n">delete</span><span class="o">=</span><span class="n">delete_tmp_on_close</span><span class="p">)</span>
+
+        <span class="c1"># Create model graph and store it as svg</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">make_dot</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">fp</span><span class="o">.</span><span class="n">name</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">],</span> <span class="n">cleanup</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Display model graph in visdom</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">show_svg</span><span class="p">(</span><span class="n">svg</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PytorchVisdomLogger.show_image_grid"><a class="viewcode-back" href="../../vislogger.html#vislogger.pytorchvisdomlogger.PytorchVisdomLogger.show_image_grid">[docs]</a>    <span class="k">def</span> <span class="nf">show_image_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">images</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="n">image_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">image_args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">image_args</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">tensor</span> <span class="o">=</span> <span class="n">images</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+        <span class="n">viz_task</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;image_grid&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;tensor&quot;</span><span class="p">:</span> <span class="n">tensor</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">title</span><span class="p">,</span>
+            <span class="s2">&quot;caption&quot;</span><span class="p">:</span> <span class="n">caption</span><span class="p">,</span>
+            <span class="s2">&quot;env_appendix&quot;</span><span class="p">:</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="s2">&quot;opts&quot;</span><span class="p">:</span> <span class="n">opts</span><span class="p">,</span>
+            <span class="s2">&quot;image_args&quot;</span><span class="p">:</span> <span class="n">image_args</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">viz_task</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__show_image_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                          <span class="n">image_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">image_args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">image_args</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">Variable</span><span class="p">):</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">data</span>
+
+        <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">tensor</span><span class="p">),</span> <span class="s2">&quot;tensor has to be a pytorch tensor or variable&quot;</span>
+        <span class="k">assert</span> <span class="n">tensor</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;tensor has to have 4 dimensions&quot;</span>
+        <span class="k">assert</span> <span class="n">tensor</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">tensor</span><span class="o">.</span><span class="n">size</span><span class="p">(</span>
+            <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;The 1. dimension (channel) has to be either 1 (gray) or 3 (rgb)&quot;</span>
+
+        <span class="n">grid</span> <span class="o">=</span> <span class="n">make_grid</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">image_args</span><span class="p">)</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">byte</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+        <span class="n">opts</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">opts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">caption</span><span class="o">=</span><span class="n">caption</span>
+        <span class="p">))</span>
+
+        <span class="n">win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis</span><span class="o">.</span><span class="n">image</span><span class="p">(</span>
+            <span class="n">img</span><span class="o">=</span><span class="n">image</span><span class="p">,</span>
+            <span class="n">win</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="n">opts</span><span class="o">=</span><span class="n">opts</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">win</span>
+
+    <span class="n">NumpyVisdomLogger</span><span class="o">.</span><span class="n">show_funcs</span><span class="p">[</span><span class="s2">&quot;image_grid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">__show_image_grid</span>
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">show_embedding</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;tsne&quot;</span><span class="p">,</span> <span class="n">n_dims</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_neigh</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="o">**</span><span class="n">meth_args</span><span class="p">):</span>
+
+        <span class="kn">from</span> <span class="nn">sklearn</span> <span class="k">import</span> <span class="n">manifold</span>
+        <span class="kn">import</span> <span class="nn">umap</span>
+
+        <span class="k">def</span> <span class="nf">__show_embedding</span><span class="p">(</span><span class="n">queue</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;tsne&quot;</span><span class="p">,</span> <span class="n">n_dims</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_neigh</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="o">**</span><span class="n">meth_args</span><span class="p">):</span>
+            <span class="n">emb_data</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="n">linears</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;standard&#39;</span><span class="p">,</span> <span class="s1">&#39;ltsa&#39;</span><span class="p">,</span> <span class="s1">&#39;hessian&#39;</span><span class="p">,</span> <span class="s1">&#39;modified&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">linears</span><span class="p">:</span>
+
+                <span class="n">loclin</span> <span class="o">=</span> <span class="n">manifold</span><span class="o">.</span><span class="n">LocallyLinearEmbedding</span><span class="p">(</span><span class="n">n_neigh</span><span class="p">,</span> <span class="n">n_dims</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="o">**</span><span class="n">meth_args</span><span class="p">)</span>
+                <span class="n">emb_data</span> <span class="o">=</span> <span class="n">loclin</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;isomap&quot;</span><span class="p">:</span>
+                <span class="n">iso</span> <span class="o">=</span> <span class="n">manifold</span><span class="o">.</span><span class="n">Isomap</span><span class="p">(</span><span class="n">n_neigh</span><span class="p">,</span> <span class="n">n_dims</span><span class="p">,</span> <span class="o">**</span><span class="n">meth_args</span><span class="p">)</span>
+                <span class="n">emb_data</span> <span class="o">=</span> <span class="n">iso</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;mds&quot;</span><span class="p">:</span>
+                <span class="n">mds</span> <span class="o">=</span> <span class="n">manifold</span><span class="o">.</span><span class="n">MDS</span><span class="p">(</span><span class="n">n_dims</span><span class="p">,</span> <span class="o">**</span><span class="n">meth_args</span><span class="p">)</span>
+                <span class="n">emb_data</span> <span class="o">=</span> <span class="n">mds</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;spectral&quot;</span><span class="p">:</span>
+                <span class="n">se</span> <span class="o">=</span> <span class="n">manifold</span><span class="o">.</span><span class="n">SpectralEmbedding</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="n">n_dims</span><span class="p">,</span> <span class="n">n_neighbors</span><span class="o">=</span><span class="n">n_neigh</span><span class="p">,</span> <span class="o">**</span><span class="n">meth_args</span><span class="p">)</span>
+                <span class="n">emb_data</span> <span class="o">=</span> <span class="n">se</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;tsne&quot;</span><span class="p">:</span>
+                <span class="n">tsne</span> <span class="o">=</span> <span class="n">manifold</span><span class="o">.</span><span class="n">TSNE</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="n">n_dims</span><span class="p">,</span> <span class="n">perplexity</span><span class="o">=</span><span class="n">n_neigh</span><span class="p">,</span> <span class="o">**</span><span class="n">meth_args</span><span class="p">)</span>
+                <span class="n">emb_data</span> <span class="o">=</span> <span class="n">tsne</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;umap&quot;</span><span class="p">:</span>
+                <span class="n">um</span> <span class="o">=</span> <span class="n">umap</span><span class="o">.</span><span class="n">UMAP</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="n">n_dims</span><span class="p">,</span> <span class="n">n_neighbors</span><span class="o">=</span><span class="n">n_neigh</span><span class="p">,</span> <span class="o">**</span><span class="n">meth_args</span><span class="p">)</span>
+                <span class="n">emb_data</span> <span class="o">=</span> <span class="n">um</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
+
+            <span class="n">vis_task</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;scatterplot&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;array&quot;</span><span class="p">:</span> <span class="n">emb_data</span><span class="p">,</span>
+                <span class="s2">&quot;labels&quot;</span><span class="p">:</span> <span class="n">labels</span><span class="p">,</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;env_appendix&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;opts&quot;</span><span class="p">:</span> <span class="p">{}</span>
+            <span class="p">}</span>
+            <span class="n">queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">vis_task</span><span class="p">)</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">__show_embedding</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">queue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="p">,</span>
+                                                         <span class="n">tensor</span><span class="o">=</span><span class="n">tensor</span><span class="p">,</span>
+                                                         <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+                                                         <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                                                         <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+                                                         <span class="n">n_dims</span><span class="o">=</span><span class="n">n_dims</span><span class="p">,</span>
+                                                         <span class="n">n_neigh</span><span class="o">=</span><span class="n">n_neigh</span><span class="p">,</span>
+                                                         <span class="o">**</span><span class="n">meth_args</span>
+                                                         <span class="p">))</span>
+        <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">terminate</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">show_roc_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+
+        <span class="kn">from</span> <span class="nn">sklearn</span> <span class="k">import</span> <span class="n">metrics</span>
+
+        <span class="k">def</span> <span class="nf">__show_roc_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+
+            <span class="n">fpr</span><span class="p">,</span> <span class="n">tpr</span><span class="p">,</span> <span class="n">thresholds</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">roc_curve</span><span class="p">(</span><span class="n">labels</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">tensor</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">show_lineplot</span><span class="p">(</span><span class="n">tpr</span><span class="p">,</span> <span class="n">fpr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fillarea&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+            <span class="c1"># self.add_to_graph(x_vals=np.arange(0, 1.1, 0.1), y_vals=np.arange(0, 1.1, 0.1), name=name, append=True)</span>
+
+
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">__show_roc_curve</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                                                         <span class="n">tensor</span><span class="o">=</span><span class="n">tensor</span><span class="p">,</span>
+                                                         <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+                                                         <span class="n">name</span><span class="o">=</span><span class="n">name</span>
+                                                         <span class="p">))</span>
+        <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">terminate</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">show_pr_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+
+        <span class="kn">from</span> <span class="nn">sklearn</span> <span class="k">import</span> <span class="n">metrics</span>
+
+        <span class="k">def</span> <span class="nf">__show_roc_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+            <span class="n">precision</span><span class="p">,</span> <span class="n">recall</span><span class="p">,</span> <span class="n">thresholds</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">precision_recall_curve</span><span class="p">(</span><span class="n">labels</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">tensor</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">show_lineplot</span><span class="p">(</span><span class="n">precision</span><span class="p">,</span> <span class="n">recall</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fillarea&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+            <span class="c1"># self.add_to_graph(x_vals=np.arange(0, 1.1, 0.1), y_vals=np.arange(0, 1.1, 0.1), name=name, append=True)</span>
+
+
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">__show_roc_curve</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                                                         <span class="n">tensor</span><span class="o">=</span><span class="n">tensor</span><span class="p">,</span>
+                                                         <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+                                                         <span class="n">name</span><span class="o">=</span><span class="n">name</span>
+                                                         <span class="p">))</span>
+        <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">terminate</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">show_classification_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;roc-auc&quot;</span><span class="p">,</span> <span class="s2">&quot;pr-auc&quot;</span><span class="p">,</span> <span class="s2">&quot;pr-score&quot;</span><span class="p">)):</span>
+
+        <span class="kn">from</span> <span class="nn">sklearn</span> <span class="k">import</span> <span class="n">metrics</span>
+
+        <span class="k">def</span> <span class="nf">__show_roc_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;roc-auc&quot;</span><span class="p">,</span> <span class="s2">&quot;pr-auc&quot;</span><span class="p">,</span> <span class="s2">&quot;pr-score&quot;</span><span class="p">)):</span>
+
+            <span class="n">vals</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">if</span> <span class="s2">&quot;roc-auc&quot;</span> <span class="ow">in</span> <span class="n">metric</span><span class="p">:</span>
+                <span class="n">roc_auc</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">roc_auc_score</span><span class="p">(</span><span class="n">labels</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">tensor</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+                <span class="n">vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">roc_auc</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;pr-auc&quot;</span> <span class="ow">in</span> <span class="n">metric</span><span class="p">:</span>
+                <span class="n">precision</span><span class="p">,</span> <span class="n">recall</span><span class="p">,</span> <span class="n">thresholds</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">precision_recall_curve</span><span class="p">(</span><span class="n">labels</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">tensor</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+                <span class="n">pr_auc</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">auc</span><span class="p">(</span><span class="n">recall</span><span class="p">,</span> <span class="n">precision</span><span class="p">)</span>
+                <span class="n">vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pr_auc</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;pr-score&quot;</span> <span class="ow">in</span> <span class="n">metric</span><span class="p">:</span>
+                <span class="n">pr_score</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">average_precision_score</span><span class="p">(</span><span class="n">labels</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">tensor</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+                <span class="n">vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pr_score</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;mcc&quot;</span> <span class="ow">in</span> <span class="n">metric</span><span class="p">:</span>
+                <span class="n">mcc_score</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">matthews_corrcoef</span><span class="p">(</span><span class="n">labels</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">tensor</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+                <span class="n">vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mcc_score</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;f1&quot;</span> <span class="ow">in</span> <span class="n">metric</span><span class="p">:</span>
+                <span class="n">f1_score</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">f1_score</span><span class="p">(</span><span class="n">labels</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">tensor</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+                <span class="n">vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f1_score</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">show_value</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">__show_roc_curve</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                                                         <span class="n">tensor</span><span class="o">=</span><span class="n">tensor</span><span class="p">,</span>
+                                                         <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+                                                         <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                                                         <span class="n">metric</span><span class="o">=</span><span class="n">metric</span>
+                                                         <span class="p">))</span>
+        <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">terminate</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">start</span><span class="p">()</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, MIC.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.1',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,1114 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>vislogger.numpyvisdomlogger &mdash; TRIXI 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> TRIXI
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Sphinx Setup</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../sphinx.html">Sphinx Setup</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Package Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">vislogger3</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">TRIXI</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>vislogger.numpyvisdomlogger</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for vislogger.numpyvisdomlogger</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">defaultdict</span>
+
+<span class="kn">import</span> <span class="nn">atexit</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span> <span class="k">as</span> <span class="nn">mp</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">vislogger.abstractlogger</span> <span class="k">import</span> <span class="n">AbstractLogger</span><span class="p">,</span> <span class="n">convert_params</span>
+<span class="kn">from</span> <span class="nn">vislogger.extravisdom</span> <span class="k">import</span> <span class="n">ExtraVisdom</span>
+
+
+<div class="viewcode-block" id="NumpyVisdomLogger"><a class="viewcode-back" href="../../vislogger.html#vislogger.numpyvisdomlogger.NumpyVisdomLogger">[docs]</a><span class="k">class</span> <span class="nc">NumpyVisdomLogger</span><span class="p">(</span><span class="n">AbstractLogger</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Visual logger, inherits the AbstractLogger and plots/ logs numpy arrays/ values on a Visdom server.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;main&quot;</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="s2">&quot;http://localhost&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">8080</span><span class="p">,</span> <span class="n">auto_close</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">auto_start</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">auto_start_ports</span><span class="o">=</span><span class="p">(</span><span class="mi">8080</span><span class="p">,</span> <span class="mi">8000</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a new NumpyVisdomLogger object.</span>
+
+<span class="sd">        :param name: The name of the visdom environment</span>
+<span class="sd">        :param server: The address of the visdom server</span>
+<span class="sd">        :param port: The port of the visdom server</span>
+<span class="sd">        :param auto_close: Close all objects and kill process at the end of the python script</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">NumpyVisdomLogger</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">auto_start</span><span class="p">:</span>
+            <span class="n">auto_port</span> <span class="o">=</span> <span class="n">start_visdom</span><span class="p">(</span><span class="n">auto_start_ports</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">auto_port</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">port</span> <span class="o">=</span> <span class="n">auto_port</span>
+                <span class="n">server</span> <span class="o">=</span> <span class="s2">&quot;http://localhost&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span> <span class="o">=</span> <span class="n">server</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">vis</span> <span class="o">=</span> <span class="n">ExtraVisdom</span><span class="p">(</span><span class="n">env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value_counter</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_3d_histograms</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_process</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__show</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="p">,))</span>
+
+        <span class="k">if</span> <span class="n">auto_close</span><span class="p">:</span>
+            <span class="c1"># atexit.register(self.close_all)</span>
+            <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exit</span><span class="p">)</span>
+            <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_vis</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__show</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queue</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loop for the internal process to process all visualization tasks</span>
+
+<span class="sd">        :param queue: queue with all visualization tasks</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+
+            <span class="n">vis_task</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+
+            <span class="k">try</span><span class="p">:</span>
+
+                <span class="n">show_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_funcs</span><span class="p">[</span><span class="n">vis_task</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]]</span>
+                <span class="n">show_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">vis_task</span><span class="p">)</span>
+
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+
+                <span class="n">error</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error </span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">msg</span><span class="p">))</span>
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">show_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Displays an image in a window/pane at the visdom server</span>
+
+<span class="sd">        :param image: The image array to be displayed</span>
+<span class="sd">        :param name: The name of the image window</span>
+<span class="sd">        :param title: The title of the image window</span>
+<span class="sd">        :param caption: The of the image, displayed in the window</span>
+<span class="sd">        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix</span>
+<span class="sd">        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">vis_task</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;image&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;image&quot;</span><span class="p">:</span> <span class="n">image</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">title</span><span class="p">,</span>
+            <span class="s2">&quot;caption&quot;</span><span class="p">:</span> <span class="n">caption</span><span class="p">,</span>
+            <span class="s2">&quot;env_appendix&quot;</span><span class="p">:</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="s2">&quot;opts&quot;</span><span class="p">:</span> <span class="n">opts</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">vis_task</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__show_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Internal show_image method, called by the internal process.</span>
+<span class="sd">        This function does all the magic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">opts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+            <span class="n">caption</span><span class="o">=</span><span class="n">caption</span>
+        <span class="p">))</span>
+
+        <span class="n">win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis</span><span class="o">.</span><span class="n">image</span><span class="p">(</span>
+            <span class="n">img</span><span class="o">=</span><span class="n">image</span><span class="p">,</span>
+            <span class="n">win</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="n">opts</span><span class="o">=</span><span class="n">opts</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">win</span>
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">show_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">images</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Displays multiple images in a window/pane at a visdom server</span>
+
+<span class="sd">        :param images: The image array to be displayed</span>
+<span class="sd">        :param name: The name of the window</span>
+<span class="sd">        :param title: The title of the image window</span>
+<span class="sd">        :param caption: The of the image, displayed in the window</span>
+<span class="sd">        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix</span>
+<span class="sd">        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">vis_task</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;images&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;images&quot;</span><span class="p">:</span> <span class="n">images</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">title</span><span class="p">,</span>
+            <span class="s2">&quot;caption&quot;</span><span class="p">:</span> <span class="n">caption</span><span class="p">,</span>
+            <span class="s2">&quot;env_appendix&quot;</span><span class="p">:</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="s2">&quot;opts&quot;</span><span class="p">:</span> <span class="n">opts</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">vis_task</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__show_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">images</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">       Internal show_images method, called by the internal process.</span>
+<span class="sd">       This function does all the magic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">opts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+            <span class="n">caption</span><span class="o">=</span><span class="n">caption</span>
+        <span class="p">))</span>
+
+        <span class="n">win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis</span><span class="o">.</span><span class="n">images</span><span class="p">(</span>
+            <span class="n">tensor</span><span class="o">=</span><span class="n">images</span><span class="p">,</span>
+            <span class="n">win</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="n">opts</span><span class="o">=</span><span class="n">opts</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">win</span>
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">show_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">counter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">show_legend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a line plot that is automatically appended with new values.</span>
+
+<span class="sd">        :param value: Value to be plotted / appended to the graph</span>
+<span class="sd">        :param name: The name of the window</span>
+<span class="sd">        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix</span>
+<span class="sd">        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">vis_task</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">value</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;counter&quot;</span><span class="p">:</span> <span class="n">counter</span><span class="p">,</span>
+            <span class="s2">&quot;tag&quot;</span><span class="p">:</span> <span class="n">tag</span><span class="p">,</span>
+            <span class="s2">&quot;show_legend&quot;</span><span class="p">:</span> <span class="n">show_legend</span><span class="p">,</span>
+            <span class="s2">&quot;env_appendix&quot;</span><span class="p">:</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="s2">&quot;opts&quot;</span><span class="p">:</span> <span class="n">opts</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">vis_task</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__show_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">counter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">show_legend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                     <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">       Internal show_value method, called by the internal process.</span>
+<span class="sd">       This function does all the magic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">value_dim</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+            <span class="n">value_dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">value</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">value</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">tag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tag</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">tag</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">if</span> <span class="s2">&quot;showlegend&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">opts</span> <span class="ow">and</span> <span class="n">show_legend</span><span class="p">:</span>
+            <span class="n">opts</span><span class="p">[</span><span class="s2">&quot;showlegend&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="n">up_str</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_counter</span><span class="p">:</span>
+            <span class="n">up_str</span> <span class="o">=</span> <span class="s2">&quot;append&quot;</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_counter</span> <span class="ow">and</span> <span class="n">tag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_counter</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">counter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_value_counter</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">tag</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_value_counter</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">tag</span><span class="p">]</span> <span class="o">+=</span> <span class="n">counter</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_counter</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">tag</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">counter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">if</span> <span class="n">value_dim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_value_counter</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">counter</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_value_counter</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">counter</span><span class="p">]</span> <span class="o">*</span> <span class="n">value_dim</span><span class="p">])</span>
+
+        <span class="n">opts</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">opts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+        <span class="p">))</span>
+
+        <span class="n">display_name</span> <span class="o">=</span> <span class="n">tag</span>
+        <span class="k">if</span> <span class="n">value_dim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">display_name</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis</span><span class="o">.</span><span class="n">line</span><span class="p">(</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">X</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_value_counter</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">tag</span><span class="p">],</span>
+            <span class="n">win</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">display_name</span><span class="p">,</span>
+            <span class="n">update</span><span class="o">=</span><span class="n">up_str</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="n">opts</span><span class="o">=</span><span class="n">opts</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">win</span>
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">show_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Displays a text in a visdom window</span>
+
+<span class="sd">        :param text: The text to be displayed</span>
+<span class="sd">        :param name: The name of the window</span>
+<span class="sd">        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix</span>
+<span class="sd">        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">vis_task</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="n">text</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;env_appendix&quot;</span><span class="p">:</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="s2">&quot;opts&quot;</span><span class="p">:</span> <span class="n">opts</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">vis_task</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__show_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">       Internal show_text method, called by the internal process.</span>
+<span class="sd">       This function does all the magic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;br&gt;&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
+            <span class="n">win</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="n">opts</span><span class="o">=</span><span class="n">opts</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">win</span>
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">show_progress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Shows the progress as a pie chart.</span>
+
+<span class="sd">        :param num: Current progress. Either a relative value (0 &lt;= num &lt;= 1) or a absolute value if total is given (</span>
+<span class="sd">        but has to be smaller than total)</span>
+<span class="sd">        :param total: This if the total number of iterations.</span>
+<span class="sd">        :param name: The name of the window</span>
+<span class="sd">        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix</span>
+<span class="sd">        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">vis_task</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;progress&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;num&quot;</span><span class="p">:</span> <span class="n">num</span><span class="p">,</span>
+            <span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="n">total</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;env_appendix&quot;</span><span class="p">:</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="s2">&quot;opts&quot;</span><span class="p">:</span> <span class="n">opts</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">vis_task</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__show_progress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">       Internal show_progress method, called by the internal process.</span>
+<span class="sd">       This function does all the magic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">total</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">num</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">total</span> <span class="o">=</span> <span class="mf">1000.</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="mf">1000.</span> <span class="o">*</span> <span class="n">num</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;Either num has to be a ratio between 0 and 1 or give a valid total number&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">num</span> <span class="o">&gt;</span> <span class="n">total</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;Num has to be smaller than total&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;progress&quot;</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">num</span><span class="p">,</span> <span class="n">total</span> <span class="o">-</span> <span class="n">num</span><span class="p">])</span>
+
+        <span class="n">opts</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">opts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">legend</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Done&#39;</span><span class="p">,</span> <span class="s1">&#39;To-Do&#39;</span><span class="p">],</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Progress&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis</span><span class="o">.</span><span class="n">pie</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+            <span class="n">win</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="n">opts</span><span class="o">=</span><span class="n">opts</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">win</span>
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">show_histogram</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Displays the histogramm of an array.</span>
+
+<span class="sd">        :param array: The array the histogram is calculated of</span>
+<span class="sd">        :param name: The name of the window</span>
+<span class="sd">        :param bins: Number of bins (== bars) in the histogram</span>
+<span class="sd">        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix</span>
+<span class="sd">        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">vis_task</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;histogram&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;array&quot;</span><span class="p">:</span> <span class="n">array</span><span class="p">,</span>
+            <span class="s2">&quot;bins&quot;</span><span class="p">:</span> <span class="n">bins</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;env_appendix&quot;</span><span class="p">:</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="s2">&quot;opts&quot;</span><span class="p">:</span> <span class="n">opts</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">vis_task</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__show_histogram</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">       Internal show_histogram method, called by the internal process.</span>
+<span class="sd">       This function does all the magic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">opts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">numbins</span><span class="o">=</span><span class="n">bins</span>
+        <span class="p">))</span>
+
+        <span class="n">win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">array</span><span class="p">,</span>
+            <span class="n">win</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="n">opts</span><span class="o">=</span><span class="n">opts</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">win</span>
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">show_histogram_3d</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Displays a history of histograms as consequtive lines in a 3d space (similar to tensorflow)</span>
+
+<span class="sd">        :param array: New sample of the array that should be plotted (i.e. results in one line of the 3d histogramm)</span>
+<span class="sd">        :param name: The name of the window</span>
+<span class="sd">        :param bins: Number of bins in the histogram</span>
+<span class="sd">        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix</span>
+<span class="sd">        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">vis_task</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;histogram_3d&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;array&quot;</span><span class="p">:</span> <span class="n">array</span><span class="p">,</span>
+            <span class="s2">&quot;bins&quot;</span><span class="p">:</span> <span class="n">bins</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;env_appendix&quot;</span><span class="p">:</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="s2">&quot;opts&quot;</span><span class="p">:</span> <span class="n">opts</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">vis_task</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__show_histogram_3d</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">       Internal show_histogram_3d method, called by the internal process.</span>
+<span class="sd">       This function does all the magic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_3d_histograms</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_3d_histograms</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_3d_histograms</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_3d_histograms</span><span class="p">[</span><span class="n">name</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">50</span><span class="p">:</span>
+
+            <span class="n">n_histo</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_3d_histograms</span><span class="p">[</span><span class="n">name</span><span class="p">])</span> <span class="o">-</span> <span class="mi">20</span>
+            <span class="n">every_n</span> <span class="o">=</span> <span class="n">n_histo</span> <span class="o">//</span> <span class="mi">30</span> <span class="o">+</span> <span class="mi">1</span>
+
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_3d_histograms</span><span class="p">[</span><span class="n">name</span><span class="p">][:</span><span class="o">-</span><span class="mi">20</span><span class="p">][</span><span class="mi">0</span><span class="p">::</span><span class="n">every_n</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_3d_histograms</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="o">-</span><span class="mi">20</span><span class="p">:]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_3d_histograms</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+        <span class="n">opts</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">opts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">numbins</span><span class="o">=</span><span class="n">bins</span>
+        <span class="p">))</span>
+
+        <span class="n">win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis</span><span class="o">.</span><span class="n">histogram_3d</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+            <span class="n">win</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="n">opts</span><span class="o">=</span><span class="n">opts</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">win</span>
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">show_barplot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rownames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Displays a bar plot from an array</span>
+
+<span class="sd">        :param array: array of shape NxM where N is the nomber of rows and M is the number of elements in the row.</span>
+<span class="sd">        :param legend: list of legend names. Has to have M elements.</span>
+<span class="sd">        :param rownames: list of row names. Has to have N elements.</span>
+<span class="sd">        :param name: The name of the window</span>
+<span class="sd">        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix</span>
+<span class="sd">        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">vis_task</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;barplot&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;array&quot;</span><span class="p">:</span> <span class="n">array</span><span class="p">,</span>
+            <span class="s2">&quot;legend&quot;</span><span class="p">:</span> <span class="n">legend</span><span class="p">,</span>
+            <span class="s2">&quot;rownames&quot;</span><span class="p">:</span> <span class="n">rownames</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;env_appendix&quot;</span><span class="p">:</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="s2">&quot;opts&quot;</span><span class="p">:</span> <span class="n">opts</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">vis_task</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__show_barplot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rownames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">       Internal show_barplot method, called by the internal process.</span>
+<span class="sd">       This function does all the magic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">opts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">stacked</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">legend</span><span class="o">=</span><span class="n">legend</span><span class="p">,</span>
+            <span class="n">rownames</span><span class="o">=</span><span class="n">rownames</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">name</span>
+        <span class="p">))</span>
+
+        <span class="n">win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">array</span><span class="p">,</span>
+            <span class="n">win</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="n">opts</span><span class="o">=</span><span class="n">opts</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">win</span>
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">show_lineplot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_vals</span><span class="p">,</span> <span class="n">x_vals</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Displays (multiple) lines plot, given values Y (and optional the corresponding X values)</span>
+
+<span class="sd">        :param y_vals: Array of shape MxN , where M is the number of points and N is the number of different line</span>
+<span class="sd">        :param x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if</span>
+<span class="sd">         not set the points are assumed to be equally distributed in the interval [0, 1] )</span>
+<span class="sd">        :param name: The name of the window</span>
+<span class="sd">        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix</span>
+<span class="sd">        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">vis_task</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;lineplot&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;x_vals&quot;</span><span class="p">:</span> <span class="n">x_vals</span><span class="p">,</span>
+            <span class="s2">&quot;y_vals&quot;</span><span class="p">:</span> <span class="n">y_vals</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;env_appendix&quot;</span><span class="p">:</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="s2">&quot;opts&quot;</span><span class="p">:</span> <span class="n">opts</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">vis_task</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__show_lineplot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_vals</span><span class="p">,</span> <span class="n">x_vals</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">       Internal show_lineplot method, called by the internal process.</span>
+<span class="sd">       This function does all the magic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">opts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+        <span class="p">))</span>
+
+        <span class="n">win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis</span><span class="o">.</span><span class="n">line</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">x_vals</span><span class="p">,</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">y_vals</span><span class="p">,</span>
+            <span class="n">win</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="n">opts</span><span class="o">=</span><span class="n">opts</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">win</span>
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">show_scatterplot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Displays a scatter plots, with the points given in X</span>
+
+<span class="sd">        :param array: A 2d array with size N x dim, where each element i \in N at X[i] results in a a 2d (if dim = 2)/</span>
+<span class="sd">         3d (if dim = 3) point.</span>
+<span class="sd">        :param labels: For each point a int label (starting from 1) can be given. Has to be an array of size N.</span>
+<span class="sd">        :param name: The name of the window</span>
+<span class="sd">        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix</span>
+<span class="sd">        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">vis_task</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;scatterplot&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;array&quot;</span><span class="p">:</span> <span class="n">array</span><span class="p">,</span>
+            <span class="s2">&quot;labels&quot;</span><span class="p">:</span> <span class="n">labels</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;env_appendix&quot;</span><span class="p">:</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="s2">&quot;opts&quot;</span><span class="p">:</span> <span class="n">opts</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">vis_task</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__show_scatterplot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">       Internal show_scatterplot method, called by the internal process.</span>
+<span class="sd">       This function does all the magic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">opts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+        <span class="p">))</span>
+
+        <span class="n">win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">array</span><span class="p">,</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+            <span class="n">win</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="n">opts</span><span class="o">=</span><span class="n">opts</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">win</span>
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">show_piechart</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Displays a pie chart.</span>
+
+<span class="sd">        :param array: Array of positive integers. Each integer will be presented as a part of the pie (with the total</span>
+<span class="sd">        as the sum of all integers)</span>
+<span class="sd">        :param name: The name of the window</span>
+<span class="sd">        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix</span>
+<span class="sd">        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">vis_task</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;piechart&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;array&quot;</span><span class="p">:</span> <span class="n">array</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;env_appendix&quot;</span><span class="p">:</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="s2">&quot;opts&quot;</span><span class="p">:</span> <span class="n">opts</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">vis_task</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__show_piechart</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">       Internal show_piechart method, called by the internal process.</span>
+<span class="sd">       This function does all the magic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">opts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">name</span>
+        <span class="p">))</span>
+
+        <span class="n">win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis</span><span class="o">.</span><span class="n">pie</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">array</span><span class="p">,</span>
+            <span class="n">win</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="n">opts</span><span class="o">=</span><span class="n">opts</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">win</span>
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">show_svg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">svg</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Displays a svg file.</span>
+
+<span class="sd">        :param svg: Filename of the svg file which should be displayed</span>
+<span class="sd">        :param name: The name of the window</span>
+<span class="sd">        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix</span>
+<span class="sd">        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">vis_task</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;svg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;svg&quot;</span><span class="p">:</span> <span class="n">svg</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;env_appendix&quot;</span><span class="p">:</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="s2">&quot;opts&quot;</span><span class="p">:</span> <span class="n">opts</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">vis_task</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__show_svg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">svg</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">       Internal show_svg method, called by the internal process.</span>
+<span class="sd">       This function does all the magic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">svg</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fileobj</span><span class="p">:</span>
+            <span class="n">svgstr</span> <span class="o">=</span> <span class="n">fileobj</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+        <span class="n">opts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">name</span>
+        <span class="p">))</span>
+
+        <span class="n">win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis</span><span class="o">.</span><span class="n">svg</span><span class="p">(</span>
+            <span class="n">svgstr</span><span class="o">=</span><span class="n">svgstr</span><span class="p">,</span>
+            <span class="n">win</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="n">opts</span><span class="o">=</span><span class="n">opts</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">win</span>
+
+<div class="viewcode-block" id="NumpyVisdomLogger.show_values"><a class="viewcode-back" href="../../vislogger.html#vislogger.numpyvisdomlogger.NumpyVisdomLogger.show_values">[docs]</a>    <span class="k">def</span> <span class="nf">show_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val_dict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A util function for multiple values. Simple plots all values in a dict, there the window name is the key</span>
+<span class="sd">        in the dict and the plotted value is the value of a dict (Simply calls the show_value function).</span>
+
+<span class="sd">        :param val_dict: Dict with key, values pairs which will be plotted</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">val_dict</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">show_value</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span></div>
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">add_to_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_vals</span><span class="p">,</span> <span class="n">x_vals</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">legend_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                     <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Displays (multiple) lines plot, given values Y (and optional the corresponding X values)</span>
+
+<span class="sd">        :param y_vals: Array of shape MxN , where M is the number of points and N is the number of different line</span>
+<span class="sd">        :param x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if</span>
+<span class="sd">         not set the points are assumed to be equally distributed in the interval [0, 1] )</span>
+<span class="sd">        :param name: The name of the window</span>
+<span class="sd">        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix</span>
+<span class="sd">        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">vis_task</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;add&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;x_vals&quot;</span><span class="p">:</span> <span class="n">x_vals</span><span class="p">,</span>
+            <span class="s2">&quot;y_vals&quot;</span><span class="p">:</span> <span class="n">y_vals</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;legend_name&quot;</span><span class="p">:</span> <span class="n">legend_name</span><span class="p">,</span>
+            <span class="s2">&quot;append&quot;</span><span class="p">:</span> <span class="n">append</span><span class="p">,</span>
+            <span class="s2">&quot;env_appendix&quot;</span><span class="p">:</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="s2">&quot;opts&quot;</span><span class="p">:</span> <span class="n">opts</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">vis_task</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__add_to_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_vals</span><span class="p">,</span> <span class="n">x_vals</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">legend_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">env_appendix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                       <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">       Internal show_lineplot method, called by the internal process.</span>
+<span class="sd">       This function does all the magic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">opts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+        <span class="p">))</span>
+
+        <span class="n">win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis</span><span class="o">.</span><span class="n">updateTrace</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">x_vals</span><span class="p">,</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">y_vals</span><span class="p">,</span>
+            <span class="n">win</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">legend_name</span><span class="p">,</span>
+            <span class="n">append</span><span class="o">=</span><span class="n">append</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="n">env_appendix</span><span class="p">,</span>
+            <span class="n">opts</span><span class="o">=</span><span class="n">opts</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">win</span>
+
+    <span class="nd">@convert_params</span>
+    <span class="k">def</span> <span class="nf">send_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="s1">&#39;events&#39;</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Displays (multiple) lines plot, given values Y (and optional the corresponding X values)</span>
+
+<span class="sd">        :param y_vals: Array of shape MxN , where M is the number of points and N is the number of different line</span>
+<span class="sd">        :param x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if</span>
+<span class="sd">         not set the points are assumed to be equally distributed in the interval [0, 1] )</span>
+<span class="sd">        :param name: The name of the window</span>
+<span class="sd">        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix</span>
+<span class="sd">        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">layout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">layout</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">vis_task</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;data&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="n">data</span><span class="p">,</span>
+            <span class="s2">&quot;layout&quot;</span><span class="p">:</span> <span class="n">layout</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;endpoint&quot;</span><span class="p">:</span> <span class="n">endpoint</span><span class="p">,</span>
+            <span class="s2">&quot;append&quot;</span><span class="p">:</span> <span class="n">append</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_queue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">vis_task</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__send_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="s1">&#39;events&#39;</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">       Internal show_lineplot method, called by the internal process.</span>
+<span class="sd">       This function does all the magic.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">layout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">layout</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">type</span><span class="p">)):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="p">]</span>
+
+        <span class="n">win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vis</span><span class="o">.</span><span class="n">_send</span><span class="p">({</span><span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">,</span>
+                              <span class="s1">&#39;layout&#39;</span><span class="p">:</span> <span class="n">layout</span><span class="p">,</span>
+                              <span class="s1">&#39;win&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+                              <span class="s1">&#39;append&#39;</span><span class="p">:</span> <span class="n">append</span><span class="p">},</span> <span class="n">endpoint</span><span class="o">=</span><span class="n">endpoint</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">win</span>
+
+<div class="viewcode-block" id="NumpyVisdomLogger.close_all"><a class="viewcode-back" href="../../vislogger.html#vislogger.numpyvisdomlogger.NumpyVisdomLogger.close_all">[docs]</a>    <span class="k">def</span> <span class="nf">close_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Closes all visdom windows.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vis</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="NumpyVisdomLogger.save_vis"><a class="viewcode-back" href="../../vislogger.html#vislogger.numpyvisdomlogger.NumpyVisdomLogger.save_vis">[docs]</a>    <span class="k">def</span> <span class="nf">save_vis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vis</span><span class="o">.</span><span class="n">save</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="NumpyVisdomLogger.exit"><a class="viewcode-back" href="../../vislogger.html#vislogger.numpyvisdomlogger.NumpyVisdomLogger.exit">[docs]</a>    <span class="k">def</span> <span class="nf">exit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Kills the internal process.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span></div>
+
+    <span class="n">show_funcs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;image&quot;</span><span class="p">:</span> <span class="n">__show_image</span><span class="p">,</span>
+        <span class="s2">&quot;images&quot;</span><span class="p">:</span> <span class="n">__show_images</span><span class="p">,</span>
+        <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">__show_value</span><span class="p">,</span>
+        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="n">__show_text</span><span class="p">,</span>
+        <span class="s2">&quot;progress&quot;</span><span class="p">:</span> <span class="n">__show_progress</span><span class="p">,</span>
+        <span class="s2">&quot;histogram&quot;</span><span class="p">:</span> <span class="n">__show_histogram</span><span class="p">,</span>
+        <span class="s2">&quot;histogram_3d&quot;</span><span class="p">:</span> <span class="n">__show_histogram_3d</span><span class="p">,</span>
+        <span class="s2">&quot;barplot&quot;</span><span class="p">:</span> <span class="n">__show_barplot</span><span class="p">,</span>
+        <span class="s2">&quot;lineplot&quot;</span><span class="p">:</span> <span class="n">__show_lineplot</span><span class="p">,</span>
+        <span class="s2">&quot;scatterplot&quot;</span><span class="p">:</span> <span class="n">__show_scatterplot</span><span class="p">,</span>
+        <span class="s2">&quot;piechart&quot;</span><span class="p">:</span> <span class="n">__show_piechart</span><span class="p">,</span>
+        <span class="s2">&quot;svg&quot;</span><span class="p">:</span> <span class="n">__show_svg</span><span class="p">,</span>
+        <span class="s2">&quot;add&quot;</span><span class="p">:</span> <span class="n">__add_to_graph</span><span class="p">,</span>
+        <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="n">__send_data</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="start_visdom"><a class="viewcode-back" href="../../vislogger.html#vislogger.numpyvisdomlogger.start_visdom">[docs]</a><span class="k">def</span> <span class="nf">start_visdom</span><span class="p">(</span><span class="n">port_list</span><span class="o">=</span><span class="p">(</span><span class="mi">8080</span><span class="p">,</span> <span class="mi">8000</span><span class="p">)):</span>
+    <span class="kn">import</span> <span class="nn">time</span>
+    <span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="k">import</span> <span class="n">Process</span>
+    <span class="kn">import</span> <span class="nn">visdom.server</span>
+
+    <span class="kn">from</span> <span class="nn">vislogger.util</span> <span class="k">import</span> <span class="n">PyLock</span>
+
+    <span class="n">lock_id</span> <span class="o">=</span> <span class="s2">&quot;visdom_lock&quot;</span>
+
+    <span class="k">def</span> <span class="nf">is_port_available</span><span class="p">(</span><span class="n">port</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+        <span class="kn">import</span> <span class="nn">socket</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="mi">98</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Port </span><span class="si">{}</span><span class="s2"> is already in use&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">port</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">_start_visdom</span><span class="p">(</span><span class="n">port</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">visdom</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">start_server</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;port&quot;</span><span class="p">:</span> <span class="n">port</span><span class="p">})</span>
+        <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">terminate</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="n">lock</span> <span class="o">=</span> <span class="n">PyLock</span><span class="p">(</span><span class="n">lock_id</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">port_list</span><span class="p">):</span>
+        <span class="n">port</span> <span class="o">=</span> <span class="n">port_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">lock</span><span class="o">.</span><span class="fm">__enter__</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">is_port_available</span><span class="p">(</span><span class="n">port</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">_start_visdom</span><span class="p">(</span><span class="n">port</span><span class="p">):</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Started Visdom on Port:&quot;</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+                    <span class="n">lock</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">port</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, MIC.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.1',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>

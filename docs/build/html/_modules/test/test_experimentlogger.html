@@ -1,0 +1,360 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>test.test_experimentlogger &mdash; TRIXI 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> TRIXI
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Sphinx Setup</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../sphinx.html">Sphinx Setup</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Package Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">vislogger3</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">TRIXI</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>test.test_experimentlogger</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for test.test_experimentlogger</h1><div class="highlight"><pre>
+<span></span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">unittest</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+<span class="kn">import</span> <span class="nn">vislogger</span>
+
+
+<span class="n">test_dir</span> <span class="o">=</span> <span class="s2">&quot;test_dir&quot;</span>
+
+
+<div class="viewcode-block" id="TestExperimentLogger"><a class="viewcode-back" href="../../test.html#test.test_experimentlogger.TestExperimentLogger">[docs]</a><span class="k">class</span> <span class="nc">TestExperimentLogger</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="TestExperimentLogger.setUp"><a class="viewcode-back" href="../../test.html#test.test_experimentlogger.TestExperimentLogger.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">remove_if_exists</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">experimentLogger</span> <span class="o">=</span> <span class="n">vislogger</span><span class="o">.</span><span class="n">PytorchExperimentLogger</span><span class="p">(</span><span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">,</span>
+                                                                  <span class="n">base_dir</span><span class="o">=</span><span class="n">test_dir</span><span class="p">,</span>
+                                                                  <span class="n">folder_format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{experiment_name}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestExperimentLogger.test_created_base_test_folder"><a class="viewcode-back" href="../../test.html#test.test_experimentlogger.TestExperimentLogger.test_created_base_test_folder">[docs]</a>    <span class="k">def</span> <span class="nf">test_created_base_test_folder</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="s2">&quot;test_dir&quot;</span><span class="p">),</span> <span class="s2">&quot;test directory not created&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestExperimentLogger.test_two_experiment_loggers_same_test_dir_no_run_number_throws_error"><a class="viewcode-back" href="../../test.html#test.test_experimentlogger.TestExperimentLogger.test_two_experiment_loggers_same_test_dir_no_run_number_throws_error">[docs]</a>    <span class="k">def</span> <span class="nf">test_two_experiment_loggers_same_test_dir_no_run_number_throws_error</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">FileExistsError</span><span class="p">):</span>
+            <span class="n">vislogger</span><span class="o">.</span><span class="n">PytorchExperimentLogger</span><span class="p">(</span><span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">,</span>
+                                              <span class="n">base_dir</span><span class="o">=</span><span class="n">test_dir</span><span class="p">,</span>
+                                              <span class="n">folder_format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{experiment_name}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestExperimentLogger.test_net_save_and_load"><a class="viewcode-back" href="../../test.html#test.test_experimentlogger.TestExperimentLogger.test_net_save_and_load">[docs]</a>    <span class="k">def</span> <span class="nf">test_net_save_and_load</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">net</span> <span class="o">=</span> <span class="n">Net</span><span class="p">()</span>
+        <span class="n">save_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentLogger</span><span class="o">.</span><span class="n">get_save_checkpoint_fn</span><span class="p">(</span><span class="n">net</span><span class="o">=</span><span class="n">net</span><span class="p">)</span>
+        <span class="n">save_fn</span><span class="p">(</span><span class="n">n_iter</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># give some time before loading, so saving has finished</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">net2</span> <span class="o">=</span> <span class="n">Net</span><span class="p">()</span>
+        <span class="n">diff_conv1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">conv1</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="o">-</span> <span class="n">net2</span><span class="o">.</span><span class="n">conv1</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">numpy</span><span class="p">()))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">diff_conv1</span> <span class="o">&gt;</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="s2">&quot;conv1 bias values have not been initialized differently&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">experimentLogger</span><span class="o">.</span><span class="n">load_last_checkpoint</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="s2">&quot;test_dir/test/checkpoint/&quot;</span><span class="p">,</span> <span class="n">net</span><span class="o">=</span><span class="n">net2</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">conv1</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">net2</span><span class="o">.</span><span class="n">conv1</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span>
+                                   <span class="n">err_msg</span><span class="o">=</span><span class="s2">&quot;loading checkpoint did not restore model values&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestExperimentLogger.test_net_save_and_load_with_optimizer"><a class="viewcode-back" href="../../test.html#test.test_experimentlogger.TestExperimentLogger.test_net_save_and_load_with_optimizer">[docs]</a>    <span class="k">def</span> <span class="nf">test_net_save_and_load_with_optimizer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_test_load_save</span><span class="p">(</span><span class="n">test_with_cuda</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestExperimentLogger.test_net_save_and_load_with_optimizer_with_cuda"><a class="viewcode-back" href="../../test.html#test.test_experimentlogger.TestExperimentLogger.test_net_save_and_load_with_optimizer_with_cuda">[docs]</a>    <span class="k">def</span> <span class="nf">test_net_save_and_load_with_optimizer_with_cuda</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_test_load_save</span><span class="p">(</span><span class="n">test_with_cuda</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_test_load_save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_with_cuda</span><span class="p">):</span>
+        <span class="c1"># small testing net</span>
+        <span class="n">net</span> <span class="o">=</span> <span class="n">Net</span><span class="p">()</span>
+        <span class="c1"># fake values for fake step</span>
+        <span class="n">random_input</span> <span class="o">=</span> <span class="n">np_to_var</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">28</span><span class="o">*</span><span class="mi">28</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">)))</span>
+        <span class="n">fake_labels</span> <span class="o">=</span> <span class="n">np_to_var</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">2</span><span class="p">]))</span><span class="o">.</span><span class="n">long</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">test_with_cuda</span><span class="p">:</span>
+            <span class="n">net</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+            <span class="n">random_input</span><span class="p">,</span> <span class="n">fake_labels</span> <span class="o">=</span> <span class="n">random_input</span><span class="o">.</span><span class="n">cuda</span><span class="p">(),</span> <span class="n">fake_labels</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+
+        <span class="n">criterion</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+        <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">net</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">,</span> <span class="n">weight_decay</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">betas</span><span class="o">=</span><span class="p">(</span><span class="mf">0.3</span><span class="p">,</span><span class="mf">0.4</span><span class="p">))</span>
+
+        <span class="c1"># do a fake forward/backward/step pass</span>
+        <span class="n">pred</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">random_input</span><span class="p">)</span>
+        <span class="n">err</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">fake_labels</span><span class="p">)</span>
+        <span class="n">err</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+        <span class="c1"># save and load network and optimizer</span>
+        <span class="n">save_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentLogger</span><span class="o">.</span><span class="n">get_save_checkpoint_fn</span><span class="p">(</span><span class="n">net</span><span class="o">=</span><span class="n">net</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">)</span>
+        <span class="n">save_fn</span><span class="p">(</span><span class="n">n_iter</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># give some time before loading, so saving has finished</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">loaded_network</span> <span class="o">=</span> <span class="n">Net</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">test_with_cuda</span><span class="p">:</span>
+            <span class="n">loaded_network</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+
+        <span class="n">loaded_optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">loaded_network</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">experimentLogger</span><span class="o">.</span><span class="n">load_last_checkpoint</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="s2">&quot;test_dir/test/checkpoint/&quot;</span><span class="p">,</span> <span class="n">net</span><span class="o">=</span><span class="n">loaded_network</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">loaded_optimizer</span><span class="p">)</span>
+
+        <span class="n">saved_pg</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">loaded_pg</span> <span class="o">=</span> <span class="n">loaded_optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># assert optimizer values have been correctly saved/loaded</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertAlmostEqual</span><span class="p">(</span><span class="n">saved_pg</span><span class="p">[</span><span class="s2">&quot;lr&quot;</span><span class="p">],</span> <span class="n">loaded_pg</span><span class="p">[</span><span class="s2">&quot;lr&quot;</span><span class="p">],</span> <span class="s2">&quot;learning rate not correctly saved&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertAlmostEqual</span><span class="p">(</span><span class="n">saved_pg</span><span class="p">[</span><span class="s2">&quot;eps&quot;</span><span class="p">],</span> <span class="n">loaded_pg</span><span class="p">[</span><span class="s2">&quot;eps&quot;</span><span class="p">],</span> <span class="s2">&quot;eps not correctly saved&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertAlmostEqual</span><span class="p">(</span><span class="n">saved_pg</span><span class="p">[</span><span class="s2">&quot;weight_decay&quot;</span><span class="p">],</span> <span class="n">loaded_pg</span><span class="p">[</span><span class="s2">&quot;weight_decay&quot;</span><span class="p">],</span> <span class="s2">&quot;weight_decay not correctly saved&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertAlmostEqual</span><span class="p">(</span><span class="n">saved_pg</span><span class="p">[</span><span class="s2">&quot;betas&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">loaded_pg</span><span class="p">[</span><span class="s2">&quot;betas&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;beta 0 not correctly saved&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertAlmostEqual</span><span class="p">(</span><span class="n">saved_pg</span><span class="p">[</span><span class="s2">&quot;betas&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">loaded_pg</span><span class="p">[</span><span class="s2">&quot;betas&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;beta 1 not correctly saved&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">saved_parameter</span><span class="p">,</span> <span class="n">loaded_parameter</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">saved_pg</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">],</span> <span class="n">loaded_pg</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">]):</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">saved_parameter</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">loaded_parameter</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span>
+                                       <span class="n">err_msg</span><span class="o">=</span><span class="s2">&quot;loading checkpoint did not restore optimizer param values&quot;</span><span class="p">)</span>
+
+        <span class="c1"># do a fake forward/backward/step pass with loaded stuff</span>
+        <span class="n">pred</span> <span class="o">=</span> <span class="n">loaded_network</span><span class="p">(</span><span class="n">random_input</span><span class="p">)</span>
+        <span class="n">err</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">fake_labels</span><span class="p">)</span>
+        <span class="n">err</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">loaded_optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>  <span class="c1"># this could raise an error, which is why there is no assert but just the execution</span>
+
+<div class="viewcode-block" id="TestExperimentLogger.tearDown"><a class="viewcode-back" href="../../test.html#test.test_experimentlogger.TestExperimentLogger.tearDown">[docs]</a>    <span class="k">def</span> <span class="nf">tearDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">remove_if_exists</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="remove_if_exists"><a class="viewcode-back" href="../../test.html#test.test_experimentlogger.remove_if_exists">[docs]</a><span class="k">def</span> <span class="nf">remove_if_exists</span><span class="p">(</span><span class="n">folder_name</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">folder_name</span><span class="p">):</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">folder_name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="np_to_var"><a class="viewcode-back" href="../../test.html#test.test_experimentlogger.np_to_var">[docs]</a><span class="k">def</span> <span class="nf">np_to_var</span><span class="p">(</span><span class="n">array</span><span class="p">):</span>
+    <span class="n">tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">array</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+    <span class="n">var</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">volatile</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">var</span></div>
+
+
+<div class="viewcode-block" id="Net"><a class="viewcode-back" href="../../test.html#test.test_experimentlogger.Net">[docs]</a><span class="k">class</span> <span class="nc">Net</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Small network to test save/load functionality</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Net</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv2_drop</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout2d</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">320</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Net.forward"><a class="viewcode-back" href="../../test.html#test.test_experimentlogger.Net.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">max_pool2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv1</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">max_pool2d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv2_drop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv2</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">320</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fc1</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">log_softmax</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">unittest</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, MIC.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.1',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>
