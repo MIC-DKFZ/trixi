@@ -184,6 +184,19 @@ def experiment():
     # Site Content
     content = {}
 
+    # Get config
+
+    default_val = "-"
+    combi_config = {}
+    exp_names = [exp.exp_name for exp in experiments]
+    exp_configs = [exp.config for exp in experiments]
+    config_keys = set([k for c in exp_configs for k in c.keys()])
+    for k in sorted(config_keys):
+        combi_config[k] = []
+        for conf in exp_configs:
+            combi_config[k].append(conf.get(k, default_val))
+
+
     # Get images
     images = {}
     image_keys = []
@@ -204,6 +217,7 @@ def experiment():
     content["graphs"] = make_graphs(results)
     content["title"] = experiments
     content["images"] = {"img_path": image_path, "imgs": images, "img_keys": image_keys}
+    content["config"] = {"exps" : exp_names, "configs": combi_config, "ckeys": config_keys}
 
     return render_template('experiment.html', **content)
 

@@ -12,13 +12,67 @@
     <meta name="author" content="">
 
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+
 
     <title>TRIXI - Comparing experiments</title>
 </head>
 
 
 <body>
-<script src="{{ url_for('static', filename='scripts.js') }}"></script>
+
+<h2>Config</h2>
+
+
+{% set exps = config["exps"] %}
+{% set configs = config["configs"] %}
+{% set ckeys = config["ckeys"] %}
+
+
+<table class="ctable">
+
+
+    <colgroup class="ctable cgroupstart"></colgroup>
+    {% for exp in exps %}
+    <colgroup class="cgroup"></colgroup>
+    {% endfor %}
+
+    <thead class="ctable">
+    <tr class="ctable">
+        <th class="ctable">&nbsp;</th>
+
+        {% for exp in exps %}
+
+        <th class="ctable">
+            <h2>{{exp}}</h2>
+        </th>
+
+        {% endfor %}
+
+    </tr>
+    </thead>
+
+    <tbody class="ctable">
+
+    {% for k in ckeys %}
+
+    <tr class="ctable">
+        <th class="ctable">{{k}}</th>
+
+        {% for val in configs[k] %}
+        <td class="ctable">{{val}}</td>
+        {% endfor %}
+
+    </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+
+<hr>
 
 
 <!--<div class="container-fluid">-->
@@ -33,6 +87,15 @@
 
 
 <!-- Slideshow container -->
+
+<h2>Images</h2>
+
+<label class="switch">
+    <input type="checkbox" onchange="alignImages()" id="imageAlignButton">
+    <span class="slider round"></span>
+</label>
+<p>Align</p>
+
 
 {% set imgs = images["imgs"] %}
 {% set img_keys = images["img_keys"] %}
@@ -52,7 +115,6 @@
 
     {% set group = group_key %}
     {% set img_group = exp_imgs[group_key]%}
-
 
 
     <div style="width:25%; display: inline-block; margin: 20px;" id="{{exps}}-{{group}}">
@@ -82,7 +144,9 @@
         <!--&lt;!&ndash; The dots/circles &ndash;&gt;-->
         <div style="text-align:center; overflow-x: scroll; white-space:nowrap;">
             {% for img in img_group %}
-            <span class="dot" onclick="currentSlide({{ loop.index0 }})" title="{{ loop.index }}">{{ loop.index }}</span>
+            <span class="dot" onclick="currentSlide('{{exps}}-{{group}}', '{{ loop.index0 }}')"
+                  title="{{ loop.index }}">{{ loop.index
+                }}</span>
             {% endfor %}
         </div>
     </div>
@@ -90,7 +154,7 @@
         showSlides("{{exps}}-{{group}}")
     </script>
     {% else %}
-    <div style="width:25%; display: inline-block; margin: 20px;">
+    <div style="width:25%; display: none; margin: 20px;" class="imageSpace">
     </div>
     {% endif %}
 
@@ -100,9 +164,13 @@
 {% endfor %}
 
 <hr>
+
+<h2>Plots</h2>
+
+
 <div style="text-align: center;">
     {% for graph in graphs %}
-    <div style="width:40%; height: 40%; display: inline-block; ">
+    <div style="height: 40%; display: inline-block; ">
         {{ graph }}
     </div>
     {% endfor %}

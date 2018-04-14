@@ -1,18 +1,19 @@
 var slideIndex = {};
 
 function plusSlides(tag, n) {
+    n = parseInt(n);
     slideIndex[tag] += n;
     showSlides(tag);
 }
 
 function currentSlide(tag, n) {
+    n = parseInt(n);
     slideIndex[tag] = n;
     showSlides(tag);
 }
 
 
-function loadImageLazily(img)
-{
+function loadImageLazily(img) {
     if (img) {
         if (img.getAttribute("lazysrc")) {
             if (!img.getAttribute("src")) {
@@ -25,7 +26,7 @@ function loadImageLazily(img)
 
 function showSlides(tag) {
 
-    if(!(tag in slideIndex)){
+    if (!(tag in slideIndex)) {
         slideIndex[tag] = 0
     }
 
@@ -49,8 +50,6 @@ function showSlides(tag) {
         dots[i].className = dots[i].className.replace(" active", "");
     }
 
-    console.log("New Index: ");
-    console.log(slideIndex[tag]);
 
     slides[slideIndex[tag]].style.display = "block";
 
@@ -59,7 +58,7 @@ function showSlides(tag) {
 
     dots[slideIndex[tag]].className += " active";
 
-    number.value = slideIndex[tag]+1
+    number.value = slideIndex[tag] + 1
 }
 
 function numberChange(tag) {
@@ -68,5 +67,29 @@ function numberChange(tag) {
     console.log(number.value);
     slideIndex[tag] = parseInt(number.value) - 1;
     showSlides(tag);
+
+}
+
+function alignImages() {
+
+    var x = document.getElementById("imageAlignButton").checked;
+    var imageSpaces = document.getElementsByClassName("imageSpace");
+
+    if (x == true) {
+        for (i = 0; i < imageSpaces.length; i++) {
+            imageSpaces[i].style.display = 'inline-block'
+        }
+    }
+    else {
+        for (i = 0; i < imageSpaces.length; i++) {
+            imageSpaces[i].style.display = 'none'
+        }
+
+
+    }
+    // for (i = 0; i < imageSpaces.length; i++) {
+    //     dots[i].className = dots[i].className.replace(" active", "");
+    // }
+
 
 }
