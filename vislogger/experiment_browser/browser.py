@@ -45,36 +45,45 @@ app.register_blueprint(blueprint)
 
 
 def process_base_dir(base_dir):
-    keys = set()
+    config_keys = set()
+    result_keys = set()
     exps = []
+    default_val = "-"
+    short_len = 25
 
     ### Load Experiments with keys / different param values
     for sub_dir in sorted(os.listdir(base_dir)):
         dir_path = os.path.join(base_dir, sub_dir)
         if os.path.isdir(dir_path):
             exp = ExperimentHelper(dir_path)
-            keys.update(list(exp.config.keys()))
+            config_keys.update(list(exp.config.keys()))
+            result_keys.update(list(exp.get_results().keys()))
             exps.append(exp)
 
     ### Remove unwanted keys
-    keys -= set(IGNORE_KEYS)
+    config_keys -= set(IGNORE_KEYS)
 
     ### Generate table rows
-    sorted_keys = sorted(keys, key=lambda x: str(x).lower())
+    sorted_c_keys = sorted(config_keys, key=lambda x: str(x).lower())
+    sorted_r_keys = sorted(result_keys, key=lambda x: str(x).lower())
 
     rows = []
     for exp in exps:
-        sub_row = []
-        for key in sorted_keys:
-            attr_strng = str(getattr(exp.config, key, "----"))
-            sub_row.append((attr_strng, attr_strng[:25]))
+        config_row = []
+        for key in sorted_c_keys:
+            attr_strng = str(exp.config.get(key, default_val))
+            config_row.append((attr_strng, attr_strng[:short_len]))
+        result_row = []
+        for key in sorted_r_keys:
+            attr_strng = str(exp.get_results().get(key, default_val))
+            result_row.append((attr_strng, attr_strng[:short_len]))
         rows.append((os.path.basename(exp.work_dir),
-                     str(getattr(exp.config, "exp_name", "----")),
-                     str(getattr(exp.config, "init_time", "----")),
-                     str(getattr(exp.config, "description", "----")),
-                     sub_row))
+                     str(exp.config.get("exp_name", default_val)),
+                     str(exp.config.get("init_time", default_val)),
+                     str(exp.config.get("description", default_val)),
+                     config_row, result_row))
 
-    return {"cols": sorted_keys, "rows": rows}
+    return {"ccols": sorted_c_keys, "rcols": sorted_r_keys, "rows": rows}
 
 
 # def get_experiment_content(experiment_dir):
@@ -163,7 +172,7 @@ def overview():
         abort(500)
 
 
-@app.route('/experiment/', methods=['GET'])
+@app.route('/experiment', methods=['GET'])
 def experiment():
     experiment_paths = request.args.getlist('exp')
 
@@ -211,7 +220,7 @@ def experiment():
     # Get plot results
     results = []
     for exp in experiments:
-        results.append(exp.get_results())
+        results.append(exp.get_results_log())
     results = merge_results(exp_names, results)
 
     content["graphs"] = make_graphs(results)

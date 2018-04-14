@@ -10,6 +10,7 @@ def partition(pred, iterable):
     t1, t2 = tee(iterable)
     return filter(pred, t1), filterfalse(pred, t2)
 
+
 class ExperimentHelper(object):
 
     def __init__(self, work_dir, name=None):
@@ -27,6 +28,8 @@ class ExperimentHelper(object):
 
         self.config = Config()
         self.config.load(os.path.join(self.config_dir, "config.json"))
+
+        self.__results_dict = None
 
         if name is not None:
             self.exp_name = name
@@ -55,7 +58,7 @@ class ExperimentHelper(object):
     def get_logs(self):
         return self.get_file_contents(self.log_dir)
 
-    def get_results(self):
+    def get_results_log(self):
 
         with open(os.path.join(self.result_dir, "results-log.json"), "r") as results_file:
             results = json.load(results_file)
@@ -75,10 +78,27 @@ class ExperimentHelper(object):
                     results_merged[label][key]["epoch"] = [epoch]
                 else:
                     if counter < len(results_merged[label][key]["data"]):
-                        raise IndexError("Tried to insert element with counter {} into {}.{}.data, but there are already {} elements.".format(
-                            counter, label, key, results_merged[label][key]["data"]))
+                        raise IndexError(
+                            "Tried to insert element with counter {} into {}.{}.data, but there are already {} elements.".format(
+                                counter, label, key, results_merged[label][key]["data"]))
                     else:
                         results_merged[label][key]["data"].append(data)
                         results_merged[label][key]["epoch"].append(epoch)
 
         return results_merged
+
+    def get_results(self):
+
+        if self.__results_dict is None:
+
+            self.__results_dict = {}
+            results_file = os.path.join(self.result_dir, "results.json")
+
+            if os.path.exists(results_file):
+                try:
+                    with open(results_file, "r") as f:
+                        self.__results_dict = json.load(f)
+                except:
+                    pass
+
+        return self.__results_dict

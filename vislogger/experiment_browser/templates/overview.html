@@ -1,142 +1,166 @@
 <html>
 
 <head>
-    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap4.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.5.1/css/buttons.bootstrap4.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.2.5/css/select.bootstrap4.min.css" />
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='custom.css') }}" />
+    <link rel="stylesheet" type="text/css"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap4.min.css"/>
+    <link rel="stylesheet" type="text/css"
+          href="https://cdn.datatables.net/buttons/1.5.1/css/buttons.bootstrap4.min.css"/>
+    <link rel="stylesheet" type="text/css"
+          href="https://cdn.datatables.net/select/1.2.5/css/select.bootstrap4.min.css"/>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='custom.css') }}"/>
+
+    <script type="text/javascript" charset="utf8"
+            src="https://cdn.datatables.net/v/bs4-4.0.0/jq-3.2.1/dt-1.10.16/datatables.min.js"></script>
+
     <title>TRIXI - {{ title }}</title>
 </head>
 
 <body>
-    <div class="container-fluid">
-        <h1>{{ title }}</h1>
-    </div>
-    <table id="example" class="table table-bordered" cellspacing="0" width="100%">
-        <thead>
-            <tr>
-                <th>Directory</th>
-                <th>Name</th>
-                <th>Time</th>
-                <th>Description</th>
-                {% for c in cols %}
-                <th>{{ c }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tfoot>
-            <tr>
-                <th>Dir</th>
-                <th>Name</th>
-                <th>Time</th>
-                <th>Description</th>
-                {% for c in cols %}
-                <th>{{ c }}</th>
-                {% endfor %}
-            </tr>
-            <tbody>
-                {% for dir, name, time, desc, row in rows %}
-                <tr>
-                    <td><a href="/experiment/{{ dir }}">{{ dir }}</a></td>
-                    <td>{{ name }}</td>
-                    <td>{{ time }}</td>
-                    <td>{{ desc }}</td>
-                    {% for el, el_short in row %}
-                    <td title="{{ el }}">{{ el_short }}</td>
-                    {% endfor %}
-                </tr>
-                {% endfor %}
-            </tbody>
-    </table>
-    <div class="container-fluid">
-        <a role="button" class="compare-experiments btn btn-primary">Compare</a>
-        {% for c in cols %}
-        <a role="button" class="btn btn-light toggle-vis" data-column="{{ loop.index + 3 }}">{{ c }}</a>
+<div class="container-fluid">
+    <h1>{{ title }}</h1>
+</div>
+<table id="overviewTable" class="table table-bordered" cellspacing="0" width="100%">
+    <thead>
+    <tr>
+        <th style="background-color: #ffebee">Directory</th>
+        <th style="background-color: #ffebee" class="center-elem">Name</th>
+        <th style="background-color: #ffebee" class="center-elem">Time</th>
+        <th style="background-color: #ffebee" class="center-elem">Description</th>
+        {% for c in ccols %}
+        <th style="background-color: #dcedc8" class="center-elem">{{ c }}</th>
         {% endfor %}
-    </div>
-
-    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/v/bs4-4.0.0/jq-3.2.1/dt-1.10.16/datatables.min.js"></script>
-    <script>
-        $(document).ready(function() {
-
-            // Setup - add a text input to each footer cell
-            $('#example tfoot th').each(function() {
-                var title = $(this).text();
-                $(this).html('<input type="text" placeholder="Search ' + title + '" />');
-            });
-
-            // Selectable rows
-            $('#example tbody').on('click', 'tr', function(e) {
-                e.preventDefault();
-                $(this).toggleClass('selected');
-            });
-
-            // DataTable
-            var table = $('#example').DataTable({
-                scrollY: '70vh',
-                scrollCollapse: true,
-                paging: false,
-                scrollX: true,
-                select: {
-                    items: 'rows'
-                }
-            });
-
-            // Compare experiments
-            $('a.compare-experiments').on('click', function(e) {
-                e.preventDefault();
-                var experiments = [];
-                $.each($('#example tr.selected'), function() {
-                    experiments.push($(this).find('td').eq(0).text());
-                });
-                if (experiments.length > 0) {
-                    var new_location = "experiment/?"
-                    $.each(experiments, function(idx, val) {
-                        new_location = new_location + "exp=" + val + "&";
-                    });
-                    window.location.href = new_location;
-                }
-            });
-
-            $('a.toggle-vis').on('click', function(e) {
-                e.preventDefault();
-
-                // Get the column API object
-                var column = table.column($(this).attr('data-column'));
-
-                // Toggle the visibility
-                column.visible(!column.visible());
-
-                // Set button state
-                if (column.visible()) {
-                    $(this).removeClass("btn-outline-light");
-                    $(this).addClass("btn-light");
-                } else {
-                    $(this).removeClass("btn-light");
-                    $(this).addClass("btn-outline-light");
-                };
-            });
+        {% for c in rcols %}
+        <th style="background-color: #fff3e0" class="center-elem">{{ c }}</th>
+        {% endfor %}
+    </tr>
+    </thead>
+    <tbody>
+    {% for dir, name, time, desc, config_vals, result_vals in rows %}
+    <tr>
+        <th><a href="/experiment?exp={{ dir }}">{{ dir }}</a></th>
+        <td>{{ name }}</td>
+        <td>{{ time }}</td>
+        <td>{{ desc }}</td>
+        {% for el, el_short in config_vals %}
+        <td title="{{ el }}">{{ el_short }}</td>
+        {% endfor %}
+        {% for el, el_short in result_vals %}
+        <td title="{{ el }}">{{ el_short }}</td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+    </tbody>
+    <tfoot>
+    <tr>
+        <th>Dir</th>
+        <th>Name</th>
+        <th>Time</th>
+        <th>Description</th>
+        {% for c in ccols %}
+        <th>{{ c }}</th>
+        {% endfor %}
+        {% for c in rcols %}
+        <th>{{ c }}</th>
+        {% endfor %}
+    </tr>
+    </tfoot>
+</table>
+<div class="container-fluid">
+    {% for c in ccols %}
+    <a role="button" class="config-toggle btn btn-success toggle-vis" data-column="{{ loop.index + 3 }}">{{ c }}</a>
+    {% endfor %}
+</div>
+<div class="container-fluid" style="margin-top: 5px">
+    {% for c in rcols %}
+    <a role="button" class="result-toggle btn btn-warning toggle-vis"
+       data-column="{{ loop.index + ccols|length + 3 }}">{{ c
+        }}</a>
+    {% endfor %}
+</div>
 
 
-            // Apply the search
-            table.columns().every(function() {
-                var that = this;
+<script>
+    $(document).ready(function () {
 
-                $('input', this.footer()).on('keyup change', function() {
-                    if (that.search() !== this.value) {
-                        that
-                            .search(this.value)
-                            .draw();
-                    }
-                });
-            });
-
-
-
-
+        // Setup - add a text input to each footer cell
+        $('#overviewTable tfoot th').each(function () {
+            var title = $(this).text();
+            $(this).html('<input type="text" placeholder="Search ' + title + '" />');
         });
-    </script>
+
+        // Selectable rows
+        $('#overviewTable tbody').on('click', 'tr', function (e) {
+            // e.preventDefault();
+            $(this).toggleClass('selected');
+        });
+
+        // DataTable
+        var table = $('#overviewTable').DataTable({
+            scrollY: '70vh',
+            scrollCollapse: true,
+            paging: false,
+            scrollX: true,
+            select: {
+                items: 'rows'
+            },
+            info: "",
+            dom: 'l<"toolbar">frtip',
+            initComplete: function () {
+                $("div.toolbar")
+                    .html('<a role="button" class="compare-experiments btn btn-primary" style="float: left">Details</a>');
+            }
+        });
+
+        // Compare experiments
+        $('a.compare-experiments').on('click', function (e) {
+            e.preventDefault();
+            var experiments = [];
+            $.each($('#overviewTable tr.selected'), function () {
+                experiments.push($(this).find('th').eq(0).text());
+            });
+            if (experiments.length > 0) {
+                var new_location = "experiment?";
+                $.each(experiments, function (idx, val) {
+                    new_location = new_location + "exp=" + val + "&";
+                });
+                window.location.href = new_location;
+            }
+        });
+
+        $('a.toggle-vis').on('click', function (e) {
+            e.preventDefault();
+            // Get the column API object
+            var column = table.column($(this).attr('data-column'));
+            // Toggle the visibility
+            column.visible(!column.visible());
+
+            if ($(this)[0].classList.contains("config-toggle")) {
+                if (column.visible()) {
+                    $(this).removeClass("btn-outline-success");
+                    $(this).addClass("btn-success");
+                } else {
+                    $(this).removeClass("btn-success");
+                    $(this).addClass("btn-outline-success");
+                }
+            }
+            if ($(this)[0].classList.contains("result-toggle")) {
+                if (column.visible()) {
+                    $(this).removeClass("btn-outline-warning");
+                    $(this).addClass("btn-warning");
+                } else {
+                    $(this).removeClass("btn-warning");
+                    $(this).addClass("btn-outline-warning");
+                }
+            }
+
+            ;
+        });
+
+
+    });
+</script>
 </body>
 
 </html>

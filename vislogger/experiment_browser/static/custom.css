@@ -3,6 +3,7 @@ h1, h2, h3, h4 {
 }
 
 * {
+    font-family: 'Roboto', sans-serif;
     box-sizing: border-box
 }
 
@@ -109,6 +110,7 @@ h1, h2, h3, h4 {
 .ctable .cgroupstart {
     width: 20%;
 }
+
 .ctable .cgroup {
     border: 1px solid #ccc;
 }
@@ -143,19 +145,23 @@ h1, h2, h3, h4 {
     color: #59c7fb;
 }
 
-
 /* Tablebody */
 
-.ctable tbody th span { font-weight: normal; font-size: 87.5%; color: #999; display: block; }
+.ctable tbody th span {
+    font-weight: normal;
+    font-size: 87.5%;
+    color: #999;
+    display: block;
+}
 
-.ctable tbody td { text-align: center; }
+.ctable tbody td {
+    text-align: center;
+}
 
 .ctable tbody tr:hover {
-          background-color: #ffff99;
-          /*font-weight: bold;*/
-        }
-
-
+    background-color: #ffff99;
+    /*font-weight: bold;*/
+}
 
 /* width */
 ::-webkit-scrollbar {
@@ -178,59 +184,68 @@ h1, h2, h3, h4 {
     background: #555;
 }
 
-
 .switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
 }
 
-.switch input {display:none;}
+.switch input {
+    display: none;
+}
 
 .slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  -webkit-transition: .4s;
-  transition: .4s;
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
 }
 
 .slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  -webkit-transition: .4s;
-  transition: .4s;
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
 }
 
 input:checked + .slider {
-  background-color: #2196F3;
+    background-color: #2196F3;
 }
 
 input:focus + .slider {
-  box-shadow: 0 0 1px #2196F3;
+    box-shadow: 0 0 1px #2196F3;
 }
 
 input:checked + .slider:before {
-  -webkit-transform: translateX(26px);
-  -ms-transform: translateX(26px);
-  transform: translateX(26px);
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
 }
 
 /* Rounded sliders */
 .slider.round {
-  border-radius: 34px;
+    border-radius: 34px;
 }
 
 .slider.round:before {
     border-radius: 50%;
+}
+
+#overviewTable tbody tr td {
+    text-align: center;
+}
+
+.center-elem {
+    text-align: center;
 }
