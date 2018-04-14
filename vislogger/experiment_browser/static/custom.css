@@ -213,6 +213,7 @@ h1, h2, h3, h4 {
     z-index: 1;
 }
 
+
 .slider:before {
     position: absolute;
     content: "";
@@ -260,11 +261,11 @@ input:checked + .slider:before {
 /* ----------------------------------------End -------------------------------------- */
 
 #wrapper {
-    padding-left: 80px;
+    display: flex;
+    align-items: stretch;
 }
 
 #sidebar-wrapper {
-    margin-left: -250px;
     width: 80px;
     background: #4285F4;
     color: #fff;
@@ -277,17 +278,12 @@ input:checked + .slider:before {
 #page-content-wrapper {
     margin-left: 90px;
     width: 100%;
-    z-index: 10;
-
 }
 
 .sidebar-nav {
-    position: absolute;
-    top: 0;
     width: 80px;
     list-style: none;
     text-align: center;
-    z-index: 1000;
 }
 
 .sidebar-nav span, .sidebar-nav i {
