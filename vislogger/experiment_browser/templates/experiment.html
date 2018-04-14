@@ -1,199 +1,295 @@
+<!DOCTYPE html>
 <html>
-
 <head>
-
-    <link rel="stylesheet" type="text/css"
-          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"/>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='custom.css') }}"/>
-    <link href="https://use.fontawesome.com/releases/v5.0.8/css/all.css" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css?family=Roboto:300" rel="stylesheet">
+    <title>TRIXI - Comparing experiments</title>
 
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='custom.css') }}"/>
+    <link href="https://use.fontawesome.com/releases/v5.0.8/css/all.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300" rel="stylesheet">
+
+    <meta charset="utf-8">
+
 
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="{{ url_for('static', filename='scripts.js') }}"></script>
 
-
-    <title>TRIXI - Comparing experiments</title>
 </head>
 
-
-<body>
-
-<h2>Config</h2>
+<body data-spy="scroll" data-target="#spy" data-offset="20">
 
 
-{% set exps = config["exps"] %}
-{% set configs = config["configs"] %}
-{% set ckeys = config["ckeys"] %}
+<div id="wrapper">
 
+    <!-- Sidebar -->
+    <div id="sidebar-wrapper" class="d-flex p-2">
+        <nav id="spy" class="fixed-top">
+            <ul class="sidebar-nav nav">
+                <li>
+                    <a href="#section1" class="nav-link">
+                        <i class="material-icons">settings</i>
+                        <span>Config</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#section2" class="nav-link">
+                        <i class="material-icons">photo</i>
+                        <span>Images</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#section3" class="nav-link">
+                        <i class="material-icons">timeline</i>
+                        <span style="width: 80px;">Plots</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#section4" class="nav-link">
+                        <i class="material-icons">library_books</i>
+                        <span>Results</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
 
-<table class="ctable">
-
-
-    <colgroup class="ctable cgroupstart"></colgroup>
-    {% for exp in exps %}
-    <colgroup class="cgroup"></colgroup>
-    {% endfor %}
-
-    <thead class="ctable">
-    <tr class="ctable">
-        <th class="ctable">&nbsp;</th>
-
-        {% for exp in exps %}
-
-        <th class="ctable">
-            <h2>{{exp}}</h2>
-        </th>
-
-        {% endfor %}
-
-    </tr>
-    </thead>
-
-    <tbody class="ctable">
-
-    {% for k in ckeys %}
-
-    <tr class="ctable">
-        <th class="ctable">{{k}}</th>
-
-        {% for val in configs[k] %}
-        <td class="ctable">{{val}}</td>
-        {% endfor %}
-
-    </tr>
-
-    {% endfor %}
-
-    </tbody>
-
-</table>
-
-
-<hr>
-
-
-<!--<div class="container-fluid">-->
-<!--<a role="button" class="btn btn-light go-back"><i class="fas fa-arrow-left"></i></a><br/>-->
-<!--{% for t in title %}-->
-<!--<h3>{{ t }}</h3>-->
-<!--{% endfor %}-->
-<!--</div>-->
-
-<!--<hr>-->
-<!--{% for graph in graphs %} {{ graph }} {% endfor %}-->
-
-
-<!-- Slideshow container -->
-
-<h2>Images</h2>
-
-<label class="switch">
-    <input type="checkbox" onchange="alignImages()" id="imageAlignButton">
-    <span class="slider round"></span>
-</label>
-<p>Align</p>
-
-
-{% set imgs = images["imgs"] %}
-{% set img_keys = images["img_keys"] %}
-{% set img_path = images["img_path"] %}
-
-{% for exps in imgs %}
-
-{% set exp_imgs = imgs[exps] %}
-
-
-<h3>{{ exps }}</h3>
-
-
-<div style="overflow-x: scroll; white-space:nowrap;">
-    {% for group_key in img_keys %}
-    {% if group_key in exp_imgs %}
-
-    {% set group = group_key %}
-    {% set img_group = exp_imgs[group_key]%}
-
-
-    <div style="width:25%; display: inline-block; margin: 20px;" id="{{exps}}-{{group}}">
-        <div class="slideshow-container">
-
-            {% for img in img_group %}
-            <div class="mySlides">
-                <div class="numbertext">{{ loop.index }} / {{ loop.length }}</div>
-                <img class="lazyimg" src="" lazysrc="{{ img }}" style="width:100%" alt="{{ img }}" title="{{ img }}">
-                <div class="text">{{ group }}</div>
-            </div>
-            {% endfor %}
-
-
-            <!-- Next and previous buttons -->
-            <a class="prev" onclick="plusSlides('{{exps}}-{{group}}' ,-1)">&#10094;</a>
-            <a class="next" onclick="plusSlides('{{exps}}-{{group}}' , 1)">&#10095;</a>
+        <div style="position : absolute; bottom : 0;">
+            <a href="/" style="color: white">
+                <i class="material-icons">chevron_left</i>
+                <span>Back</span>
+            </a>
         </div>
+    </div>
+
+    <div id="page-content-wrapper">
         <div>
-            <p style="text-align:center;">
-                <input class="number" type="number" value="1" min="1" max="{{img_group|length}}"
-                       onchange="numberChange('{{exps}}-{{group}}')"
-                       style="width:25%"> /
-                {{img_group|length}}
-            </p>
-        </div>
-        <!--&lt;!&ndash; The dots/circles &ndash;&gt;-->
-        <div style="text-align:center; overflow-x: scroll; white-space:nowrap;">
-            {% for img in img_group %}
-            <span class="dot" onclick="currentSlide('{{exps}}-{{group}}', '{{ loop.index0 }}')"
-                  title="{{ loop.index }}">{{ loop.index
+            <div id="section1" class="card border-primary" style="margin: 10px;">
+                <div class="card-header" style="color: #4285F4">
+                    <h3>Config</h3>
+                </div>
+
+                <div class="card-body">
+
+                    {% set exps = config["exps"] %}
+                    {% set configs = config["configs"] %}
+                    {% set ckeys = config["keys"] %}
+
+                    <table class="ctable">
+
+                        <colgroup class="cgroupstart"></colgroup>
+                        {% for exp in exps %}
+                        <colgroup class="cgroup"></colgroup>
+                        {% endfor %}
+
+                        <thead class="ctable">
+                        <tr class="ctable">
+                            <th class="ctable">&nbsp;</th>
+
+                            {% for exp in exps %}
+                            <th class="ctable">
+                                <h2>{{exp}}</h2>
+                            </th>
+                            {% endfor %}
+
+                        </tr>
+                        </thead>
+                        <tbody class="ctable">
+
+                        {% for k in ckeys %}
+                        <tr class="ctable">
+                            <th class="ctable">{{k}}</th>
+
+                            {% for val in configs[k] %}
+                            <td class="ctable">{{val}}</td>
+                            {% endfor %}
+
+                        </tr>
+                        {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+
+            <hr>
+
+            <div id="section2" class="card border-primary" style="margin: 10px;">
+                <div class="card-header" style="color: #4285F4">
+                    <div style="float: left">
+                        <h2>Images</h2>
+                    </div>
+                    <div style="float: right">
+                        <label class="switch">
+                            <input type="checkbox" onchange="alignImages()" id="imageAlignButton" style="z-index: 1;">
+                            <span class="slider round"></span>
+                        </label>
+                        <p>Align</p>
+                    </div>
+                </div>
+
+                <div class="card-body">
+
+
+                    {% set imgs = images["imgs"] %}
+                    {% set img_keys = images["img_keys"] %}
+                    {% set img_path = images["img_path"] %}
+
+                    {% for exps in imgs %}
+
+                    {% set exp_imgs = imgs[exps] %}
+
+
+                    <h4>{{ exps }}</h4>
+
+
+                    <div style="overflow-x: scroll; white-space:nowrap;">
+                        {% for group_key in img_keys %}
+                        {% if group_key in exp_imgs %}
+
+                        {% set group = group_key %}
+                        {% set img_group = exp_imgs[group_key]%}
+
+
+                        <div style="width:25%; display: inline-block; margin: 20px;" id="{{exps}}-{{group}}">
+                            <div class="slideshow-container">
+
+                                {% for img in img_group %}
+                                <div class="mySlides">
+                                    <div class="numbertext">{{ loop.index }} / {{ loop.length }}</div>
+                                    <img class="lazyimg" src="" lazysrc="{{ img }}" style="width:100%" alt="{{ img }}"
+                                         title="{{ img }}">
+                                    <div class="text">{{ group }}</div>
+                                </div>
+                                {% endfor %}
+
+
+                                <!-- Next and previous buttons -->
+                                <a class="prev" onclick="plusSlides('{{exps}}-{{group}}' ,-1)">&#10094;</a>
+                                <a class="next" onclick="plusSlides('{{exps}}-{{group}}' , 1)">&#10095;</a>
+                            </div>
+                            <div>
+                                <p style="text-align:center;">
+                                    <input class="number" type="number" value="1" min="1" max="{{img_group|length}}"
+                                           onchange="numberChange('{{exps}}-{{group}}')"
+                                           style="width:25%"> /
+                                    {{img_group|length}}
+                                </p>
+                            </div>
+                            <!--&lt;!&ndash; The dots/circles &ndash;&gt;-->
+                            <div style="text-align:center; overflow-x: scroll; white-space:nowrap;">
+                                {% for img in img_group %}
+                                <span class="dot" onclick="currentSlide('{{exps}}-{{group}}', '{{ loop.index0 }}')"
+                                      title="{{ loop.index }}">{{ loop.index
                 }}</span>
-            {% endfor %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <script>
+                            showSlides("{{exps}}-{{group}}")
+                        </script>
+                        {% else %}
+                        <div style="width:25%; display: none; margin: 20px;" class="imageSpace">
+                        </div>
+                        {% endif %}
+
+                        {% endfor %}
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+            </div>
+
+            <hr>
+
+            <div id="section3" class="card border-primary" style="margin: 10px;">
+                <div class="card-header" style="color: #4285F4">
+                    <h3>Plots</h3>
+                </div>
+
+                <div class="card-body">
+
+
+                    <div style="text-align: center;" class="plots">
+                        {% for graph in graphs %}
+                        <div style="width:48%; display: inline-block; ">
+                            {{ graph }}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <br>
+                    <hr>
+
+
+                    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+                    <script>
+                        $(document).ready(function () {
+
+                            $('a.go-back').on('click', function (e) {
+                                e.preventDefault();
+                                window.history.back();
+                            });
+
+                        });
+                    </script>
+                </div>
+            </div>
+
+            <div id="section4" class="card border-primary" style="margin: 10px;">
+                <div class="card-header" style="color: #4285F4">
+                    <h3>Results</h3>
+                </div>
+
+                <div class="card-body">
+
+                    {% set exps = results["exps"] %}
+                    {% set res = results["results"] %}
+                    {% set rkeys = results["keys"] %}
+
+                    <div>
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>&nbsp;</th>
+
+                                {% for exp in exps %}
+                                <th>{{exp}}</th>
+                                {% endfor %}
+
+                            </tr>
+                            </thead>
+
+                            <tbody>
+
+                            {% for k in rkeys %}
+                            <tr>
+                                <th>{{k}}</th>
+
+                                {% for val in res[k] %}
+                                <td>{{val}}</td>
+                                {% endfor %}
+
+                            </tr>
+                            {% endfor %}
+
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+
         </div>
     </div>
-    <script>
-        showSlides("{{exps}}-{{group}}")
-    </script>
-    {% else %}
-    <div style="width:25%; display: none; margin: 20px;" class="imageSpace">
-    </div>
-    {% endif %}
-
-    {% endfor %}
 </div>
-
-{% endfor %}
-
-<hr>
-
-<h2>Plots</h2>
-
-
-<div style="text-align: center;">
-    {% for graph in graphs %}
-    <div style="height: 40%; display: inline-block; ">
-        {{ graph }}
-    </div>
-    {% endfor %}
-</div>
-
-<br>
-<hr>
-
-
-<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-<script>
-    $(document).ready(function () {
-
-        $('a.go-back').on('click', function (e) {
-            e.preventDefault();
-            window.history.back();
-        });
-
-    });
-</script>
 
 </body>
-
 </html>

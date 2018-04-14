@@ -4,7 +4,10 @@ h1, h2, h3, h4 {
 
 * {
     font-family: 'Roboto', sans-serif;
-    box-sizing: border-box
+}
+
+.plots {
+    box-sizing: border-box;
 }
 
 /* Slideshow container */
@@ -189,10 +192,12 @@ h1, h2, h3, h4 {
     display: inline-block;
     width: 60px;
     height: 34px;
+    z-index: 1;
 }
 
 .switch input {
     display: none;
+    z-index: 1;
 }
 
 .slider {
@@ -205,6 +210,7 @@ h1, h2, h3, h4 {
     background-color: #ccc;
     -webkit-transition: .4s;
     transition: .4s;
+    z-index: 1;
 }
 
 .slider:before {
@@ -217,6 +223,7 @@ h1, h2, h3, h4 {
     background-color: white;
     -webkit-transition: .4s;
     transition: .4s;
+    z-index: 1;
 }
 
 input:checked + .slider {
@@ -249,3 +256,54 @@ input:checked + .slider:before {
 .center-elem {
     text-align: center;
 }
+
+/* ----------------------------------------End -------------------------------------- */
+
+#wrapper {
+    padding-left: 80px;
+}
+
+#sidebar-wrapper {
+    margin-left: -250px;
+    width: 80px;
+    background: #4285F4;
+    color: #fff;
+    position: fixed;
+    height: 100%;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+#page-content-wrapper {
+    margin-left: 90px;
+    width: 100%;
+    z-index: 10;
+
+}
+
+.sidebar-nav {
+    position: absolute;
+    top: 0;
+    width: 80px;
+    list-style: none;
+    text-align: center;
+    z-index: 1000;
+}
+
+.sidebar-nav span, .sidebar-nav i {
+    color: white;
+}
+
+.sidebar-nav li a {
+    width: 80px;
+}
+
+.sidebar-nav li a:hover {
+    background: rgba(255, 255, 255, 0.2);
+    text-decoration: none;
+}
+
+
+
+
+
