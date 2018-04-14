@@ -1,6 +1,6 @@
 import argparse
 import os
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 import colorlover as cl
 import numpy as np
@@ -101,10 +101,11 @@ def group_images(images):
     group_dict = defaultdict(list)
 
     for img in images:
-        base_name = os.path.splitext(os.path.basename(img))[0]
+        filename = os.path.basename(img)
+        base_name = os.path.splitext(filename)[0]
         base_name = ''.join(e for e in base_name if e.isalpha())
 
-        group_dict[base_name].append(img)
+        group_dict[base_name].append(filename)
 
     return group_dict
 
@@ -113,7 +114,15 @@ def make_graphs(results, trace_options=None, layout_options=None):
     if trace_options is None:
         trace_options = {}
     if layout_options is None:
-        layout_options = {}
+        layout_options = {
+            "legend" : dict(
+                orientation="h",
+                font=dict(
+                    size=8,
+                ),
+
+            )
+        }
 
     graphs = []
 
@@ -215,13 +224,14 @@ def experiment():
 
 
     # Get images
-    images = {}
+    images = OrderedDict({})
     image_keys = []
-    image_path = exp.img_dir
+    image_path = {}
     for exp in experiments:
         exp_images = exp.get_images()
         img_groups = group_images(exp_images)
         images[exp.exp_name] = img_groups
+        image_path[exp.exp_name] = exp.img_dir
         image_keys += (list(img_groups.keys()))
     image_keys.sort()
 

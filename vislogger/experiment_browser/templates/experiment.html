@@ -95,7 +95,7 @@
 
                             {% for exp in exps %}
                             <th class="ctable">
-                                <h2>{{exp}}</h2>
+                                <h4>{{exp}}</h4>
                             </th>
                             {% endfor %}
 
@@ -127,12 +127,12 @@
                     <div style="float: left">
                         <h2>Images</h2>
                     </div>
-                    <div style="float: right">
+                    <div style="float: right;">
                         <label class="switch">
                             <input type="checkbox" onchange="alignImages()" id="imageAlignButton" style="z-index: 1;">
                             <span class="slider round"></span>
                         </label>
-                        <p>Align</p>
+                        <div >Align</div>
                     </div>
                 </div>
 
@@ -141,15 +141,14 @@
 
                     {% set imgs = images["imgs"] %}
                     {% set img_keys = images["img_keys"] %}
-                    {% set img_path = images["img_path"] %}
 
                     {% for exps in imgs %}
 
+                    {% set img_path = images["img_path"][exps] %}
                     {% set exp_imgs = imgs[exps] %}
 
 
-                    <h4>{{ exps }}</h4>
-
+                    <h4 style="text-align: center">{{ exps }}</h4>
 
                     <div style="overflow-x: scroll; white-space:nowrap;">
                         {% for group_key in img_keys %}
@@ -165,9 +164,9 @@
                                 {% for img in img_group %}
                                 <div class="mySlides">
                                     <div class="numbertext">{{ loop.index }} / {{ loop.length }}</div>
-                                    <img class="lazyimg" src="" lazysrc="{{ img }}" style="width:100%" alt="{{ img }}"
+                                    <img class="lazyimg" src="" lazysrc="{{img_path}}/{{ img }}" style="width:100%" alt="{{ img }}"
                                          title="{{ img }}">
-                                    <div class="text">{{ group }}</div>
+                                    <div class="text">{{ img }}</div>
                                 </div>
                                 {% endfor %}
 
@@ -188,8 +187,7 @@
                             <div style="text-align:center; overflow-x: scroll; white-space:nowrap;">
                                 {% for img in img_group %}
                                 <span class="dot" onclick="currentSlide('{{exps}}-{{group}}', '{{ loop.index0 }}')"
-                                      title="{{ loop.index }}">{{ loop.index
-                }}</span>
+                                      title="{{ loop.index }}">{{ loop.index}}</span>
                                 {% endfor %}
                             </div>
                         </div>
@@ -203,7 +201,8 @@
 
                         {% endfor %}
                     </div>
-
+                    <hr>
+                    <br>
                     {% endfor %}
 
                 </div>
@@ -218,7 +217,6 @@
 
                 <div class="card-body">
 
-
                     <div style="text-align: center;" class="plots">
                         {% for graph in graphs %}
                         <div style="width:48%; display: inline-block; ">
@@ -228,22 +226,12 @@
                     </div>
 
                     <br>
-                    <hr>
-
-
-                    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-                    <script>
-                        $(document).ready(function () {
-
-                            $('a.go-back').on('click', function (e) {
-                                e.preventDefault();
-                                window.history.back();
-                            });
-
-                        });
-                    </script>
                 </div>
             </div>
+
+
+            <hr>
+
 
             <div id="section4" class="card border-primary" style="margin: 10px;">
                 <div class="card-header" style="color: #4285F4">
