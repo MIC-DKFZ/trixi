@@ -82,7 +82,52 @@
 
 
 <script>
+
+    var search_dict = {};
+
+    // Extended Search so you can search with <, <= , >, >=
+    $.fn.dataTable.ext.search.push(
+        function (settings, data, dataIndex) {
+
+            var show_draw_row = true;
+
+            for (var key in search_dict) {
+                if (search_dict.hasOwnProperty(key)) {
+                    var val = search_dict[key];
+                    var data_el = data[key];
+
+                    if (val.startsWith(">=")) {
+                        var numb = parseFloat(val.substring(2));
+                        if (data_el < numb) {
+                            show_draw_row = false;
+                        }
+                    }
+                    else if (val.startsWith(">")) {
+                        var numb = parseFloat(val.substring(1));
+                        if (data_el <= numb) {
+                            show_draw_row = false;
+                        }
+                    }
+                    else if (val.startsWith("<=")) {
+                        var numb = parseFloat(val.substring(2));
+                        if (data_el > numb) {
+                            show_draw_row = false;
+                        }
+                    }
+                    else if (val.startsWith("<")) {
+                        var numb = parseFloat(val.substring(1));
+                        if (data_el >= numb) {
+                            show_draw_row = false;
+                        }
+                    }
+                }
+            }
+            return show_draw_row;
+        }
+    );
+
     $(document).ready(function () {
+
 
         // Setup - add a text input to each footer cell
         $('#overviewTable tfoot th').each(function () {
@@ -161,16 +206,29 @@
         // Apply the search
         table.columns().every(function () {
             var that = this;
-
             $('input', this.footer()).on('keyup change', function () {
-                if (that.search() !== this.value) {
-                    that
-                        .search(this.value)
-                        .draw();
+
+                var cidx = that[0];
+                var pre_str = this.value.replace(/\s/g, "");
+
+                if (pre_str.startsWith(">") || pre_str.startsWith("<")) {
+                    search_dict[cidx] = pre_str;
+                    table.draw();
+
+                }
+                else {
+                    if (!pre_str || 0 === pre_str.length) {
+                        delete search_dict[cidx];
+                        table.draw();
+                    }
+                    if (that.search() !== this.value) {
+                        that
+                            .search(this.value)
+                            .draw();
+                    }
                 }
             });
         });
-
 
     });
 </script>
