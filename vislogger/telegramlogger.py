@@ -1,7 +1,9 @@
-from vislogger import AbstractLogger
+from vislogger.numpyseabornplotlogger import NumpySeabornPlotLogger
+import matplotlib.pyplot as plt
 import telegram
+import io
 
-class TelegramLogger(AbstractLogger):
+class TelegramLogger(NumpySeabornPlotLogger):
     """
     Telegram logger, inherits the AbstractLogger and sends plots/logs to a chat via a Telegram bot.
     """
@@ -29,7 +31,7 @@ class TelegramLogger(AbstractLogger):
         """
         self.bot.send_message(chat_id=self.chat_id, text=text)
 
-    def show_image(self, image_path):
+    def _show_image(self, image_path):
         """
         Sends an image file to a chat using an existing Telegram bot.
         :param image_path: Path to the image file to be sent to the chat.
@@ -37,7 +39,7 @@ class TelegramLogger(AbstractLogger):
         """
         self.bot.send_photo(chat_id=self.chat_id, photo=open(image_path, 'rb'))
 
-    def show_value(self, value, counter=None, tag=None, **kwargs):
+    def show_value(self, value, name, counter=None, tag=None, **kwargs):
         """
         Sends a value to a chat using an existing Telegram bot.
 
@@ -46,11 +48,9 @@ class TelegramLogger(AbstractLogger):
         :param tag: Tag to be used for value.
         :type tag: str
         """
-        if tag is None:
-            tag = 'Value'
-
-        message = tag+': ' + str(value)
-        if counter is not None:
-            message += ', Counter:' + str(counter)
-
-        self.show_text(text=message)
+        buf = io.BytesIO()
+        figure = NumpySeabornPlotLogger.show_value(self, value, name, counter, tag)
+        figure.savefig(buf, format='png')
+        buf.seek(0)
+        self.bot.send_photo(chat_id=self.chat_id, photo=buf)
+        plt.close(figure)
