@@ -12,10 +12,9 @@ class TelegramLogger(NumpySeabornPlotLogger):
         """
         Creates a new TelegramLogger object.
 
-        :param token: The token of the Telegram bot used.
-        :type token: str
-        :param chat_id: The chat ID for the chat between the user and the Telegram bot.
-        :type chat_id: str
+        Args:
+            token (str): The token of the Telegram bot used.
+            chat_id (str): The chat ID for the chat between the user and the Telegram bot.
         """
         super(TelegramLogger, self).__init__(**kwargs)
 
@@ -26,16 +25,18 @@ class TelegramLogger(NumpySeabornPlotLogger):
     def show_text(self, text):
         """
         Sends a text to a chat using an existing Telegram bot.
-        :param text: Text message to be sent to the bot.
-        :type text: str
+
+        Args:
+            text (str): Text message to be sent to the bot.
         """
         self.bot.send_message(chat_id=self.chat_id, text=text)
 
-    def _show_image(self, image_path):
+    def show_image(self, image_path):
         """
         Sends an image file to a chat using an existing Telegram bot.
-        :param image_path: Path to the image file to be sent to the chat.
-        :type image_path: str
+
+        Args:
+            image_path (str): Path to the image file to be sent to the chat.
         """
         self.bot.send_photo(chat_id=self.chat_id, photo=open(image_path, 'rb'))
 
@@ -43,10 +44,11 @@ class TelegramLogger(NumpySeabornPlotLogger):
         """
         Sends a value to a chat using an existing Telegram bot.
 
-        :param value: Value to be sent to the chat.
-        :param counter: Optional counter to be sent in conjunction with the value.
-        :param tag: Tag to be used for value.
-        :type tag: str
+        Args:
+            value: Value to be plotted sent to the chat.
+            name: Name for the plot.
+            counter: Optional counter to be sent in conjunction with the value.
+            tag: Tag to be used as a label for the plot.
         """
         buf = io.BytesIO()
         figure = NumpySeabornPlotLogger.show_value(self, value, name, counter, tag)
