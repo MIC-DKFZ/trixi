@@ -47,7 +47,7 @@ function showSlides(tag) {
         slides[i].style.display = "none";
     }
     for (i = 0; i < dots.length; i++) {
-        dots[i].className = dots[i].className.replace(" active", "");
+        dots[i].className = dots[i].className.replace(" b_active", "");
     }
 
 
@@ -56,7 +56,7 @@ function showSlides(tag) {
     var img = part.getElementsByClassName("mySlides")[slideIndex[tag]].getElementsByClassName("lazyimg")[0];
     loadImageLazily(img);
 
-    dots[slideIndex[tag]].className += " active";
+    dots[slideIndex[tag]].className += " b_active";
 
     number.value = slideIndex[tag] + 1
 }

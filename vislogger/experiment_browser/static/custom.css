@@ -43,6 +43,7 @@ h1, h2, h3, h4 {
     border-radius: 3px 0 0 3px;
 }
 
+
 /* On hover, add a black background color with a little bit see-through */
 .prev:hover, .next:hover {
     background-color: rgba(0, 0, 0, 0.8);
@@ -83,9 +84,10 @@ h1, h2, h3, h4 {
     transition: background-color 0.6s ease;
 }
 
-.active, .dot:hover {
+.b_active, .dot:hover {
     background-color: #717171;
 }
+
 
 .ctable table {
     width: 100%;
@@ -296,4 +298,9 @@ input:checked + .slider:before {
 .sidebar-nav li a:hover {
     background: rgba(255, 255, 255, 0.2);
     text-decoration: none;
+}
+
+
+.nav-link.active {
+    background-color: #f26e00;
 }

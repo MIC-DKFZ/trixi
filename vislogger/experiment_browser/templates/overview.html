@@ -1,13 +1,14 @@
 <html>
 
 <head>
+    <link rel="stylesheet" type="text/css"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"/>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap4.min.css"/>
     <link rel="stylesheet" type="text/css"
           href="https://cdn.datatables.net/buttons/1.5.1/css/buttons.bootstrap4.min.css"/>
     <link rel="stylesheet" type="text/css"
           href="https://cdn.datatables.net/select/1.2.5/css/select.bootstrap4.min.css"/>
-    <link rel="stylesheet" type="text/css"
-          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"/>
+
     <link href="https://fonts.googleapis.com/css?family=Roboto:300" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='custom.css') }}"/>
 
@@ -70,13 +71,15 @@
 <div class="container-fluid">
     <a role="button" class="btn btn-outline-dark toggle-config">Toggle all</a>
     {% for c in ccols %}
-    <a role="button" class="btn btn-success toggle-vis" data-column="{{ loop.index + 3 }}" data-type="config">{{ c }}</a>
+    <a role="button" class="btn btn-success toggle-vis" data-column="{{ loop.index + 3 }}" data-type="config">{{ c
+        }}</a>
     {% endfor %}
 </div>
 <div class="container-fluid" style="margin-top: 5px">
     <a role="button" class="btn btn-outline-dark toggle-result">Toggle all</a>
     {% for c in rcols %}
-    <a role="button" class="btn btn-warning toggle-vis" data-column="{{ loop.index + ccols|length + 3 }}" data-type="result">{{ c }}</a>
+    <a role="button" class="btn btn-warning toggle-vis" data-column="{{ loop.index + ccols|length + 3 }}"
+       data-type="result">{{ c }}</a>
     {% endfor %}
 </div>
 
@@ -96,7 +99,10 @@
                     var val = search_dict[key];
                     var data_el = data[key];
 
-                    if (val.startsWith(">=")) {
+                    if(data_el === "-"){
+                        show_draw_row = false;
+                    }
+                    else if (val.startsWith(">=")) {
                         var numb = parseFloat(val.substring(2));
                         if (data_el < numb) {
                             show_draw_row = false;
@@ -180,7 +186,7 @@
             // Toggle the visibility
             column.visible(!column.visible());
 
-            if (button.attr('data-type') == "config"){
+            if (button.attr('data-type') == "config") {
                 if (column.visible()) {
                     button.removeClass("btn-outline-success");
                     button.addClass("btn-success");
