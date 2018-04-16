@@ -45,6 +45,7 @@ app.register_blueprint(blueprint)
 
 
 def process_base_dir(base_dir):
+
     config_keys = set()
     result_keys = set()
     exps = []
@@ -62,6 +63,7 @@ def process_base_dir(base_dir):
 
     ### Remove unwanted keys
     config_keys -= set(IGNORE_KEYS)
+    result_keys -= set(IGNORE_KEYS)
 
     ### Generate table rows
     sorted_c_keys = sorted(config_keys, key=lambda x: str(x).lower())
@@ -97,6 +99,7 @@ def process_base_dir(base_dir):
 
 
 def group_images(images):
+
     images.sort()
     group_dict = defaultdict(list)
 
@@ -115,7 +118,7 @@ def make_graphs(results, trace_options=None, layout_options=None):
         trace_options = {}
     if layout_options is None:
         layout_options = {
-            "legend" : dict(
+            "legend": dict(
                 orientation="h",
                 font=dict(
                     size=8,
@@ -157,6 +160,7 @@ def make_graphs(results, trace_options=None, layout_options=None):
 
 
 def merge_results(experiment_names, result_list):
+
     merged_results = {}
 
     for r, result in enumerate(result_list):
@@ -222,7 +226,6 @@ def experiment():
         for res in exp_results:
             combi_results[k].append(res.get(k, default_val))
 
-
     # Get images
     images = OrderedDict({})
     image_keys = []
@@ -244,8 +247,8 @@ def experiment():
     content["graphs"] = make_graphs(results)
     content["title"] = experiments
     content["images"] = {"img_path": image_path, "imgs": images, "img_keys": image_keys}
-    content["config"] = {"exps" : exp_names, "configs": combi_config, "keys": config_keys}
-    content["results"] = {"exps" : exp_names, "results": combi_results, "keys": result_keys}
+    content["config"] = {"exps": exp_names, "configs": combi_config, "keys": config_keys}
+    content["results"] = {"exps": exp_names, "results": combi_results, "keys": result_keys}
 
     return render_template('experiment.html', **content)
 
