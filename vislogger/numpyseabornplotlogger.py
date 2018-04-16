@@ -56,11 +56,14 @@ class NumpySeabornPlotLogger(AbstractLogger):
         for y_name in self.values[name]:
 
             y, x = zip(*self.values[name][y_name])
-            plt.plot(x, y)
+            plt.plot(x, y, label=tag)
 
         if show:
             plt.show(block=False)
             plt.pause(0.01)
+
+        plt.legend()
+        plt.ylabel(name)
 
         return figure
 
