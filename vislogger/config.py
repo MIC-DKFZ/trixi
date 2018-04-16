@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import json
-from vislogger.util import ModuleMultiTypeEncoder, ModuleMultiTypeDecoder
+
+from vislogger.util import ModuleMultiTypeDecoder, ModuleMultiTypeEncoder
 
 
 class Config(dict):
@@ -40,11 +41,15 @@ class Config(dict):
 
     def load(self, file_, raise_=True, **kwargs):
 
-        if hasattr(file_, "read"):
-            new_dict = json.load(file_, cls=ModuleMultiTypeDecoder, **kwargs)
-        else:
-            with open(file_, "r") as file_object:
-                new_dict = json.load(file_object, cls=ModuleMultiTypeDecoder, **kwargs)
+        try:
+            if hasattr(file_, "read"):
+                new_dict = json.load(file_, cls=ModuleMultiTypeDecoder, **kwargs)
+            else:
+                with open(file_, "r") as file_object:
+                    new_dict = json.load(file_object, cls=ModuleMultiTypeDecoder, **kwargs)
+        except Exception as e:
+            if raise_:
+                raise e
 
         self.update(new_dict)
 
@@ -133,7 +138,6 @@ class Config(dict):
 
 
 def update_from_sys_argv(config):
-
     import sys
     import argparse
     import warnings

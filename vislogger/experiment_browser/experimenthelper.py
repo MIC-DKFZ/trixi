@@ -1,8 +1,7 @@
 import json
-import numpy as np
 import os
-import re
-from itertools import tee, filterfalse
+from itertools import filterfalse, tee
+
 from vislogger import Config
 
 
@@ -28,6 +27,11 @@ class ExperimentHelper(object):
 
         self.config = Config()
         self.config.load(os.path.join(self.config_dir, "config.json"))
+
+        self.exp_info = Config()
+        exp_info_file = os.path.join(self.config_dir, "exp.json")
+        if os.path.exists(exp_info_file):
+            self.exp_info.load(exp_info_file)
 
         self.__results_dict = None
 
@@ -60,9 +64,22 @@ class ExperimentHelper(object):
 
     def get_results_log(self):
 
-        with open(os.path.join(self.result_dir, "results-log.json"), "r") as results_file:
-            results = json.load(results_file)
         results_merged = {}
+
+        results = []
+        try:
+            with open(os.path.join(self.result_dir, "results-log.json"), "r") as results_file:
+                results = json.load(results_file)
+        except:
+            try:
+                with open(os.path.join(self.result_dir, "results-log.json"), "r") as results_file:
+                    results_str = results_file.readlines()
+                    results_str[-1] = "{}]"
+                    results_json = "".join(results_str)
+                    results = json.loads(results_json)
+            except:
+                print("Could not load result log from", self.result_dir)
+            results_merged = {}
 
         for result in results:
             for key in result.keys():
@@ -102,3 +119,5 @@ class ExperimentHelper(object):
                     pass
 
         return self.__results_dict
+
+

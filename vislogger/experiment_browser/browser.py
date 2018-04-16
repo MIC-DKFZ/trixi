@@ -1,6 +1,6 @@
 import argparse
 import os
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict, defaultdict
 
 import colorlover as cl
 import numpy as np
@@ -36,6 +36,9 @@ parser.add_argument("-d", "--debug", action="store_true",
 args = parser.parse_args()
 base_dir = args.base_directory
 
+if base_dir[-1] == os.sep:
+    base_dir = base_dir[:-1]
+
 # The actual flask app lives in the package directory. The blueprint allows us
 # to specify an additional static folder and we use that to allow access to the
 # experiment files
@@ -55,10 +58,13 @@ def process_base_dir(base_dir):
     for sub_dir in sorted(os.listdir(base_dir)):
         dir_path = os.path.join(base_dir, sub_dir)
         if os.path.isdir(dir_path):
-            exp = ExperimentHelper(dir_path)
-            config_keys.update(list(exp.config.keys()))
-            result_keys.update(list(exp.get_results().keys()))
-            exps.append(exp)
+            try:
+                exp = ExperimentHelper(dir_path)
+                config_keys.update(list(exp.config.keys()))
+                result_keys.update(list(exp.get_results().keys()))
+                exps.append(exp)
+            except:
+                print("Could not load experiment: ", dir_path)
 
     ### Remove unwanted keys
     config_keys -= set(IGNORE_KEYS)
@@ -77,10 +83,16 @@ def process_base_dir(base_dir):
         for key in sorted_r_keys:
             attr_strng = str(exp.get_results().get(key, default_val))
             result_row.append((attr_strng, attr_strng[:short_len]))
+
+        name = exp.exp_info.get("name", default_val) if "name" in exp.exp_info else exp.config.get("name", default_val)
+        time = exp.exp_info.get("time", default_val) if "time" in exp.exp_info else exp.config.get("time", default_val)
+        state = exp.exp_info.get("state", default_val) if "state" in exp.exp_info else exp.config.get("state",
+                                                                                                      default_val)
+
         rows.append((os.path.basename(exp.work_dir),
-                     str(exp.config.get("exp_name", default_val)),
-                     str(exp.config.get("init_time", default_val)),
-                     str(exp.config.get("description", default_val)),
+                     str(name),
+                     str(time),
+                     str(state),
                      config_row, result_row))
 
     return {"ccols": sorted_c_keys, "rcols": sorted_r_keys, "rows": rows}
@@ -115,7 +127,7 @@ def make_graphs(results, trace_options=None, layout_options=None):
         trace_options = {}
     if layout_options is None:
         layout_options = {
-            "legend" : dict(
+            "legend": dict(
                 orientation="h",
                 font=dict(
                     size=8,
@@ -178,6 +190,7 @@ def overview():
         return render_template("overview.html", **base_info)
     except Exception as e:
         print(e.__repr__())
+        raise e
         abort(500)
 
 
@@ -222,17 +235,17 @@ def experiment():
         for res in exp_results:
             combi_results[k].append(res.get(k, default_val))
 
-
     # Get images
     images = OrderedDict({})
-    image_keys = []
+    image_keys = set()
     image_path = {}
     for exp in experiments:
         exp_images = exp.get_images()
         img_groups = group_images(exp_images)
         images[exp.exp_name] = img_groups
         image_path[exp.exp_name] = exp.img_dir
-        image_keys += (list(img_groups.keys()))
+        image_keys.update(list(img_groups.keys()))
+    image_keys = list(image_keys)
     image_keys.sort()
 
     # Get plot results
@@ -244,8 +257,8 @@ def experiment():
     content["graphs"] = make_graphs(results)
     content["title"] = experiments
     content["images"] = {"img_path": image_path, "imgs": images, "img_keys": image_keys}
-    content["config"] = {"exps" : exp_names, "configs": combi_config, "keys": config_keys}
-    content["results"] = {"exps" : exp_names, "results": combi_results, "keys": result_keys}
+    content["config"] = {"exps": exp_names, "configs": combi_config, "keys": config_keys}
+    content["results"] = {"exps": exp_names, "results": combi_results, "keys": result_keys}
 
     return render_template('experiment.html', **content)
 
