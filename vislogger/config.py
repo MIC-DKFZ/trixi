@@ -93,46 +93,46 @@ class Config(dict):
 
         return Config(config=conv_config)
 
-    def difference_dict(self, other_config):
-        return self.difference_dict_static(self, other_config)
+    def difference_dict(self, *other_configs):
+        return self.difference_dict_static(self, *other_configs)
 
     @staticmethod
-    def difference_dict_static(config1, config2):
-        """Make a dict of all elements that differ between two configs.
+    def difference_dict_static(*configs):
+        """Make a dict of all elements that differ between N configs.
 
         The resulting dict looks like this:
 
-            {key: (config1[key], config2[key])}
+            {key: (config1[key], config2[key], ...)}
 
         If the key is missing, None will be inserted. The inputs will not be
         modified.
 
         Args:
-            config1 (Config): First config
-            config2 (Config): Second config
+            configs (Config): First config
 
         Returns:
             dict: Possibly empty
         """
 
         difference_dict = {}
-        all_keys = set(config1.keys()) | set(config2.keys())
+        all_keys = set()
+        for config in configs:
+            all_keys.update(set(config.keys()))
 
         for key in all_keys:
 
-            if key in config1 and key in config2:
+            current_values = []
+            all_equal = True
+            for config in configs:
+                if not hasattr(config, key):
+                    all_equal = False
+                current_values.append(getattr(config, key, None))
+                if len(current_values) >= 2:
+                    if current_values[-1] != current_values[-2]:
+                        all_equal = False
 
-                if config1[key] == config2[key]:
-                    continue
-                else:
-                    difference_dict[key] = (config1[key], config2[key])
-
-            else:
-
-                if key in config1:
-                    difference_dict[key] = (config1[key], None)
-                else:
-                    difference_dict[key] = (None, config2[key])
+            if not all_equal:
+                difference_dict[key] = tuple(current_values)
 
         return difference_dict
 

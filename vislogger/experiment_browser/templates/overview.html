@@ -1,13 +1,13 @@
 <html>
 
 <head>
-    <link rel="stylesheet" type="text/css"
-          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"/>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap4.min.css"/>
     <link rel="stylesheet" type="text/css"
           href="https://cdn.datatables.net/buttons/1.5.1/css/buttons.bootstrap4.min.css"/>
     <link rel="stylesheet" type="text/css"
           href="https://cdn.datatables.net/select/1.2.5/css/select.bootstrap4.min.css"/>
+    <link rel="stylesheet" type="text/css"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"/>
     <link href="https://fonts.googleapis.com/css?family=Roboto:300" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='custom.css') }}"/>
 
@@ -24,10 +24,10 @@
 <table id="overviewTable" class="table table-bordered" cellspacing="0" width="100%">
     <thead>
     <tr>
-        <th style="background-color: #ffebee">Directory</th>
-        <th style="background-color: #ffebee" class="center-elem">Name</th>
-        <th style="background-color: #ffebee" class="center-elem">Time</th>
-        <th style="background-color: #ffebee" class="center-elem">State</th>
+        <th>Directory</th>
+        <th class="center-elem">Name</th>
+        <th class="center-elem">Time</th>
+        <th class="center-elem">State</th>
         {% for c in ccols %}
         <th style="background-color: #dcedc8" class="center-elem">{{ c }}</th>
         {% endfor %}
@@ -68,15 +68,15 @@
     </tfoot>
 </table>
 <div class="container-fluid">
+    <a role="button" class="btn btn-outline-dark toggle-config">Toggle all</a>
     {% for c in ccols %}
-    <a role="button" class="config-toggle btn btn-success toggle-vis" data-column="{{ loop.index + 3 }}">{{ c }}</a>
+    <a role="button" class="btn btn-success toggle-vis" data-column="{{ loop.index + 3 }}" data-type="config">{{ c }}</a>
     {% endfor %}
 </div>
 <div class="container-fluid" style="margin-top: 5px">
+    <a role="button" class="btn btn-outline-dark toggle-result">Toggle all</a>
     {% for c in rcols %}
-    <a role="button" class="result-toggle btn btn-warning toggle-vis"
-       data-column="{{ loop.index + ccols|length + 3 }}">{{ c
-        }}</a>
+    <a role="button" class="btn btn-warning toggle-vis" data-column="{{ loop.index + ccols|length + 3 }}" data-type="result">{{ c }}</a>
     {% endfor %}
 </div>
 
@@ -174,33 +174,49 @@
             }
         });
 
-        $('a.toggle-vis').on('click', function (e) {
-            e.preventDefault();
+        function toggle(button) {
             // Get the column API object
-            var column = table.column($(this).attr('data-column'));
+            var column = table.column(button.attr('data-column'));
             // Toggle the visibility
             column.visible(!column.visible());
 
-            if ($(this)[0].classList.contains("config-toggle")) {
+            if (button.attr('data-type') == "config"){
                 if (column.visible()) {
-                    $(this).removeClass("btn-outline-success");
-                    $(this).addClass("btn-success");
+                    button.removeClass("btn-outline-success");
+                    button.addClass("btn-success");
                 } else {
-                    $(this).removeClass("btn-success");
-                    $(this).addClass("btn-outline-success");
+                    button.removeClass("btn-success");
+                    button.addClass("btn-outline-success");
                 }
             }
-            if ($(this)[0].classList.contains("result-toggle")) {
+            if (button.attr('data-type') == "result") {
                 if (column.visible()) {
-                    $(this).removeClass("btn-outline-warning");
-                    $(this).addClass("btn-warning");
+                    button.removeClass("btn-outline-warning");
+                    button.addClass("btn-warning");
                 } else {
-                    $(this).removeClass("btn-warning");
-                    $(this).addClass("btn-outline-warning");
+                    button.removeClass("btn-warning");
+                    button.addClass("btn-outline-warning");
                 }
             }
+        };
 
-            ;
+        $('a.toggle-vis').on('click', function (e) {
+            e.preventDefault();
+            toggle($(this));
+        });
+
+        $('a.toggle-config').on('click', function (e) {
+            e.preventDefault();
+            $('[data-type="config"]').each(function (i, obj) {
+                toggle($(obj));
+            });
+        });
+
+        $('a.toggle-result').on('click', function (e) {
+            e.preventDefault();
+            $('[data-type="result"]').each(function (i, obj) {
+                toggle($(obj));
+            });
         });
 
         // Apply the search

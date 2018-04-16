@@ -48,6 +48,7 @@ app.register_blueprint(blueprint)
 
 
 def process_base_dir(base_dir):
+
     config_keys = set()
     result_keys = set()
     exps = []
@@ -68,6 +69,7 @@ def process_base_dir(base_dir):
 
     ### Remove unwanted keys
     config_keys -= set(IGNORE_KEYS)
+    result_keys -= set(IGNORE_KEYS)
 
     ### Generate table rows
     sorted_c_keys = sorted(config_keys, key=lambda x: str(x).lower())
@@ -109,6 +111,7 @@ def process_base_dir(base_dir):
 
 
 def group_images(images):
+
     images.sort()
     group_dict = defaultdict(list)
 
@@ -169,6 +172,7 @@ def make_graphs(results, trace_options=None, layout_options=None):
 
 
 def merge_results(experiment_names, result_list):
+
     merged_results = {}
 
     for r, result in enumerate(result_list):
