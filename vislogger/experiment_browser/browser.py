@@ -11,7 +11,7 @@ from scipy.signal import savgol_filter
 
 from vislogger.experiment_browser.experimenthelper import ExperimentHelper
 
-IGNORE_KEYS = ("exp_name",
+IGNORE_KEYS = ("name",
                "experiment_dir",
                "work_dir",
                "config_dir",
@@ -21,8 +21,8 @@ IGNORE_KEYS = ("exp_name",
                "plot_dir",
                "save_dir",
                "result_dir",
-               "init_time",
-               "description")
+               "time",
+               "state")
 
 COLORMAP = cl.scales["8"]["qual"]["Dark2"]
 
@@ -64,7 +64,7 @@ def process_base_dir(base_dir):
                 config_keys.update(list(exp.config.keys()))
                 result_keys.update(list(exp.get_results().keys()))
                 exps.append(exp)
-            except:
+            except Exception as e:
                 print("Could not load experiment: ", dir_path)
 
     ### Remove unwanted keys
@@ -100,16 +100,6 @@ def process_base_dir(base_dir):
     return {"ccols": sorted_c_keys, "rcols": sorted_r_keys, "rows": rows}
 
 
-# def get_experiment_content(experiment_dir):
-#
-#     exp = ExperimentHelper(experiment_dir)
-#     results = exp.get_results()
-#     graphs = make_graphs(results)
-#     images = exp.get_images()
-#
-#     return {"graphs": graphs, "images": images}
-
-
 def group_images(images):
 
     images.sort()
@@ -126,6 +116,7 @@ def group_images(images):
 
 
 def make_graphs(results, trace_options=None, layout_options=None):
+
     if trace_options is None:
         trace_options = {}
     if layout_options is None:

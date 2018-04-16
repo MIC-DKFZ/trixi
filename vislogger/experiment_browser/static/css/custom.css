@@ -6,6 +6,15 @@ h1, h2, h3, h4 {
     font-family: 'Roboto', sans-serif;
 }
 
+.content {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+a.toggle-vis, a.toggle-config, a.toggle-result {
+    margin: 1px;
+}
+
 .plots {
     box-sizing: border-box;
 }

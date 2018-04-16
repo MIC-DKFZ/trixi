@@ -1,7 +1,8 @@
 {
-    "exp_name": "test_experiment",
+    "name": "test_experiment",
     "description": "This is only to test the experiment browser",
-    "init_time": "20180221-163831",
+    "time": "20180221-163831",
+    "state": "Error",
     "patch_size": "__tuple__((128, 128, 128))",
     "batch_size": 3,
     "num_epochs": 2000,
