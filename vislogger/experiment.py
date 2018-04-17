@@ -1,20 +1,21 @@
-import json
-import string
-import traceback
-
 import atexit
 import fnmatch
-import numpy as np
-import os.path
+import json
 import random
 import shutil
+import string
 import time
-import torch
-import vislogger
+import traceback
 import warnings
+
+import numpy as np
+import os.path
+import torch
+
+import vislogger
 from vislogger import Config
 from vislogger.sourcepacker import SourcePacker
-from vislogger.util import name_and_iter_to_filename, ResultLogDict, ResultElement
+from vislogger.util import ResultElement, ResultLogDict, name_and_iter_to_filename
 
 
 class Experiment(object):
@@ -151,7 +152,7 @@ class PyTorchExperiment(Experiment):
                  vislogger_c_freq=1,
                  use_explogger=True,
                  explogger_kwargs=None,
-                 explogger_c_freq=1,
+                 explogger_c_freq=100,
                  append_rnd_to_name=False):
         """Inits an algo with a config, config needs to a n_epochs, name, output_folder and seed !"""
         # super(PyTorchExperiment, self).__init__()
@@ -193,8 +194,7 @@ class PyTorchExperiment(Experiment):
             self.exp_name = config.name
         if append_rnd_to_name:
             rnd_str = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(5))
-            self.exp_name += "-"+rnd_str
-        print("Experiment: ", self.exp_name)
+            self.exp_name += "-" + rnd_str
 
         if "base_dir" in config:
             base_dir = config.base_dir
@@ -385,10 +385,14 @@ class PyTorchExperiment(Experiment):
             self.results.print_to_file("]")
         self.save_results()
         self.save_end_checkpoint()
+        self.elog.save_config(Config(**{'name': self.exp_name, 'time': self.time_start, 'state': self.exp_state}),
+                              "exp")
         self.elog.print("Experiment ended. Checkpoints stored =)")
 
     def end_test(self):
-        self.save_results(name="results-test")
+        self.save_results()
+        self.elog.save_config(Config(**{'name': self.exp_name, 'time': self.time_start, 'state': self.exp_state}),
+                              "exp")
         self.elog.print("Testing ended. Results stored =)")
 
     def at_exit_func(self):
@@ -396,13 +400,17 @@ class PyTorchExperiment(Experiment):
             if isinstance(self.results, ResultLogDict):
                 self.results.print_to_file("]")
             self.save_checkpoint(name="checkpoint_exit-" + self.exp_state)
-            self.save_results(name="results-" + self.exp_state + ".json")
+            self.save_results()
+            self.elog.save_config(Config(**{'name': self.exp_name, 'time': self.time_start, 'state': self.exp_state}),
+                                  "exp")
             self.elog.print("Experiment exited. Checkpoints stored =)")
         time.sleep(2)  # allow checkpoint saving to finish
 
     def _setup_internal(self):
         self.prepare_resume()
         self.elog.save_config(self._config_raw, "config")
+        self.elog.save_config(Config(**{'name': self.exp_name, 'time': self.time_start, 'state': self.exp_state}),
+                              "exp")
 
     def prepare_resume(self):
         checkpoint_file = ""
@@ -452,7 +460,6 @@ class PyTorchExperiment(Experiment):
         self.save_checkpoint(name="checkpoint_last")
 
     def add_result(self, value, name, counter=None, label=None, plot_result=True):
-
         label_name = label
         if label_name is None:
             label_name = name

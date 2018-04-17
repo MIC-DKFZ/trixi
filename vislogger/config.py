@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import json
-from vislogger.util import ModuleMultiTypeEncoder, ModuleMultiTypeDecoder
+
+from vislogger.util import ModuleMultiTypeDecoder, ModuleMultiTypeEncoder
 
 
 class Config(dict):
@@ -40,11 +41,15 @@ class Config(dict):
 
     def load(self, file_, raise_=True, **kwargs):
 
-        if hasattr(file_, "read"):
-            new_dict = json.load(file_, cls=ModuleMultiTypeDecoder, **kwargs)
-        else:
-            with open(file_, "r") as file_object:
-                new_dict = json.load(file_object, cls=ModuleMultiTypeDecoder, **kwargs)
+        try:
+            if hasattr(file_, "read"):
+                new_dict = json.load(file_, cls=ModuleMultiTypeDecoder, **kwargs)
+            else:
+                with open(file_, "r") as file_object:
+                    new_dict = json.load(file_object, cls=ModuleMultiTypeDecoder, **kwargs)
+        except Exception as e:
+            if raise_:
+                raise e
 
         self.update(new_dict)
 
@@ -94,13 +99,56 @@ class Config(dict):
 
         return Config(config=conv_config)
 
+
     def __str__(self):
         json_str = json.dumps(self, cls=ModuleMultiTypeEncoder, indent=4, sort_keys=True)
         return json_str
 
+    def difference_dict(self, *other_configs):
+        return self.difference_dict_static(self, *other_configs)
+
+    @staticmethod
+    def difference_dict_static(*configs):
+        """Make a dict of all elements that differ between N configs.
+
+        The resulting dict looks like this:
+
+            {key: (config1[key], config2[key], ...)}
+
+        If the key is missing, None will be inserted. The inputs will not be
+        modified.
+
+        Args:
+            configs (Config): First config
+
+        Returns:
+            dict: Possibly empty
+        """
+
+        difference_dict = {}
+        all_keys = set()
+        for config in configs:
+            all_keys.update(set(config.keys()))
+
+        for key in all_keys:
+
+            current_values = []
+            all_equal = True
+            for config in configs:
+                if not hasattr(config, key):
+                    all_equal = False
+                current_values.append(getattr(config, key, None))
+                if len(current_values) >= 2:
+                    if current_values[-1] != current_values[-2]:
+                        all_equal = False
+
+            if not all_equal:
+                difference_dict[key] = tuple(current_values)
+
+        return difference_dict
+
 
 def update_from_sys_argv(config):
-
     import sys
     import argparse
     import warnings
