@@ -85,22 +85,16 @@ class ExperimentHelper(object):
             for key in result.keys():
                 counter = result[key]["counter"]
                 data = result[key]["data"]
-                epoch = result[key]["epoch"]
                 label = result[key]["label"]
                 if label not in results_merged:
                     results_merged[label] = {}
                 if key not in results_merged[label]:
                     results_merged[label][key] = {}
                     results_merged[label][key]["data"] = [data]
-                    results_merged[label][key]["epoch"] = [epoch]
+                    results_merged[label][key]["counter"] = [counter]
                 else:
-                    if counter < len(results_merged[label][key]["data"]):
-                        raise IndexError(
-                            "Tried to insert element with counter {} into {}.{}.data, but there are already {} elements.".format(
-                                counter, label, key, results_merged[label][key]["data"]))
-                    else:
-                        results_merged[label][key]["data"].append(data)
-                        results_merged[label][key]["epoch"].append(epoch)
+                    results_merged[label][key]["data"].append(data)
+                    results_merged[label][key]["counter"].append(counter)
 
         return results_merged
 
@@ -119,5 +113,3 @@ class ExperimentHelper(object):
                     pass
 
         return self.__results_dict
-
-

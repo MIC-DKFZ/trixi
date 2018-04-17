@@ -140,7 +140,7 @@ def make_graphs(results, trace_options=None, layout_options=None):
         for r, result in enumerate(results[group]):
 
             y = np.array(results[group][result]["data"])
-            x = np.array(results[group][result]["epoch"])
+            x = np.array(results[group][result]["counter"])
 
             do_filter = len(y) >= 1000
             opacity = 0.2 if do_filter else 1.
