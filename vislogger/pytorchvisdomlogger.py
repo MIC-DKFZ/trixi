@@ -115,7 +115,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         for model_name, model in model_dict.items():
             self.plot_model_statistics_grads(model=model, env_appendix=env_appendix, model_name=model_name)
 
-    def plot_model_structure(self, model, input_size, name=None, use_cuda=True, delete_tmp_on_close=False, **kwargs):
+    def plot_model_structure(self, model, *input_size, name=None, use_cuda=True, delete_tmp_on_close=False, **kwargs):
         """
         Plots the model structure/ model graph of a pytorch module (this only works correctly with pytorch 0.2.0).
 
@@ -183,13 +183,13 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             return dot
 
         # Create input
-        inputs = Variable(torch.randn(input_size))
+        inpt_vars = [Variable(torch.randn(i_s)) for i_s in input_size]
         if use_cuda:
-            inputs = inputs.cuda()
+            inpt_vars = [i_v.cuda() for i_v in inpt_vars]
             model = model.cuda()
 
         # get output
-        output = model(inputs)
+        output = model(*inpt_vars)
 
         # get temp file to store svg in
         fp = tempfile.NamedTemporaryFile(suffix=".svg", delete=delete_tmp_on_close)
