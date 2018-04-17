@@ -94,7 +94,6 @@ class PytorchExperimentLogger(ExperimentLogger):
         else:
             torch.save(kwargs, checkpoint_file)
 
-
     def save_checkpoint(self, name, n_iter=None, iter_format="{:05d}", prefix=False, **kwargs):
 
         if n_iter is not None:
@@ -181,7 +180,6 @@ class PytorchExperimentLogger(ExperimentLogger):
 
     def load_last_checkpoint(self, **kwargs):
         return self.load_last_checkpoint_static(self.checkpoint_dir, **kwargs)
-
 
     def print(self, *args):
         self.text_logger.print(*args)

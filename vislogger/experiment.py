@@ -1,4 +1,5 @@
 import json
+import string
 import traceback
 
 import atexit
@@ -11,7 +12,6 @@ import time
 import torch
 import vislogger
 import warnings
-from collections import defaultdict
 from vislogger import Config
 from vislogger.sourcepacker import SourcePacker
 from vislogger.util import name_and_iter_to_filename, ResultLogDict, ResultElement
@@ -39,6 +39,8 @@ class Experiment(object):
             self.prepare()
 
             self.exp_state = "Started"
+            print("Experiment started.")
+
             for epoch in range(self.n_epochs):
                 self.epoch_idx = epoch
                 self.train(epoch=epoch)
@@ -46,10 +48,11 @@ class Experiment(object):
                 self._end_epoch_internal(epoch=epoch)
 
             self.exp_state = "Trained"
+            print("Training complete.")
 
-            print("Trained.")
             self.end()
             self.exp_state = "Ended"
+            print("Experiment ended.")
 
             self.time_end = time.strftime("%y-%m-%d_%H:%M:%S", time.localtime(time.time()))
 
@@ -74,11 +77,13 @@ class Experiment(object):
                 self.prepare()
 
             self.exp_state = "Testing"
+            print("Start test.")
+
             self.test()
             self.end_test()
-            self.exp_state = "Tested"
 
-            print("Tested.")
+            self.exp_state = "Tested"
+            print("Testing complete.")
 
         except Exception as e:
 
@@ -146,7 +151,8 @@ class PyTorchExperiment(Experiment):
                  vislogger_c_freq=1,
                  use_explogger=True,
                  explogger_kwargs=None,
-                 explogger_c_freq=100):
+                 explogger_c_freq=1,
+                 append_rnd_to_name=False):
         """Inits an algo with a config, config needs to a n_epochs, name, output_folder and seed !"""
         # super(PyTorchExperiment, self).__init__()
         Experiment.__init__(self)
@@ -158,15 +164,15 @@ class PyTorchExperiment(Experiment):
             if resume_path:
                 resume = resume_path
 
-        self.__config_raw = None
+        self._config_raw = None
         if isinstance(config, str):
-            self.__config_raw = Config(file_=config, update_from_argv=True)
+            self._config_raw = Config(file_=config, update_from_argv=True)
         elif isinstance(config, Config):
-            self.__config_raw = config
+            self._config_raw = config
         elif isinstance(config, dict):
-            self.__config_raw = Config(config=config)
+            self._config_raw = Config(config=config)
         else:
-            self.__config_raw = Config(update_from_argv=True)
+            self._config_raw = Config(update_from_argv=True)
 
         self.n_epochs = n_epochs
         if "n_epochs" in config:
@@ -175,7 +181,7 @@ class PyTorchExperiment(Experiment):
         self.seed = seed
         if "seed" in config:
             self.seed = config.seed
-        if seed is None:
+        if self.seed is None:
             random_data = os.urandom(4)
             seed = int.from_bytes(random_data, byteorder="big")
             config.seed = seed
@@ -185,6 +191,10 @@ class PyTorchExperiment(Experiment):
         if "name" in config:
             name = config.name
             self.exp_name = config.name
+        if append_rnd_to_name:
+            rnd_str = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(5))
+            self.exp_name += "-"+rnd_str
+        print("Experiment: ", self.exp_name)
 
         if "base_dir" in config:
             base_dir = config.base_dir
@@ -231,13 +241,12 @@ class PyTorchExperiment(Experiment):
             SourcePacker.zip_sources(globs, zip_name)
 
         # Init objects in config
-        self.config = Config.init_objects(self.__config_raw)
+        self.config = Config.init_objects(self._config_raw)
 
         atexit.register(self.at_exit_func)
 
     def process_err(self, e):
         self.elog.text_logger.log_to("\n".join(traceback.format_tb(e.__traceback__)), "err")
-        print("err", "\n".join(traceback.format_tb(e.__traceback__)))
 
     def update_attributes(self, var_dict, ignore=()):
         for key, val in var_dict.items():
@@ -389,10 +398,11 @@ class PyTorchExperiment(Experiment):
             self.save_checkpoint(name="checkpoint_exit-" + self.exp_state)
             self.save_results(name="results-" + self.exp_state + ".json")
             self.elog.print("Experiment exited. Checkpoints stored =)")
+        time.sleep(2)  # allow checkpoint saving to finish
 
     def _setup_internal(self):
         self.prepare_resume()
-        self.elog.save_config(self.__config_raw, "config")
+        self.elog.save_config(self._config_raw, "config")
 
     def prepare_resume(self):
         checkpoint_file = ""
@@ -421,8 +431,8 @@ class PyTorchExperiment(Experiment):
             if not self.ignore_resume_config:
                 load_config = Config()
                 load_config.load(os.path.join(base_dir, "config/config.json"))
-                self.__config_raw = load_config
-                self.config = Config.init_objects(self.__config_raw)
+                self._config_raw = load_config
+                self.config = Config.init_objects(self._config_raw)
                 self.elog.print("Loaded existing config from:", base_dir)
 
         if checkpoint_file:
@@ -441,13 +451,13 @@ class PyTorchExperiment(Experiment):
     def save_end_checkpoint(self):
         self.save_checkpoint(name="checkpoint_last")
 
-    def add_result(self, value, name, label=None, counter=None, plot_result=True):
+    def add_result(self, value, name, counter=None, label=None, plot_result=True):
 
-        lable_name = label
-        if lable_name is None:
-            lable_name = name
+        label_name = label
+        if label_name is None:
+            label_name = name
 
-        r_elem = ResultElement(data=value, label=lable_name, epoch=self.epoch_idx, counter=counter)
+        r_elem = ResultElement(data=value, label=label_name, epoch=self.epoch_idx, counter=counter)
 
         self.results[name] = r_elem
 

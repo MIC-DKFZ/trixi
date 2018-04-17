@@ -7,13 +7,13 @@ import re
 import shutil
 try:
     import cPickle as pickle
-except:
+except ImportError:
     import pickle
 
 import numpy as np
 
 from vislogger import AbstractLogger, TextLogger, NumpyPlotFileLogger, Config
-from vislogger.util import create_folder, MultiTypeEncoder, MultiTypeDecoder, SafeDict
+from vislogger.util import create_folder, MultiTypeEncoder, MultiTypeDecoder
 
 
 REPLACEMENTS = [("%Y", 4), ("%m", 2), ("%d", 2), ("%H", 2), ("%M", 2), ("%S", 2),
@@ -61,29 +61,43 @@ class ExperimentLogger(AbstractLogger):
             create_folder(self.save_dir)
             create_folder(self.result_dir)
 
-        if text_logger_args is None: text_logger_args = {}
-        if plot_logger_args is None: plot_logger_args = {}
+        if text_logger_args is None:
+            text_logger_args = {}
+        if plot_logger_args is None:
+            plot_logger_args = {}
 
         self.text_logger = TextLogger(self.log_dir, **text_logger_args)
-        self.plot_logger = NumpyPlotFileLogger(self.img_dir, self.plot_dir, **plot_logger_args)
+        self.plot_logger = NumpyPlotFileLogger(
+            self.img_dir, self.plot_dir, **plot_logger_args)
 
     def show_image(self, image, name, file_format=".png", **kwargs):
+        """
+        This function shows an image.
+
+        Args:
+            image(np.ndarray): image to be shown
+            name(str): image title
+        """
         self.plot_logger.show_image(image, name, file_format=".png", **kwargs)
 
     def show_barplot(self, array, name, file_format=".png", **kwargs):
-        self.plot_logger.show_barplot(array, name, file_format=".png", **kwargs)
+        self.plot_logger.show_barplot(
+            array, name, file_format=".png", **kwargs)
 
     def show_lineplot(self, y_vals, x_vals, name, file_format=".png", **kwargs):
-        self.plot_logger.show_lineplot(y_vals, x_vals, name, file_format=".png", **kwargs)
+        self.plot_logger.show_lineplot(
+            y_vals, x_vals, name, file_format=".png", **kwargs)
 
     def show_piechart(self, array, name, file_format=".png", **kwargs):
-        self.plot_logger.show_piechart(array, name, file_format=".png", **kwargs)
+        self.plot_logger.show_piechart(
+            array, name, file_format=".png", **kwargs)
 
     def show_scatterplot(self, array, name, file_format=".png", **kwargs):
-        self.plot_logger.show_scatterplot(array, name, file_format=".png", **kwargs)
+        self.plot_logger.show_scatterplot(
+            array, name, file_format=".png", **kwargs)
 
-    def show_value(self, value, name=None, file_format=".png", **kwargs):
-        self.plot_logger.show_value(value, name, file_format, **kwargs)
+    def show_value(self, value, name=None, counter=None, tag=None, file_format=".png", **kwargs):
+        self.plot_logger.show_value(value, name, counter, tag, file_format, **kwargs)
 
     def show_text(self, text, name=None, logger="default", **kwargs):
         self.text_logger.show_text(text, name, logger, **kwargs)
@@ -194,17 +208,18 @@ class ExperimentLogger(AbstractLogger):
                     pattern = pattern.replace("{run_number}", "\d+")
                 elif run_match:
                     length = int(run_match.group(0))
-                    pattern = re.sub("\{run_number\:\d+d\}", "\\d{"+str(length)+"}", pattern)
+                    pattern = re.sub("\{run_number\:\d+d\}",
+                                     "\\d{" + str(length) + "}", pattern)
                 else:
                     if find[1:-1] in self.__dict__:
-                        pattern = pattern.replace(find, self.__dict__[find[1:-1]])
+                        pattern = pattern.replace(
+                            find, self.__dict__[find[1:-1]])
 
             for r in REPLACEMENTS:
-                pattern = pattern.replace(r[0], "\\d{"+str(r[1])+"}")
+                pattern = pattern.replace(r[0], "\\d{" + str(r[1]) + "}")
 
             return list(filter(lambda x: re.match(pattern, x),
                                sorted(os.listdir(self.base_dir))))[-1]
-
 
         if "%" in input_:
             input_ = self.init_time.strftime(input_)

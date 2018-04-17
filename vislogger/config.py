@@ -53,6 +53,12 @@ class Config(dict):
             if key not in self:
                 self[key] = val
 
+    def hasattr_not_none(self, str_):
+        if str_ in self:
+            if self[str_] is not None:
+                return True
+        return False
+
     @staticmethod
     def init_objects(config):
 
@@ -88,7 +94,9 @@ class Config(dict):
 
         return Config(config=conv_config)
 
-
+    def __str__(self):
+        json_str = json.dumps(self, cls=ModuleMultiTypeEncoder, indent=4, sort_keys=True)
+        return json_str
 
 
 def update_from_sys_argv(config):
@@ -172,4 +180,3 @@ def update_from_sys_argv(config):
 
         # update dict
         update_keys(config, vars(param))
-

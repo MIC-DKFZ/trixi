@@ -6,6 +6,7 @@ import os
 import random
 import re
 import string
+import matplotlib.pyplot as plt
 import subprocess as subp
 import time
 import warnings
@@ -164,24 +165,9 @@ class Singleton:
         return isinstance(inst, self._decorated)
 
 
-def git_info(file_):
-    old_dir = os.getcwd()
-    file_path = os.path.abspath(file_)
-    os.chdir(os.path.dirname(file_path))
-
-    try:
-        commit = subp.check_output(["git", "rev-parse", "HEAD"]).decode("ascii")[:-1]
-        branch = subp.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).decode("ascii")[:-1]
-        repo = subp.check_output(["git", "remote", "-vv"]).decode("ascii")
-        repo = re.findall("(?<=origin[\s\t])(http.+|ssh.+)(?=[\s\t]\(fetch)", repo)[0]
-        result = (repo, branch, commit)
-    except Exception as e:
-        print("Could not find GIT info for {}".format(file_path))
-        print(e)
-        result = (None, None, None)
-
-    os.chdir(old_dir)
-    return result
+def savefig_and_close(figure, *args, **kwargs):
+    figure.savefig(*args, **kwargs)
+    plt.close(figure)
 
 
 def random_string(length):
@@ -190,7 +176,7 @@ def random_string(length):
 
 def create_folder(path):
     """
-    Creates a folder if not already exits
+    Creates a folder if not already exists
     Args:
         :param path: The folder to be created
     Returns
@@ -274,8 +260,8 @@ class PyLock(object):
 
 
 class LogDict(dict):
-    def __init__(self, file_name, base_dir=None):
-        """Initilaizes a new Dict which can logs to a given target_file."""
+    def __init__(self, file_name, base_dir=None, to_console=False):
+        """Initializes a new Dict which can log to a given target file."""
 
         super(LogDict, self).__init__()
 
@@ -291,6 +277,7 @@ class LogDict(dict):
         file_handler = logging.FileHandler(self.file_name)
         file_handler.setFormatter(file_handler_formatter)
         self.logger.addHandler(file_handler)
+        self.logger.propagate = to_console
 
     def __setitem__(self, key, item):
         super(LogDict, self).__setitem__(key, item)
@@ -302,7 +289,7 @@ class LogDict(dict):
 
 class ResultLogDict(LogDict):
     def __init__(self, file_name, base_dir=None):
-        """Initilaizes a new Dict which directly logs value chnages to a given target_file."""
+        """Initializes a new Dict which directly logs value changes to a given target_file."""
         super(ResultLogDict, self).__init__(file_name=file_name, base_dir=base_dir)
 
         self.is_init = False
@@ -312,7 +299,7 @@ class ResultLogDict(LogDict):
     def __setitem__(self, key, item):
 
         if key == "cntr_dict":
-            raise ValueError("In ResultLogDict you can not add a item with key 'cntr_dict'")
+            raise ValueError("In ResultLogDict you can not add an item with key 'cntr_dict'")
 
         data = item
         if isinstance(item, dict) and "data" in item and "label" in item and "epoch" in item:

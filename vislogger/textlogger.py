@@ -92,7 +92,7 @@ class TextLogger(AbstractLogger):
         """wrapper for logger.error"""
         self.loggers[logger].error(msg)
 
-    def log_to(self, msg, name, log_level=logging.INFO, log_to_default=True):
+    def log_to(self, msg, name, log_level=logging.INFO, log_to_default=False):
         """Logs to an existing logger or creates new one"""
 
         if name not in self.loggers:

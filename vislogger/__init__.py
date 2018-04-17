@@ -1,3 +1,7 @@
+use_agg = True
+import matplotlib
+if use_agg: matplotlib.use("Agg")
+
 from vislogger.config import Config
 from vislogger.abstractlogger import AbstractLogger
 from vislogger.combinedlogger import CombinedLogger
@@ -5,6 +9,8 @@ from vislogger.textlogger import TextLogger
 from vislogger.numpyplotfilelogger import NumpyPlotFileLogger
 from vislogger.numpyseabornplotlogger import NumpySeabornPlotLogger
 from vislogger.experimentlogger import ExperimentLogger
+from vislogger.experiment import Experiment, PyTorchExperiment
+from vislogger.telegramlogger import TelegramLogger
 
 # pynvml
 try:
