@@ -1,6 +1,9 @@
 <html>
 
 <head>
+
+    <title>TRIXI - {{ title }}</title>
+
     <link rel="stylesheet" type="text/css"
           href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"/>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap4.min.css"/>
@@ -15,7 +18,9 @@
     <script type="text/javascript" charset="utf8"
             src="https://cdn.datatables.net/v/bs4-4.0.0/jq-3.2.1/dt-1.10.16/datatables.min.js"></script>
 
-    <title>TRIXI - {{ title }}</title>
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='assets/trixi-icon.png') }}"/>
+
+
 </head>
 
 <body>
@@ -73,11 +78,12 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-auto" style="padding-right: 2px">
-                <a role="button" class="btn btn-outline-secondary toggle-config">Toggle all</a>
+                <a role="button" class="btn btn-outline-secondary toggle-config" >Toggle all</a>
             </div>
             <div class="col" style="padding-left: 2px">
                 {% for c in ccols %}
-                <a role="button" class="btn btn-success toggle-vis" data-column="{{ loop.index + 3 }}" data-type="config">{{ c }}</a>
+                <a role="button" class="btn btn-success toggle-vis" data-column="{{ loop.index + 3 }}"
+                   data-type="config">{{ c }}</a>
                 {% endfor %}
             </div>
         </div>
@@ -97,8 +103,8 @@
 </div>
 
 <div class="text-center" style="margin: 2em">
-    <img src="{{ url_for('static', filename='assets/trixi-small.png') }}" width="50px" />
-    <br />
+    <img src="{{ url_for('static', filename='assets/trixi-small.png') }}" width="50px"/>
+    <br/>
     loves you &lt;3.
 </div>
 
@@ -118,7 +124,7 @@
                     var val = search_dict[key];
                     var data_el = data[key];
 
-                    if(data_el === "-"){
+                    if (data_el === "-") {
                         show_draw_row = false;
                     }
                     else if (val.startsWith(">=")) {

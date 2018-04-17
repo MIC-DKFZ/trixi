@@ -21,6 +21,9 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='assets/trixi-icon.png') }}"/>
+
+
 </head>
 
 <body data-spy="scroll" data-target="#spy" data-offset="20">
@@ -132,7 +135,7 @@
                             <input type="checkbox" onchange="alignImages()" id="imageAlignButton" style="z-index: 1;">
                             <span class="slider round"></span>
                         </label>
-                        <div >Align</div>
+                        <div>Align</div>
                     </div>
                 </div>
 
@@ -164,7 +167,8 @@
                                 {% for img in img_group %}
                                 <div class="mySlides">
                                     <div class="numbertext">{{ loop.index }} / {{ loop.length }}</div>
-                                    <img class="lazyimg" src="" lazysrc="{{img_path}}/{{ img }}" style="width:100%" alt="{{ img }}"
+                                    <img class="lazyimg" src="" lazysrc="{{img_path}}/{{ img }}" style="width:100%"
+                                         alt="{{ img }}"
                                          title="{{ img }}">
                                     <div class="text">{{ img }}</div>
                                 </div>
