@@ -9,6 +9,8 @@ from vislogger.textlogger import TextLogger
 from vislogger.numpyplotfilelogger import NumpyPlotFileLogger
 from vislogger.numpyseabornplotlogger import NumpySeabornPlotLogger
 from vislogger.experimentlogger import ExperimentLogger
+from vislogger.experiment import Experiment, PyTorchExperiment
+from vislogger.telegramlogger import TelegramLogger
 
 # pynvml
 try:

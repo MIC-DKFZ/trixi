@@ -71,6 +71,13 @@ class ExperimentLogger(AbstractLogger):
             self.img_dir, self.plot_dir, **plot_logger_args)
 
     def show_image(self, image, name, file_format=".png", **kwargs):
+        """
+        This function shows an image.
+
+        Args:
+            image(np.ndarray): image to be shown
+            name(str): image title
+        """
         self.plot_logger.show_image(image, name, file_format=".png", **kwargs)
 
     def show_barplot(self, array, name, file_format=".png", **kwargs):
@@ -89,8 +96,8 @@ class ExperimentLogger(AbstractLogger):
         self.plot_logger.show_scatterplot(
             array, name, file_format=".png", **kwargs)
 
-    def show_value(self, value, name=None, count=None, tag=None, file_format=".png", **kwargs):
-        self.plot_logger.show_value(value, name, count, tag, file_format, **kwargs)
+    def show_value(self, value, name=None, counter=None, tag=None, file_format=".png", **kwargs):
+        self.plot_logger.show_value(value, name, counter, tag, file_format, **kwargs)
 
     def show_text(self, text, name=None, logger="default", **kwargs):
         self.text_logger.show_text(text, name, logger, **kwargs)

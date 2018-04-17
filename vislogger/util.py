@@ -6,6 +6,7 @@ import os
 import random
 import re
 import string
+import matplotlib.pyplot as plt
 import subprocess as subp
 import time
 import warnings
@@ -164,13 +165,18 @@ class Singleton:
         return isinstance(inst, self._decorated)
 
 
+def savefig_and_close(figure, *args, **kwargs):
+    figure.savefig(*args, **kwargs)
+    plt.close(figure)
+
+
 def random_string(length):
     return "".join(random.choice(string.ascii_letters + string.digits) for _ in range(length))
 
 
 def create_folder(path):
     """
-    Creates a folder if not already exits
+    Creates a folder if not already exists
     Args:
         :param path: The folder to be created
     Returns
