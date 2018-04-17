@@ -1,10 +1,10 @@
+import subprocess
 import zipfile
 
 import os.path
 import re
 import subprocess as subp
 import sys
-from pip.operations import freeze
 
 
 class SourcePacker(object):
@@ -71,7 +71,7 @@ class SourcePacker(object):
     @staticmethod
     def gather_sources_and_dependencies(globs):
         py_str = "python {}".format(sys.version)
-        dependencies = list(freeze.freeze())
+        dependencies = subprocess.check_output([sys.executable, '-m', 'pip', 'freeze']).decode("utf-8").split("\n")
 
         filename = globs.get('__file__')
 
