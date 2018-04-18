@@ -68,10 +68,10 @@
             </ul>
             </ul>
         </nav>
-        <div style="position : absolute; bottom : 0;">
+        <div style="position: absolute; bottom: 0; width: 80px; padding-bottom: 10px; padding-left: 3px">
             <a href="/" style="color: white">
-                <i class="material-icons">chevron_left</i>
-                <span>Back</span>
+                <i class="material-icons" style="vertical-align: middle">chevron_left</i>
+                <span style="vertical-align: middle">Back</span>
             </a>
         </div>
 
@@ -90,6 +90,7 @@
                     {% set exps = config["exps"] %}
                     {% set configs = config["configs"] %}
                     {% set ckeys = config["keys"] %}
+                    {% set dkeys = config["diff_keys"] %}
 
                     <table class="ctable">
 
@@ -113,7 +114,7 @@
                         <tbody class="ctable">
 
                         {% for k in ckeys %}
-                        <tr class="ctable">
+                        <tr {% if k in dkeys %}class="ctable ctable-diff"{% else %}class="ctable"{% endif %}>
                             <th class="ctable">{{k}}</th>
 
                             {% for val in configs[k] %}

@@ -10,6 +10,7 @@ from plotly.offline import plot
 from scipy.signal import savgol_filter
 
 from vislogger.experiment_browser.experimenthelper import ExperimentHelper
+from vislogger import Config
 
 IGNORE_KEYS = ("name",
                "experiment_dir",
@@ -40,7 +41,7 @@ if base_dir[-1] == os.sep:
     base_dir = base_dir[:-1]
 
 # The actual flask app lives in the package directory. The blueprint allows us
-# to specify an additional static folder and we use that to allow access to the
+# to specify an additional static folder and we use that to give access to the
 # experiment files
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), "static"))
 blueprint = Blueprint("data", __name__, static_url_path=base_dir, static_folder=base_dir)
@@ -48,6 +49,7 @@ app.register_blueprint(blueprint)
 
 
 def process_base_dir(base_dir):
+
     config_keys = set()
     result_keys = set()
     exps = []
@@ -210,6 +212,7 @@ def experiment():
     default_val = "-"
     combi_config = {}
     exp_configs = [exp.config for exp in experiments]
+    diff_config_keys = list(Config.difference_dict_static(*exp_configs).keys())
     config_keys = set([k for c in exp_configs for k in c.keys()])
     for k in sorted(config_keys):
         combi_config[k] = []
@@ -254,7 +257,7 @@ def experiment():
     content["graphs"] = make_graphs(results)
     content["title"] = experiments
     content["images"] = {"img_path": image_path, "imgs": images, "img_keys": image_keys}
-    content["config"] = {"exps": exp_names, "configs": combi_config, "keys": config_keys}
+    content["config"] = {"exps": exp_names, "configs": combi_config, "keys": config_keys, "diff_keys": diff_config_keys}
     content["results"] = {"exps": exp_names, "results": combi_results, "keys": result_keys}
     content["logs"] = {"logs_dict": logs_dict}
 

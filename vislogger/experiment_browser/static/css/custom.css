@@ -176,6 +176,10 @@ a.toggle-vis, a.toggle-config, a.toggle-result {
     /*font-weight: bold;*/
 }
 
+tr.ctable-diff {
+    background-color: #ffccf5;
+}
+
 /* width */
 ::-webkit-scrollbar {
     width: 10px;
@@ -282,7 +286,6 @@ input:checked + .slider:before {
     position: fixed;
     height: 100%;
     overflow-y: auto;
-    z-index: 1000;
 }
 
 #page-content-wrapper {
