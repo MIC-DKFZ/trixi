@@ -40,6 +40,7 @@ class Experiment(object):
             self.prepare()
 
             self.exp_state = "Started"
+            self._start_internal()
             print("Experiment started.")
 
             for epoch in range(self.n_epochs):
@@ -131,6 +132,9 @@ class Experiment(object):
 
     def prepare(self):
         """This method is called directly before the experiment training starts"""
+        pass
+
+    def _start_internal(self):
         pass
 
 
@@ -409,6 +413,10 @@ class PyTorchExperiment(Experiment):
     def _setup_internal(self):
         self.prepare_resume()
         self.elog.save_config(self._config_raw, "config")
+        self.elog.save_config(Config(**{'name': self.exp_name, 'time': self.time_start, 'state': self.exp_state}),
+                              "exp")
+
+    def _start_internal(self):
         self.elog.save_config(Config(**{'name': self.exp_name, 'time': self.time_start, 'state': self.exp_state}),
                               "exp")
 
