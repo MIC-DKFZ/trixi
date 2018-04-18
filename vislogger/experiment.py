@@ -157,6 +157,9 @@ class PyTorchExperiment(Experiment):
                  use_explogger=True,
                  explogger_kwargs=None,
                  explogger_c_freq=100,
+                 use_telegramlogger=False,
+                 telegramlogger_kwargs=None,
+                 telegramlogger_c_freq=1000,
                  append_rnd_to_name=False):
         """Inits an algo with a config, config needs to a n_epochs, name, output_folder and seed !"""
         # super(PyTorchExperiment, self).__init__()
@@ -220,6 +223,11 @@ class PyTorchExperiment(Experiment):
                                                                                   experiment_name=name,
                                                                                   **explogger_kwargs)
             logger_list.append((self.elog, explogger_c_freq))
+        if use_telegramlogger:
+            if telegramlogger_kwargs is None:
+                telegramlogger_kwargs = {}
+            self.tlog = vislogger.TelegramLogger(**telegramlogger_kwargs, exp_name=self.exp_name)
+            logger_list.append((self.tlog, telegramlogger_c_freq))
 
             # Set results log dict to the right path
             self.results = ResultLogDict("results-log.json", base_dir=self.elog.result_dir)
