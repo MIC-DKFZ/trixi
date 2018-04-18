@@ -62,6 +62,20 @@ class ExperimentHelper(object):
     def get_logs(self):
         return self.get_file_contents(self.log_dir)
 
+    def get_log_file_content(self, file_name):
+
+        content = ""
+        log_file = os.path.join(self.log_dir, file_name)
+
+        if os.path.exists(log_file):
+            with open(log_file, 'r') as f:
+                content = f.read()
+                content = content.replace("\n", "<br>")
+
+        return content
+
+
+
     def get_results_log(self):
 
         results_merged = {}

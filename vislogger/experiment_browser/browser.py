@@ -48,7 +48,6 @@ app.register_blueprint(blueprint)
 
 
 def process_base_dir(base_dir):
-
     config_keys = set()
     result_keys = set()
     exps = []
@@ -101,7 +100,6 @@ def process_base_dir(base_dir):
 
 
 def group_images(images):
-
     images.sort()
     group_dict = defaultdict(list)
 
@@ -116,7 +114,6 @@ def group_images(images):
 
 
 def make_graphs(results, trace_options=None, layout_options=None):
-
     if trace_options is None:
         trace_options = {}
     if layout_options is None:
@@ -163,7 +160,6 @@ def make_graphs(results, trace_options=None, layout_options=None):
 
 
 def merge_results(experiment_names, result_list):
-
     merged_results = {}
 
     for r, result in enumerate(result_list):
@@ -243,6 +239,12 @@ def experiment():
     image_keys = list(image_keys)
     image_keys.sort()
 
+    # Get logs
+    logs_dict = OrderedDict({})
+    for exp in experiments:
+        exp_logs = [os.path.basename(l) for l in exp.get_logs()]
+        logs_dict[exp.exp_name] = exp_logs
+
     # Get plot results
     results = []
     for exp in experiments:
@@ -254,8 +256,22 @@ def experiment():
     content["images"] = {"img_path": image_path, "imgs": images, "img_keys": image_keys}
     content["config"] = {"exps": exp_names, "configs": combi_config, "keys": config_keys}
     content["results"] = {"exps": exp_names, "results": combi_results, "keys": result_keys}
+    content["logs"] = {"logs_dict": logs_dict}
 
     return render_template('experiment.html', **content)
+
+
+@app.route('/experiment_log', methods=['GET'])
+def experiment_log():
+    experiment_path = request.args.get('exp')
+    log_name = request.args.get('log')
+
+    exp = ExperimentHelper(os.path.join(base_dir, experiment_path), name=experiment_path)
+    content = exp.get_log_file_content(log_name)
+
+    print(experiment_path, log_name)
+
+    return content
 
 
 if __name__ == "__main__":

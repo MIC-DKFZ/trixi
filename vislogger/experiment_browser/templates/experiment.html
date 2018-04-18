@@ -59,6 +59,12 @@
                         <span>Results</span>
                     </a>
                 </li>
+                <li>
+                    <a href="#section5" class="nav-link">
+                        <i class="material-icons">business_center</i>
+                        <span>Logs</span>
+                    </a>
+                </li>
             </ul>
             </ul>
         </nav>
@@ -281,10 +287,107 @@
                 </div>
             </div>
 
+
+            <hr>
+
+            <div id="section5" class="card border-primary" style="margin: 10px;">
+                <div class="card-header" style="color: #4285F4">
+                    <h3>Logs</h3>
+                </div>
+
+                <div class="card-body">
+
+
+                    <div>
+
+                        {% for exp in logs["logs_dict"] %}
+                        <h4 style="text-align: center">{{ exp }}</h4>
+
+                        <div class="card text-center">
+
+                            <div class="card-header">
+                                <ul class="nav nav-tabs card-header-tabs">
+
+                                    {% for log_file in logs["logs_dict"][exp] %}
+                                    <!--<p>{{ log_file }}</p>-->
+
+                                    <li class="nav-item">
+                                        <a class="nav-link log-file-link" href="#" expname="{{ exp }}"
+                                           logfile="{{ log_file }}">
+                                            {{log_file}}</a>
+                                    </li>
+
+                                    {% endfor %}
+
+                                    <li class="pull-right" style="float: right;  display: inline-block;">
+                                        <a class="nav-link log-file-close float-right" href="#" expname="{{ exp }}">Close</a>
+                                    </li>
+
+                                </ul>
+                            </div>
+                            <div class="card-body" style="max-height: 40em; overflow-y: scroll;">
+                                <p class="card-text" id="{{ exp }}-log-content" style="text-align: left; white-space:
+                                 pre"></p>
+                            </div>
+                        </div>
+                        <hr>
+                        <br>
+                        {% endfor %}
+
+
+                    </div>
+
+                </div>
+            </div>
+
         </div>
     </div>
 
 </div>
+
+
+<script>
+
+    var log_dict = {};
+
+    $(document).ready(function () {
+
+        $('a.log-file-link').on('click', function (e) {
+            e.preventDefault();
+
+            var expname = $(this)[0].attributes.expname.value;
+            var logfile = $(this)[0].attributes.logfile.value;
+
+            var target_elem = document.getElementById(expname + "-log-content");
+
+            var dict_key = expname + "-" + logfile;
+            if (dict_key in log_dict) {
+                target_elem.innerHTML = log_dict[dict_key];
+            }
+            else {
+                $.get(
+                    "experiment_log",
+                    {exp: expname, log: logfile},
+                    function (data) {
+                        console.log("request");
+                        log_dict[dict_key] = [data];
+                        target_elem.innerHTML = data;
+                    }
+                );
+            }
+            // toggle($(this));
+        });
+
+        $('a.log-file-close').on('click', function (e) {
+            e.preventDefault();
+            var expname = $(this)[0].attributes.expname.value;
+            var target_elem = document.getElementById(expname + "-log-content");
+            target_elem.innerHTML = "";
+        });
+
+
+    });
+</script>
 
 </body>
 </html>
