@@ -62,6 +62,8 @@ def process_base_dir(base_dir):
         if os.path.isdir(dir_path):
             try:
                 exp = ExperimentHelper(dir_path)
+                if exp.ignore:
+                    continue
                 config_keys.update(list(exp.config.keys()))
                 result_keys.update(list(exp.get_results().keys()))
                 exps.append(exp)
@@ -275,6 +277,18 @@ def experiment_log():
     print(experiment_path, log_name)
 
     return content
+
+
+@app.route('/experiment_remove', methods=['GET'])
+def experiment_remove():
+    experiment_paths = request.args.getlist('exp')
+
+    # Get all Experiments
+    for experiment_path in sorted(experiment_paths):
+        exp = ExperimentHelper(os.path.join(base_dir, experiment_path), name=experiment_path)
+        exp.ignore_experiment()
+
+    return ""
 
 
 if __name__ == "__main__":

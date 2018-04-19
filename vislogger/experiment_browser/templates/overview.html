@@ -78,7 +78,7 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-auto" style="padding-right: 2px">
-                <a role="button" class="btn btn-outline-secondary toggle-config" >Toggle all</a>
+                <a role="button" class="btn btn-outline-secondary toggle-config">Toggle all</a>
             </div>
             <div class="col" style="padding-left: 2px">
                 {% for c in ccols %}
@@ -110,12 +110,17 @@
 <script>
 
     var search_dict = {};
+    var removed_list = [];
 
     // Extended Search so you can search with <, <= , >, >=
     $.fn.dataTable.ext.search.push(
         function (settings, data, dataIndex) {
 
             var show_draw_row = true;
+
+            if (removed_list.indexOf(data[0]) >= 0) {
+                return false;
+            }
 
             for (var key in search_dict) {
                 if (search_dict.hasOwnProperty(key)) {
@@ -183,7 +188,7 @@
             dom: 'l<"toolbar">frtip',
             initComplete: function () {
                 $("div.toolbar")
-                    .html('<a role="button" class="compare-experiments btn btn-primary" style="float: left">Details</a>');
+                    .html('<a role="button" class="compare-experiments btn btn-primary" style="float: left">Details</a> <a role="button" class="remove-experiments btn btn-danger" style="float: left; margin-left: 3em;">Remove</a>');
             }
         });
 
@@ -200,6 +205,33 @@
                     new_location = new_location + "exp=" + val + "&";
                 });
                 window.location.href = new_location;
+            }
+        });
+
+        $('a.remove-experiments').on('click', function (e) {
+            e.preventDefault();
+            var experiments = [];
+            $.each($('#overviewTable tr.selected'), function () {
+                experiments.push($(this).find('th').eq(0).text());
+            });
+            if (experiments.length > 0) {
+                var url_exp_remove = "experiment_remove?";
+                $.each(experiments, function (idx, val) {
+                    url_exp_remove = url_exp_remove + "exp=" + val + "&";
+                    removed_list.push(val);
+                });
+
+                $.get(
+                    url_exp_remove,
+                    {},
+                    function (data) {
+                        $.each(experiments, function (idx, val) {
+                            removed_list.push(val);
+                        });
+                    }
+                );
+                table.draw();
+
             }
         });
 

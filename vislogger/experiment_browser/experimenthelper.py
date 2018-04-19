@@ -42,6 +42,10 @@ class ExperimentHelper(object):
         else:
             self.exp_name = "experiments"
 
+        self.ignore = False
+        if os.path.exists(os.path.join(self.work_dir, "ignore.txt")):
+            self.ignore = True
+
     def get_file_contents(self, folder):
 
         if os.path.isdir(folder):
@@ -73,8 +77,6 @@ class ExperimentHelper(object):
                 content = content.replace("\n", "<br>")
 
         return content
-
-
 
     def get_results_log(self):
 
@@ -127,3 +129,8 @@ class ExperimentHelper(object):
                     pass
 
         return self.__results_dict
+
+    def ignore_experiment(self):
+        ignore_flag_file = os.path.join(self.work_dir, "ignore.txt")
+        with open(ignore_flag_file, "w+") as f:
+            f.write("ignore")
