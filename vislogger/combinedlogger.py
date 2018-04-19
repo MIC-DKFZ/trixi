@@ -8,31 +8,39 @@ def create_function(self, sub_methods):
 
         for sub_method in sub_methods:
 
-            method_cntr = self.log_methods_cntr[sub_method]
-            method_freq = self.log_methods_freq[sub_method]
+            try:
 
-            use_name = False
-            if "name" in kwargs and not ("ignore_name_in_args" in kwargs and kwargs["ignore_name_in_args"] is True):
-                method_cntr = self.log_methods_name_cntr[sub_method][kwargs["name"]]
-                use_name = True
+                method_cntr = self.log_methods_cntr[sub_method]
+                method_freq = self.log_methods_freq[sub_method]
 
-            if "log_all" in kwargs and kwargs["log_all"] is True:
-                sub_method(*args, **kwargs)
-                continue
+                if method_freq is None or method_freq == 0:
+                    continue
 
-            if method_cntr % method_freq == 0:
-                sub_method(*args, **kwargs)
+                use_name = False
+                if "name" in kwargs and not ("ignore_name_in_args" in kwargs and kwargs["ignore_name_in_args"] is True):
+                    method_cntr = self.log_methods_name_cntr[sub_method][kwargs["name"]]
+                    use_name = True
 
-            elif "same_as_last" in kwargs and kwargs["same_as_last"] is True:
-                if method_cntr % method_freq == 1:
+                if "log_all" in kwargs and kwargs["log_all"] is True:
                     sub_method(*args, **kwargs)
-                kwargs["do_not_increase"] = True
+                    continue
 
-            if use_name:
-                self.log_methods_name_cntr[sub_method][kwargs["name"]] += 1
-            elif "do_not_increase" not in kwargs or ("do_not_increase" in kwargs and kwargs["do_not_increase"] is
-                                                     False):
-                self.log_methods_cntr[sub_method] += 1
+                if method_cntr % method_freq == 0:
+                    sub_method(*args, **kwargs)
+
+                elif "same_as_last" in kwargs and kwargs["same_as_last"] is True:
+                    if method_cntr % method_freq == 1:
+                        sub_method(*args, **kwargs)
+                    kwargs["do_not_increase"] = True
+
+                if use_name:
+                    self.log_methods_name_cntr[sub_method][kwargs["name"]] += 1
+                elif "do_not_increase" not in kwargs or ("do_not_increase" in kwargs and kwargs["do_not_increase"] is
+                                                         False):
+                    self.log_methods_cntr[sub_method] += 1
+
+            except:
+                print("a combi logger method failed: ", str(sub_method))
 
     return surrogate_fn
 

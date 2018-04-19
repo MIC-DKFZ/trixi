@@ -30,7 +30,7 @@ class TelegramLogger(NumpySeabornPlotLogger):
         self.bot = telegram.Bot(token=self.token)
         self.exp_name = exp_name
 
-    def show_text(self, text):
+    def show_text(self, text, **kwargs):
         """
         Sends a text to a chat using an existing Telegram bot.
 
@@ -39,16 +39,22 @@ class TelegramLogger(NumpySeabornPlotLogger):
         """
         if self.exp_name is not None:
             text = self.exp_name + ":\n" + text
-        self.bot.send_message(chat_id=self.chat_id, text=text)
+        try:
+            self.bot.send_message(chat_id=self.chat_id, text=text)
+        except:
+            print("Could not send text to telegram")
 
-    def show_image(self, image_path):
+    def show_image(self, image_path, **kwargs):
         """
         Sends an image file to a chat using an existing Telegram bot.
 
         Args:
             image_path (str): Path to the image file to be sent to the chat.
         """
-        self.bot.send_photo(chat_id=self.chat_id, photo=open(image_path, 'rb'))
+        try:
+            self.bot.send_photo(chat_id=self.chat_id, photo=open(image_path, 'rb'))
+        except:
+            print("Could not send image to telegram")
 
     def show_image_grid(self, image_array, name=None, nrow=8, padding=2,
                         normalize=False, range=None, scale_each=False, pad_value=0, **kwargs):
@@ -78,7 +84,10 @@ class TelegramLogger(NumpySeabornPlotLogger):
         im = Image.fromarray(ndarr)
         im.save(buf, format="png")
         buf.seek(0)
-        self.bot.send_photo(chat_id=self.chat_id, photo=buf, caption=caption)
+        try:
+            self.bot.send_photo(chat_id=self.chat_id, photo=buf, caption=caption)
+        except:
+            print("Could not send image_grid to telegram")
 
     def show_value(self, value, name, counter=None, tag=None, **kwargs):
         """
@@ -101,7 +110,10 @@ class TelegramLogger(NumpySeabornPlotLogger):
         figure = NumpySeabornPlotLogger.show_value(self, value, name, counter, tag)
         figure.savefig(buf, format='png')
         buf.seek(0)
-        self.bot.send_photo(chat_id=self.chat_id, photo=buf, caption=caption)
+        try:
+            self.bot.send_photo(chat_id=self.chat_id, photo=buf, caption=caption)
+        except:
+            print("Could not send plot to telegram")
         plt.close(figure)
 
         def show_barplot(self, *args, **kwargs):
