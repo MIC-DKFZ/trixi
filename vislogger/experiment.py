@@ -176,9 +176,9 @@ class PyTorchExperiment(Experiment):
         if isinstance(config, str):
             self._config_raw = Config(file_=config, update_from_argv=True)
         elif isinstance(config, Config):
-            self._config_raw = config
+            self._config_raw = Config(config=config, update_from_argv=True)
         elif isinstance(config, dict):
-            self._config_raw = Config(config=config)
+            self._config_raw = Config(config=config, update_from_argv=True)
         else:
             self._config_raw = Config(update_from_argv=True)
 
