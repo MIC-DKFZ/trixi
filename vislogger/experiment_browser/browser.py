@@ -148,12 +148,12 @@ def make_graphs(results, trace_options=None, layout_options=None):
 
             traces.append(go.Scatter(x=x, y=y, opacity=opacity, name=result,
                                      line=dict(color=COLORMAP[r % len(COLORMAP)]), **trace_options))
-            if do_filter:
-                def filter_(x):
-                    return savgol_filter(x, max(5, 2 * (len(y) // 50) + 1), 3)
-
-                traces.append(go.Scatter(x=x, y=filter_(y), name=result + " smoothed",
-                                         line=dict(color=COLORMAP[r % len(COLORMAP)]), **trace_options))
+            # if do_filter:
+            #     def filter_(x):
+            #         return savgol_filter(x, max(5, 2 * (len(y) // 50) + 1), 3)
+            #
+            #     traces.append(go.Scatter(x=x, y=filter_(y), name=result + " smoothed",
+            #                              line=dict(color=COLORMAP[r % len(COLORMAP)]), **trace_options))
 
         graphs.append(Markup(plot({"data": traces, "layout": layout},
                                   output_type="div",
@@ -220,6 +220,7 @@ def experiment():
         combi_config[k] = []
         for conf in exp_configs:
             combi_config[k].append(conf.get(k, default_val))
+    config_keys = list(sorted(list(config_keys)))
 
     # Get results
     default_val = "-"
