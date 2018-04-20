@@ -57,7 +57,7 @@ class Config(dict):
         else:
             super(Config, self).__setitem__(key, value)
 
-    def set_with_decode(self, key, value):
+    def set_with_decode(self, key, value, stringify_value=False):
 
         if type(key) != str:
             # We could encode the key if it's not a string, but for now raise
@@ -74,7 +74,10 @@ class Config(dict):
             dict_str += '"{}":'.format(k)
             depth += 1
 
-        dict_str += '"{}"'.format(value)
+        if stringify_value:
+            dict_str += '"{}"'.format(value)
+        else:
+            dict_str += "{}".format(value)
 
         for _ in range(depth):
             dict_str += "}"
