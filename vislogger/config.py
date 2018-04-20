@@ -10,7 +10,12 @@ class Config(dict):
 
     def __init__(self, file_=None, config=None, update_from_argv=False, **kwargs):
 
-        super(Config, self).__init__(**kwargs)
+        super(Config, self).__init__()
+
+        # the following allows us to access keys as attributes if syntax permits
+        # config["a"] = 1 -> config.a -> 1
+        # config["a-b"] = 2 -> config.a-b (not possible)
+        # this is purely for convenience
         self.__dict__ = self
 
         if file_ is not None:
@@ -23,6 +28,77 @@ class Config(dict):
         if update_from_argv:
             update_from_sys_argv(self)
 
+    def __setattr__(self, key, value):
+
+        if type(value) == dict:
+            super(Config, self).__setattr__(key, Config(**value))
+        else:
+            super(Config, self).__setattr__(key, value)
+
+    def __getitem__(self, key):
+
+        if type(key) == str and "." in key:
+            superkey = key.split(".")[0]
+            subkeys = ".".join(key.split(".")[1:])
+            return self[superkey][subkeys]
+        else:
+            return super(Config, self).__getitem__(key)
+
+    def __setitem__(self, key, value):
+
+        if type(key) == str and "." in key:
+            superkey = key.split(".")[0]
+            subkeys = ".".join(key.split(".")[1:])
+            if superkey not in self:
+                self[superkey] = Config()
+            self[superkey][subkeys] = value
+        elif type(value) == dict:
+            super(Config, self).__setitem__(key, Config(**value))
+        else:
+            super(Config, self).__setitem__(key, value)
+
+    def set_with_decode(self, key, value):
+
+        if type(key) != str:
+            # We could encode the key if it's not a string, but for now raise
+            raise TypeError("set_with_decode requires string as key.")
+        if type(value) != str:
+            raise TypeError("set_with_decode requires string as value.")
+
+        dict_str = ''
+        depth = 0
+        key_split = key.split(".")
+
+        for k in key_split:
+            dict_str += "{"
+            dict_str += '"{}":'.format(k)
+            depth += 1
+
+        dict_str += '"{}"'.format(value)
+
+        for _ in range(depth):
+            dict_str += "}"
+
+        self.loads(dict_str)
+
+    def update(self, dict_like):
+
+        for key, value in dict_like.items():
+
+            if key in self and isinstance(value, dict):
+                self[key].update(value)
+            else:
+                self[key] = value
+
+    def update_missing(self, dict_like):
+
+        for key, value in dict_like.items():
+
+            if key not in self:
+                self[key] = value
+            elif isinstance(value, dict):
+                self[key].update_missing(value)
+
     def dump(self, file_, indent=4, separators=(",", ": "), **kwargs):
 
         if hasattr(file_, "write"):
@@ -34,6 +110,13 @@ class Config(dict):
         else:
             with open(file_, "w") as file_object:
                 json.dump(self, file_object,
+                          cls=ModuleMultiTypeEncoder,
+                          indent=indent,
+                          separators=separators,
+                          **kwargs)
+
+    def dumps(self, indent=4, separators=(",", ": "), **kwargs):
+        return json.dumps(self,
                           cls=ModuleMultiTypeEncoder,
                           indent=indent,
                           separators=separators,
@@ -53,14 +136,18 @@ class Config(dict):
 
         self.update(new_dict)
 
-    def update_missing(self, dict_):
-        for key, val in dict_.items():
-            if key not in self:
-                self[key] = val
+    def loads(self, json_str, **kwargs):
 
-    def hasattr_not_none(self, str_):
-        if str_ in self:
-            if self[str_] is not None:
+        if not json_str.startswith("{"):
+            json_str = "{" + json_str
+        if not json_str.endswith("}"):
+            json_str = json_str + "}"
+        new_dict = json.loads(json_str, cls=ModuleMultiTypeDecoder, **kwargs)
+        self.update(new_dict)
+
+    def hasattr_not_none(self, key):
+        if key in self:
+            if self[key] is not None:
                 return True
         return False
 
@@ -99,19 +186,17 @@ class Config(dict):
 
         return Config(config=conv_config)
 
-
     def __str__(self):
-        json_str = json.dumps(self, cls=ModuleMultiTypeEncoder, indent=4, sort_keys=True)
-        return json_str
+        return self.dumps(sort_keys=True)
 
-    def difference_dict(self, *other_configs):
-        return self.difference_dict_static(self, *other_configs)
+    def difference_config(self, *other_configs):
+        return self.difference_config_static(self, *other_configs)
 
     @staticmethod
-    def difference_dict_static(*configs):
-        """Make a dict of all elements that differ between N configs.
+    def difference_config_static(*configs):
+        """Make a Config of all elements that differ between N configs.
 
-        The resulting dict looks like this:
+        The resulting Config looks like this:
 
             {key: (config1[key], config2[key], ...)}
 
@@ -122,10 +207,11 @@ class Config(dict):
             configs (Config): First config
 
         Returns:
-            dict: Possibly empty
+            Config: Possibly empty
         """
 
-        difference_dict = {}
+        difference = Config()
+
         all_keys = set()
         for config in configs:
             all_keys.update(set(config.keys()))
@@ -134,18 +220,32 @@ class Config(dict):
 
             current_values = []
             all_equal = True
+            all_configs = True
+
             for config in configs:
-                if not hasattr(config, key):
+
+                if key not in config:
                     all_equal = False
-                current_values.append(getattr(config, key, None))
+                    all_configs = False
+                    current_values.append(None)
+                else:
+                    current_values.append(config[key])
+
                 if len(current_values) >= 2:
                     if current_values[-1] != current_values[-2]:
                         all_equal = False
 
-            if not all_equal:
-                difference_dict[key] = tuple(current_values)
+                if type(current_values[-1]) != Config:
+                    all_configs = False
 
-        return difference_dict
+            if not all_equal:
+
+                if not all_configs:
+                    difference[key] = tuple(current_values)
+                else:
+                    difference[key] = Config.difference_config_static(*current_values)
+
+        return difference
 
 
 def update_from_sys_argv(config):
