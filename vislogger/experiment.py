@@ -215,23 +215,27 @@ class PyTorchExperiment(Experiment):
             if vislogger_kwargs is None:
                 vislogger_kwargs = {}
             self.vlog = vislogger.pytorchvisdomlogger.PytorchVisdomLogger(name=self.exp_name, **vislogger_kwargs)
-            logger_list.append((self.vlog, vislogger_c_freq))
+            if vislogger_c_freq is not None and vislogger_c_freq > 0:
+                logger_list.append((self.vlog, vislogger_c_freq))
         if use_explogger:
             if explogger_kwargs is None:
                 explogger_kwargs = {}
             self.elog = vislogger.pytorchexperimentlogger.PytorchExperimentLogger(base_dir=base_dir,
                                                                                   experiment_name=name,
                                                                                   **explogger_kwargs)
-            logger_list.append((self.elog, explogger_c_freq))
+            if explogger_c_freq is not None and explogger_c_freq > 0:
+                logger_list.append((self.elog, explogger_c_freq))
+
+            self.results = ResultLogDict("results-log.json", base_dir=self.elog.result_dir)
+            self.results.print_to_file("[")
         if use_telegramlogger:
             if telegramlogger_kwargs is None:
                 telegramlogger_kwargs = {}
             self.tlog = vislogger.TelegramLogger(**telegramlogger_kwargs, exp_name=self.exp_name)
-            logger_list.append((self.tlog, telegramlogger_c_freq))
+            if telegramlogger_c_freq is not None and telegramlogger_c_freq > 0:
+                logger_list.append((self.tlog, telegramlogger_c_freq))
 
             # Set results log dict to the right path
-            self.results = ResultLogDict("results-log.json", base_dir=self.elog.result_dir)
-            self.results.print_to_file("[")
 
         self.clog = vislogger.CombinedLogger(*logger_list)
 

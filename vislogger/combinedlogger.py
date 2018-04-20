@@ -54,8 +54,8 @@ class CombinedLogger(object):
             if not isinstance(logger, AbstractLogger):
                 raise TypeError("All logger must be subclasses of the abstract visual logger.")
         for freq in self.frequencies:
-            if freq < 1:
-                raise ValueError("All frequencies must be at least one.")
+            if freq < 0:
+                raise ValueError("All frequencies must be positive.")
 
         self.logger_methods = defaultdict(list)
         self.log_methods_cntr = defaultdict(dict)
