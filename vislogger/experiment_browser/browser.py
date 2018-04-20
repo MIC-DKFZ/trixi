@@ -133,12 +133,12 @@ def make_graphs(results, trace_options=None, layout_options=None):
 
     graphs = []
 
-    for group in results:
+    for group in sorted(results):
 
         layout = go.Layout(title=group, **layout_options)
         traces = []
 
-        for r, result in enumerate(results[group]):
+        for r, result in enumerate(sorted(results[group])):
 
             y = np.array(results[group][result]["data"])
             x = np.array(results[group][result]["counter"])
@@ -231,6 +231,7 @@ def experiment():
         combi_results[k] = []
         for res in exp_results:
             combi_results[k].append(res.get(k, default_val))
+    result_keys = list(sorted(list(result_keys)))
 
     # Get images
     images = OrderedDict({})
