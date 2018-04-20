@@ -293,7 +293,7 @@ class ResultLogDict(LogDict):
         super(ResultLogDict, self).__init__(file_name=file_name, base_dir=base_dir)
 
         self.is_init = False
-        self.cntr_dict = defaultdict(int)
+        self.cntr_dict = defaultdict(float)
         self.is_init = True
 
     def __setitem__(self, key, item):
@@ -304,8 +304,8 @@ class ResultLogDict(LogDict):
         data = item
         if isinstance(item, dict) and "data" in item and "label" in item and "epoch" in item:
             data = item["data"]
-            if "count" in item and item["count"] is not None:
-                self.cntr_dict[key] = item["count"]
+            if "counter" in item and item["counter"] is not None:
+                self.cntr_dict[key] = item["counter"]
             json_dict = {key: dict(data=data, label=item["label"], epoch=item["epoch"],
                                    counter=self.cntr_dict[key])}
         else:
