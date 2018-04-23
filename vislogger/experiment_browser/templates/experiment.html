@@ -14,6 +14,7 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/custom.css') }}"/>
     <link href="https://use.fontawesome.com/releases/v5.0.8/css/all.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto:300" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
     <meta charset="utf-8">
 
@@ -229,6 +230,7 @@
                 <div class="card-body">
 
                     <div style="text-align: center;" class="plots" id="plotlyplots">
+                        <i class="fa fa-circle-o-notch fa-spin" style="font-size:24px"></i>
                     </div>
 
                     <br>
@@ -407,8 +409,6 @@
                 });
             return result;
         }
-
-        console.log("xD");
 
         $.get(
             "experiment_plots?" + window.location.search.substr(1),
