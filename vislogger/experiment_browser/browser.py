@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 from collections import OrderedDict, defaultdict
 
@@ -252,13 +253,7 @@ def experiment():
         exp_logs = [os.path.basename(l) for l in exp.get_logs()]
         logs_dict[exp.exp_name] = exp_logs
 
-    # Get plot results
-    results = []
-    for exp in experiments:
-        results.append(exp.get_results_log())
-    results = merge_results(exp_names, results)
 
-    content["graphs"] = make_graphs(results)
     content["title"] = experiments
     content["images"] = {"img_path": image_path, "imgs": images, "img_keys": image_keys}
     content["config"] = {"exps": exp_names, "configs": combi_config, "keys": config_keys, "diff_keys": diff_config_keys}
@@ -291,6 +286,36 @@ def experiment_remove():
         exp.ignore_experiment()
 
     return ""
+
+
+@app.route('/experiment_plots', methods=['GET'])
+def experiment_plots():
+    experiment_paths = request.args.getlist('exp')
+    experiments = []
+
+    # Get all Experiments
+    for experiment_path in sorted(experiment_paths):
+        exp = ExperimentHelper(os.path.join(base_dir, experiment_path), name=experiment_path)
+        experiments.append(exp)
+
+    # Assign unique names
+    exp_names = [exp.exp_name for exp in experiments]
+    if len(exp_names) > len(set(exp_names)):
+        for i, exp in enumerate(experiments):
+            exp.exp_name += str(i)
+    exp_names = [exp.exp_name for exp in experiments]
+
+    results = []
+    for exp in experiments:
+        results.append(exp.get_results_log())
+    results = merge_results(exp_names, results)
+
+    graphs = make_graphs(results)
+    graphs = [str(g) for g in graphs]
+
+    return json.dumps({"graphs": graphs})
+
+
 
 
 if __name__ == "__main__":
