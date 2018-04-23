@@ -84,6 +84,11 @@ class Config(dict):
 
         self.loads(dict_str)
 
+    def set_from_string(self, str_, stringify_value=False):
+
+        key, value = str_.split("=")
+        self.set_with_decode(key, value, stringify_value)
+
     def update(self, dict_like):
 
         for key, value in dict_like.items():

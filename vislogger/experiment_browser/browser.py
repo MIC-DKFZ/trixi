@@ -214,7 +214,7 @@ def experiment():
     default_val = "-"
     combi_config = {}
     exp_configs = [exp.config for exp in experiments]
-    diff_config_keys = list(Config.difference_dict_static(*exp_configs).keys())
+    diff_config_keys = list(Config.difference_config_static(*exp_configs).keys())
     config_keys = set([k for c in exp_configs for k in c.keys()])
     for k in sorted(config_keys):
         combi_config[k] = []

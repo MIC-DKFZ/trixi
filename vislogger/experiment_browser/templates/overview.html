@@ -82,7 +82,7 @@
             </div>
             <div class="col" style="padding-left: 2px">
                 {% for c in ccols %}
-                <a role="button" class="btn btn-success toggle-vis" data-column="{{ loop.index + 3 }}"
+                <a role="button" class="btn btn-outline-success toggle-vis" data-column="{{ loop.index + 3 }}"
                    data-type="config">{{ c }}</a>
                 {% endfor %}
             </div>
@@ -93,7 +93,7 @@
             </div>
             <div class="col" style="padding-left: 2px">
                 {% for c in rcols %}
-                <a role="button" class="btn btn-warning toggle-vis" data-column="{{ loop.index + ccols|length + 3 }}"
+                <a role="button" class="btn btn-outline-warning toggle-vis" data-column="{{ loop.index + ccols|length + 3 }}"
                    data-type="result">{{ c }}</a>
                 {% endfor %}
             </div>
@@ -189,7 +189,11 @@
             initComplete: function () {
                 $("div.toolbar")
                     .html('<a role="button" class="compare-experiments btn btn-primary" style="float: left">Details</a> <a role="button" class="remove-experiments btn btn-danger" style="float: left; margin-left: 3em;">Remove</a>');
-            }
+            },
+            columnDefs: [
+                { targets: [0, 1, 2, 3], visible: true },
+                { targets: "_all", visible: false }
+            ]
         });
 
         // Compare experiments
@@ -235,11 +239,11 @@
             }
         });
 
-        function toggle(button) {
+        function toggle(button, redraw=true) {
             // Get the column API object
             var column = table.column(button.attr('data-column'));
             // Toggle the visibility
-            column.visible(!column.visible());
+            column.visible(!column.visible(), redraw);
 
             if (button.attr('data-type') == "config") {
                 if (column.visible()) {
@@ -268,15 +272,27 @@
 
         $('a.toggle-config').on('click', function (e) {
             e.preventDefault();
-            $('a[data-type="config"]').each(function (i, obj) {
-                toggle($(obj));
+            var configbuttons = $('a[data-type="config"]');
+            var n = configbuttons.length;
+            configbuttons.each(function (i, obj) {
+                if (i != n-1) {
+                    toggle($(obj), false);
+                } else {
+                    toggle($(obj));
+                }
             });
         });
 
         $('a.toggle-result').on('click', function (e) {
             e.preventDefault();
-            $('a[data-type="result"]').each(function (i, obj) {
-                toggle($(obj));
+            var resultbuttons = $('a[data-type="result"]');
+            var n = resultbuttons.length;
+            resultbuttons.each(function (i, obj) {
+                if (i != n-1) {
+                    toggle($(obj), false);
+                } else {
+                    toggle($(obj));
+                }
             });
         });
 
