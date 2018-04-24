@@ -69,6 +69,7 @@
             </ul>
             </ul>
         </nav>
+
         <div style="position: absolute; bottom: 0; width: 80px; padding-bottom: 10px; padding-left: 3px">
             <a href="/" style="color: white">
                 <i class="material-icons" style="vertical-align: middle">chevron_left</i>
@@ -80,9 +81,10 @@
 
     <!-- Page content -->
     <div id="page-content-wrapper">
-        <div>
-            <div id="section1" class="card border-primary" style="margin: 10px;">
-                <div class="card-header" style="color: #4285F4">
+
+            <div id="section1" class="card border-primary">
+
+                <div class="card-header card-header-color">
                     <h3>Config</h3>
                 </div>
 
@@ -93,43 +95,47 @@
                     {% set ckeys = config["keys"] %}
                     {% set dkeys = config["diff_keys"] %}
 
-                    <table class="ctable">
+                    <div class="table-responsive">
+                        <table class="ctable table-hover">
 
-                        <colgroup class="cgroupstart"></colgroup>
-                        {% for exp in exps %}
-                        <colgroup class="cgroup"></colgroup>
-                        {% endfor %}
-
-                        <thead class="ctable">
-                        <tr class="ctable">
-                            <th class="ctable">&nbsp;</th>
-
+                            <colgroup class="cgroupstart"></colgroup>
                             {% for exp in exps %}
-                            <th class="ctable">
-                                <h4>{{exp}}</h4>
-                            </th>
+                            <colgroup class="cgroup"></colgroup>
                             {% endfor %}
 
-                        </tr>
-                        </thead>
-                        <tbody class="ctable">
+                            <thead class="ctable">
+                            <tr class="ctable">
+                                <th>&nbsp;</th>
 
-                        {% for k in ckeys %}
-                        <tr {% if k in dkeys %}class="ctable ctable-diff" {% else %}class="ctable" {% endif %}>
-                            <th class="ctable">{{k}}</th>
+                                {% for exp in exps %}
+                                <th class="ctable">
+                                    <h4>{{exp}}</h4>
+                                </th>
+                                {% endfor %}
 
-                            {% for val in configs[k] %}
-                            <td class="ctable">{{val}}</td>
-                            {% endfor %}
+                            </tr>
+                            </thead>
 
-                        </tr>
-                        {% endfor %}
+                            <tbody class="ctable">
 
-                        </tbody>
-                    </table>
+                                {% for k in ckeys %}
+                                <tr {% if k in dkeys %}class="ctable ctable-diff"{% else %}class="ctable"{% endif %}>
+
+                                    <th class="ctable">{{k}}</th>
+
+                                    {% for val in configs[k] %}
+                                    <td class="ctable">{{val}}</td>
+                                    {% endfor %}
+
+                                </tr>
+                                {% endfor %}
+
+                            </tbody>
+                        </table>
+                    </div>
+
                 </div>
             </div>
-
 
             <hr>
 
@@ -337,7 +343,6 @@
                     </div>
 
                 </div>
-            </div>
 
         </div>
     </div>
@@ -422,7 +427,11 @@
 
                 $.each(graph["graphs"], function (index, value) {
 
-                    plothtml += '<div style="width:48%; display: inline-block; ">';
+                    var height = 450 + 40 * graph["traces"][index];
+
+                    plothtml += '<div class="plot-box" style="height: ';
+                    plothtml += '' + height;
+                    plothtml += 'px">';
                     plothtml += value;
                     plothtml += '</div>';
 
@@ -439,7 +448,6 @@
 
             }
         );
-
 
     });
 </script>

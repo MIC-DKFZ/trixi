@@ -124,15 +124,19 @@ def make_graphs(results, trace_options=None, layout_options=None):
     if layout_options is None:
         layout_options = {
             "legend": dict(
-                orientation="h",
+                orientation="v",
+                xanchor="left",
+                x=0,
+                yanchor="top",
+                y=-0.1,
                 font=dict(
                     size=8,
-                ),
-
+                )
             )
         }
 
     graphs = []
+    trace_counters = []
 
     for group in sorted(results):
 
@@ -147,21 +151,24 @@ def make_graphs(results, trace_options=None, layout_options=None):
             do_filter = len(y) >= 1000
             opacity = 0.2 if do_filter else 1.
 
-            traces.append(go.Scatter(x=x, y=y, opacity=opacity, name=result,
-                                     line=dict(color=COLORMAP[r % len(COLORMAP)]), **trace_options))
             if do_filter:
                 def filter_(x):
                     return savgol_filter(x, max(5, 2 * (len(y) // 50) + 1), 3)
-
-                traces.append(go.Scatter(x=x, y=filter_(y), name=result + " smoothed",
+                traces.append(go.Scatter(x=x, y=y, opacity=opacity, name=result, legendgroup=result, showlegend=False,
+                                         line=dict(color=COLORMAP[r % len(COLORMAP)]), **trace_options))
+                traces.append(go.Scatter(x=x, y=filter_(y), name=result, legendgroup=result,
+                                         line=dict(color=COLORMAP[r % len(COLORMAP)]), **trace_options))
+            else:
+                traces.append(go.Scatter(x=x, y=y, opacity=opacity, name=result, legendgroup=result,
                                          line=dict(color=COLORMAP[r % len(COLORMAP)]), **trace_options))
 
+        trace_counters.append(len(results[group]))
         graphs.append(Markup(plot({"data": traces, "layout": layout},
                                   output_type="div",
                                   include_plotlyjs=False,
                                   show_link=False)))
 
-    return graphs
+    return graphs, trace_counters
 
 
 def merge_results(experiment_names, result_list):
@@ -253,7 +260,6 @@ def experiment():
         exp_logs = [os.path.basename(l) for l in exp.get_logs()]
         logs_dict[exp.exp_name] = exp_logs
 
-
     content["title"] = experiments
     content["images"] = {"img_path": image_path, "imgs": images, "img_keys": image_keys}
     content["config"] = {"exps": exp_names, "configs": combi_config, "keys": config_keys, "diff_keys": diff_config_keys}
@@ -310,10 +316,10 @@ def experiment_plots():
         results.append(exp.get_results_log())
     results = merge_results(exp_names, results)
 
-    graphs = make_graphs(results)
+    graphs, traces = make_graphs(results)
     graphs = [str(g) for g in graphs]
 
-    return json.dumps({"graphs": graphs})
+    return json.dumps({"graphs": graphs, "traces": traces})
 
 
 
