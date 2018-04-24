@@ -27,7 +27,7 @@ class ExperimentLogger(AbstractLogger):
     def __init__(self,
                  experiment_name,
                  base_dir,
-                 folder_format="%Y%m%d-%H%M%S_{experiment_name}_{run_number}",
+                 folder_format="%Y%m%d-%H%M%S_{experiment_name}",
                  resume=False,
                  text_logger_args=None,
                  plot_logger_args=None,
