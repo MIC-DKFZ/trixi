@@ -37,20 +37,42 @@ class Config(dict):
 
     def __getitem__(self, key):
 
+        if key == "":
+            if len(self.keys()) == 1:
+                key = list(self.keys())[0]
+            else:
+                raise KeyError("Empty string only works for single element Configs.")
+
         if type(key) == str and "." in key:
             superkey = key.split(".")[0]
             subkeys = ".".join(key.split(".")[1:])
+            if type(self[superkey]) in (list, tuple):
+                try:
+                    subkeys = int(subkeys)
+                except ValueError:
+                    pass
             return self[superkey][subkeys]
         else:
             return super(Config, self).__getitem__(key)
 
     def __setitem__(self, key, value):
 
+        if key == "":
+            if len(self.keys()) == 1:
+                key = list(self.keys())[0]
+            else:
+                raise KeyError("Empty string only works for single element Configs.")
+
         if type(key) == str and "." in key:
             superkey = key.split(".")[0]
             subkeys = ".".join(key.split(".")[1:])
-            if superkey not in self:
+            if superkey != "" and superkey not in self:
                 self[superkey] = Config()
+            if type(self[superkey]) == list:
+                try:
+                    subkeys = int(subkeys)
+                except ValueError:
+                    pass
             self[superkey][subkeys] = value
         elif type(value) == dict:
             super(Config, self).__setitem__(key, Config(**value))
