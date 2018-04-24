@@ -6,6 +6,23 @@ h1, h2, h3, h4 {
     font-family: 'Roboto', sans-serif;
 }
 
+td {
+    text-overflow: ellipsis;
+    max-width: 0;
+}
+
+.card {
+    margin: 10px;
+}
+
+.card-header-color {
+    color: #4285F4;
+}
+
+.table-diff {
+    background-color: #ffccf5;
+}
+
 .content {
     margin-top: 1em;
     margin-bottom: 1em;
@@ -17,6 +34,12 @@ a.toggle-vis, a.toggle-config, a.toggle-result {
 
 .plots {
     box-sizing: border-box;
+}
+
+.plot-box {
+    width: 45%;
+    display: inline-block;
+    vertical-align: top;
 }
 
 /* Slideshow container */
@@ -286,11 +309,12 @@ input:checked + .slider:before {
     position: fixed;
     height: 100%;
     overflow-y: auto;
+    z-index: 999;
 }
 
 #page-content-wrapper {
-    margin-left: 90px;
-    width: 100%;
+    margin-left: 80px;
+    width: calc(100% - 80px);
 }
 
 .sidebar-nav {

@@ -325,6 +325,8 @@ def update_from_sys_argv(config):
             else:
                 if type(val) == bool:
                     parser.add_argument(name_str, type=str2bool, default=val)
+                elif isinstance(val, (list, tuple)):
+                    parser.add_argument(name_str, nargs='+', type=type(val[0]), default=val)
                 else:
                     parser.add_argument(name_str, type=type(val), default=val)
 

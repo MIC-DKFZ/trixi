@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 from collections import OrderedDict, defaultdict
 
@@ -123,22 +124,26 @@ def make_graphs(results, trace_options=None, layout_options=None):
     if layout_options is None:
         layout_options = {
             "legend": dict(
-                orientation="h",
+                orientation="v",
+                xanchor="left",
+                x=0,
+                yanchor="top",
+                y=-0.1,
                 font=dict(
                     size=8,
-                ),
-
+                )
             )
         }
 
     graphs = []
+    trace_counters = []
 
-    for group in results:
+    for group in sorted(results):
 
         layout = go.Layout(title=group, **layout_options)
         traces = []
 
-        for r, result in enumerate(results[group]):
+        for r, result in enumerate(sorted(results[group])):
 
             y = np.array(results[group][result]["data"])
             x = np.array(results[group][result]["counter"])
@@ -146,21 +151,24 @@ def make_graphs(results, trace_options=None, layout_options=None):
             do_filter = len(y) >= 1000
             opacity = 0.2 if do_filter else 1.
 
-            traces.append(go.Scatter(x=x, y=y, opacity=opacity, name=result,
-                                     line=dict(color=COLORMAP[r % len(COLORMAP)]), **trace_options))
             if do_filter:
                 def filter_(x):
                     return savgol_filter(x, max(5, 2 * (len(y) // 50) + 1), 3)
-
-                traces.append(go.Scatter(x=x, y=filter_(y), name=result + " smoothed",
+                traces.append(go.Scatter(x=x, y=y, opacity=opacity, name=result, legendgroup=result, showlegend=False,
+                                         line=dict(color=COLORMAP[r % len(COLORMAP)]), **trace_options))
+                traces.append(go.Scatter(x=x, y=filter_(y), name=result, legendgroup=result,
+                                         line=dict(color=COLORMAP[r % len(COLORMAP)]), **trace_options))
+            else:
+                traces.append(go.Scatter(x=x, y=y, opacity=opacity, name=result, legendgroup=result,
                                          line=dict(color=COLORMAP[r % len(COLORMAP)]), **trace_options))
 
+        trace_counters.append(len(results[group]))
         graphs.append(Markup(plot({"data": traces, "layout": layout},
                                   output_type="div",
                                   include_plotlyjs=False,
                                   show_link=False)))
 
-    return graphs
+    return graphs, trace_counters
 
 
 def merge_results(experiment_names, result_list):
@@ -231,6 +239,7 @@ def experiment():
         combi_results[k] = []
         for res in exp_results:
             combi_results[k].append(res.get(k, default_val))
+    result_keys = list(sorted(list(result_keys)))
 
     # Get images
     images = OrderedDict({})
@@ -251,13 +260,6 @@ def experiment():
         exp_logs = [os.path.basename(l) for l in exp.get_logs()]
         logs_dict[exp.exp_name] = exp_logs
 
-    # Get plot results
-    results = []
-    for exp in experiments:
-        results.append(exp.get_results_log())
-    results = merge_results(exp_names, results)
-
-    content["graphs"] = make_graphs(results)
     content["title"] = experiments
     content["images"] = {"img_path": image_path, "imgs": images, "img_keys": image_keys}
     content["config"] = {"exps": exp_names, "configs": combi_config, "keys": config_keys, "diff_keys": diff_config_keys}
@@ -290,6 +292,36 @@ def experiment_remove():
         exp.ignore_experiment()
 
     return ""
+
+
+@app.route('/experiment_plots', methods=['GET'])
+def experiment_plots():
+    experiment_paths = request.args.getlist('exp')
+    experiments = []
+
+    # Get all Experiments
+    for experiment_path in sorted(experiment_paths):
+        exp = ExperimentHelper(os.path.join(base_dir, experiment_path), name=experiment_path)
+        experiments.append(exp)
+
+    # Assign unique names
+    exp_names = [exp.exp_name for exp in experiments]
+    if len(exp_names) > len(set(exp_names)):
+        for i, exp in enumerate(experiments):
+            exp.exp_name += str(i)
+    exp_names = [exp.exp_name for exp in experiments]
+
+    results = []
+    for exp in experiments:
+        results.append(exp.get_results_log())
+    results = merge_results(exp_names, results)
+
+    graphs, traces = make_graphs(results)
+    graphs = [str(g) for g in graphs]
+
+    return json.dumps({"graphs": graphs, "traces": traces})
+
+
 
 
 if __name__ == "__main__":

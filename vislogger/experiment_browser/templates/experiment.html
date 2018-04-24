@@ -14,6 +14,7 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/custom.css') }}"/>
     <link href="https://use.fontawesome.com/releases/v5.0.8/css/all.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto:300" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
     <meta charset="utf-8">
 
@@ -68,6 +69,7 @@
             </ul>
             </ul>
         </nav>
+
         <div style="position: absolute; bottom: 0; width: 80px; padding-bottom: 10px; padding-left: 3px">
             <a href="/" style="color: white">
                 <i class="material-icons" style="vertical-align: middle">chevron_left</i>
@@ -79,9 +81,10 @@
 
     <!-- Page content -->
     <div id="page-content-wrapper">
-        <div>
-            <div id="section1" class="card border-primary" style="margin: 10px;">
-                <div class="card-header" style="color: #4285F4">
+
+            <div id="section1" class="card border-primary">
+
+                <div class="card-header card-header-color">
                     <h3>Config</h3>
                 </div>
 
@@ -92,43 +95,47 @@
                     {% set ckeys = config["keys"] %}
                     {% set dkeys = config["diff_keys"] %}
 
-                    <table class="ctable">
+                    <div class="table-responsive">
+                        <table class="ctable table-hover">
 
-                        <colgroup class="cgroupstart"></colgroup>
-                        {% for exp in exps %}
-                        <colgroup class="cgroup"></colgroup>
-                        {% endfor %}
-
-                        <thead class="ctable">
-                        <tr class="ctable">
-                            <th class="ctable">&nbsp;</th>
-
+                            <colgroup class="cgroupstart"></colgroup>
                             {% for exp in exps %}
-                            <th class="ctable">
-                                <h4>{{exp}}</h4>
-                            </th>
+                            <colgroup class="cgroup"></colgroup>
                             {% endfor %}
 
-                        </tr>
-                        </thead>
-                        <tbody class="ctable">
+                            <thead class="ctable">
+                            <tr class="ctable">
+                                <th>&nbsp;</th>
 
-                        {% for k in ckeys %}
-                        <tr {% if k in dkeys %}class="ctable ctable-diff"{% else %}class="ctable"{% endif %}>
-                            <th class="ctable">{{k}}</th>
+                                {% for exp in exps %}
+                                <th class="ctable">
+                                    <h4>{{exp}}</h4>
+                                </th>
+                                {% endfor %}
 
-                            {% for val in configs[k] %}
-                            <td class="ctable">{{val}}</td>
-                            {% endfor %}
+                            </tr>
+                            </thead>
 
-                        </tr>
-                        {% endfor %}
+                            <tbody class="ctable">
 
-                        </tbody>
-                    </table>
+                                {% for k in ckeys %}
+                                <tr {% if k in dkeys %}class="ctable ctable-diff"{% else %}class="ctable"{% endif %}>
+
+                                    <th class="ctable">{{k}}</th>
+
+                                    {% for val in configs[k] %}
+                                    <td class="ctable">{{val}}</td>
+                                    {% endfor %}
+
+                                </tr>
+                                {% endfor %}
+
+                            </tbody>
+                        </table>
+                    </div>
+
                 </div>
             </div>
-
 
             <hr>
 
@@ -228,12 +235,8 @@
 
                 <div class="card-body">
 
-                    <div style="text-align: center;" class="plots">
-                        {% for graph in graphs %}
-                        <div style="width:48%; display: inline-block; ">
-                            {{ graph }}
-                        </div>
-                        {% endfor %}
+                    <div style="text-align: center;" class="plots" id="plotlyplots">
+                        <i class="fa fa-circle-o-notch fa-spin" style="font-size:24px"></i>
                     </div>
 
                     <br>
@@ -340,7 +343,6 @@
                     </div>
 
                 </div>
-            </div>
 
         </div>
     </div>
@@ -400,6 +402,52 @@
 
         });
 
+        function findGetParameter(parameterName) {
+            var result = null,
+                tmp = [];
+            location.search
+                .substr(1)
+                .split("&")
+                .forEach(function (item) {
+                    tmp = item.split("=");
+                    if (tmp[0] === parameterName) result = decodeURIComponent(tmp[1]);
+                });
+            return result;
+        }
+
+        $.get(
+            "experiment_plots?" + window.location.search.substr(1),
+            {},
+            function (data) {
+                console.log("request");
+                var graph = JSON.parse(data);
+                var plothtml = "";
+
+                var target_elem = document.getElementById("plotlyplots");
+
+                $.each(graph["graphs"], function (index, value) {
+
+                    var height = 450 + 40 * graph["traces"][index];
+
+                    plothtml += '<div class="plot-box" style="height: ';
+                    plothtml += '' + height;
+                    plothtml += 'px">';
+                    plothtml += value;
+                    plothtml += '</div>';
+
+                });
+
+                target_elem.innerHTML = plothtml;
+
+
+                $.each(graph["graphs"], function (index, value) {
+                    var js_strng = value.split('<script type="text/javascript">')[1];
+                    js_strng = js_strng.substring(0, js_strng.length - 9);
+                    eval(js_strng);
+                });
+
+            }
+        );
 
     });
 </script>

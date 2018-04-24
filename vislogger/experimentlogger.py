@@ -231,8 +231,10 @@ class ExperimentLogger(AbstractLogger):
         while os.path.exists(os.path.join(self.base_dir,
                                           input_.format(run_number=run_number,
                                                         **self.__dict__))):
+            # if the folder already exists, for example if two jobs are launched
+            # at the same time, append run_number
             if "{run_number}" not in input_:
-                raise FileExistsError
+                input_ = input_ + "_{run_number}"
 
             run_number += 1
 
