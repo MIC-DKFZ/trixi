@@ -63,7 +63,10 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
             if m_param is not None:
                 param_mean = m_param.data.mean()
-                param_std = np.sqrt(m_param.data.var())
+                param_std = m_param.data.std()
+
+                if np.isnan(param_std):
+                    param_std = 0
 
                 means.append(param_mean)
                 stds.append(param_std)
