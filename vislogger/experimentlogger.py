@@ -40,8 +40,28 @@ class ExperimentLogger(AbstractLogger):
         self.folder_format = folder_format
 
         self.init_time = datetime.datetime.today()
-        self.folder_name = self.resolve_format(folder_format, resume)
-        self.work_dir = os.path.join(base_dir, self.folder_name)
+
+        # try to make folder until successful or until counter runs out
+        # this is necessary when multiple ExperimentLoggers start at the same time
+        makedir_success = False
+        makedir_counter = 100
+        makedir_exception = None
+        while (not makedir_success and makedir_counter > 0):
+            try:
+                self.folder_name = self.resolve_format(folder_format, resume)
+                self.work_dir = os.path.join(base_dir, self.folder_name)
+                if not resume:
+                    create_folder(self.work_dir)
+                makedir_success = True
+            except FileExistsError as file_error:
+                makedir_counter -= 1
+            except Exception as e:
+                makedir_exception = e
+                makedir_counter -= 1
+        if makedir_exception is not None:
+            raise RuntimeWarning("Last exception encountered in makedir process:\n" +
+                                 "{}\n".format(makedir_exception) +
+                                 "There may or may not be a folder for the experiment to run in.")
 
         self.config_dir = os.path.join(self.work_dir, "config")
         self.log_dir = os.path.join(self.work_dir, "log")
@@ -52,7 +72,6 @@ class ExperimentLogger(AbstractLogger):
         self.result_dir = os.path.join(self.work_dir, "result")
 
         if not resume:
-            create_folder(self.work_dir)
             create_folder(self.config_dir)
             create_folder(self.log_dir)
             create_folder(self.checkpoint_dir)
