@@ -9,6 +9,7 @@ from vislogger.textlogger import TextLogger
 from vislogger.numpyplotfilelogger import NumpyPlotFileLogger
 from vislogger.numpyseabornplotlogger import NumpySeabornPlotLogger
 from vislogger.experimentlogger import ExperimentLogger
+from vislogger.experiment import Experiment
 from vislogger.telegramlogger import TelegramLogger
 
 # pynvml
@@ -31,7 +32,7 @@ try:
     from vislogger.pytorchplotfilelogger import PytorchPlotFileLogger
     from vislogger.pytorchvisdomlogger import PytorchVisdomLogger
     from vislogger.pytorchexperimentlogger import PytorchExperimentLogger
-    from vislogger.experiment import Experiment, PyTorchExperiment
+    from vislogger.experiment import PyTorchExperiment
 except ImportError as e:
     print("Could not import Pytorch related modules.")
     print(e)

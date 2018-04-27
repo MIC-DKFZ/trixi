@@ -10,9 +10,10 @@ from flask import Blueprint, Flask, Markup, abort, render_template, request
 from plotly.offline import plot
 from scipy.signal import savgol_filter
 
-from vislogger.experiment_browser.experimenthelper import ExperimentHelper
+from vislogger.experiment_browser.experimentreader import ExperimentReader
 from vislogger import Config
 
+# These keys will be ignored when in a config file
 IGNORE_KEYS = ("name",
                "experiment_dir",
                "work_dir",
@@ -26,6 +27,7 @@ IGNORE_KEYS = ("name",
                "time",
                "state")
 
+# Set the color palette for plots
 COLORMAP = cl.scales["8"]["qual"]["Dark2"]
 
 # Read in base directory
@@ -37,7 +39,6 @@ parser.add_argument("-d", "--debug", action="store_true",
                     help="Turn debug mode on, eg. for live reloading.")
 args = parser.parse_args()
 base_dir = args.base_directory
-
 if base_dir[-1] == os.sep:
     base_dir = base_dir[:-1]
 
@@ -49,20 +50,31 @@ blueprint = Blueprint("data", __name__, static_url_path=base_dir, static_folder=
 app.register_blueprint(blueprint)
 
 
-def process_base_dir(base_dir):
+def process_base_dir(base_dir, default_val="-", short_len=25):
+    """Create an overview table of all experiments in the given directory.
+
+    Args:
+        base_dir (str): A directory containing experiment folders.
+        default_val (str): Default value if an entry is missing.
+        short_len (int): Cut strings to this length. Full string in alt-text.
+
+    Returns:
+        dict: {"ccols": Columns for config entries,
+               "rcols": Columns for result entries,
+               "rows": The actual data}
+
+    """
 
     config_keys = set()
     result_keys = set()
     exps = []
-    default_val = "-"
-    short_len = 25
 
     ### Load Experiments with keys / different param values
     for sub_dir in sorted(os.listdir(base_dir)):
         dir_path = os.path.join(base_dir, sub_dir)
         if os.path.isdir(dir_path):
             try:
-                exp = ExperimentHelper(dir_path)
+                exp = ExperimentReader(dir_path)
                 if exp.ignore:
                     continue
                 config_keys.update(list(exp.config.keys()))
@@ -119,6 +131,16 @@ def group_images(images):
 
 
 def make_graphs(results, trace_options=None, layout_options=None):
+    """Create plot markups.
+
+    This converts results into plotly plots in markup form. Results in a common
+    group will be placed in the same plot.
+
+    Args:
+        results (dict): Dictionary
+
+    """
+
     if trace_options is None:
         trace_options = {}
     if layout_options is None:
@@ -205,7 +227,7 @@ def experiment():
 
     # Get all Experiments
     for experiment_path in sorted(experiment_paths):
-        exp = ExperimentHelper(os.path.join(base_dir, experiment_path), name=experiment_path)
+        exp = ExperimentReader(os.path.join(base_dir, experiment_path), name=experiment_path)
         experiments.append(exp)
 
     # Assign unique names
@@ -274,7 +296,7 @@ def experiment_log():
     experiment_path = request.args.get('exp')
     log_name = request.args.get('log')
 
-    exp = ExperimentHelper(os.path.join(base_dir, experiment_path), name=experiment_path)
+    exp = ExperimentReader(os.path.join(base_dir, experiment_path), name=experiment_path)
     content = exp.get_log_file_content(log_name)
 
     print(experiment_path, log_name)
@@ -288,7 +310,7 @@ def experiment_remove():
 
     # Get all Experiments
     for experiment_path in sorted(experiment_paths):
-        exp = ExperimentHelper(os.path.join(base_dir, experiment_path), name=experiment_path)
+        exp = ExperimentReader(os.path.join(base_dir, experiment_path), name=experiment_path)
         exp.ignore_experiment()
 
     return ""
@@ -301,7 +323,7 @@ def experiment_plots():
 
     # Get all Experiments
     for experiment_path in sorted(experiment_paths):
-        exp = ExperimentHelper(os.path.join(base_dir, experiment_path), name=experiment_path)
+        exp = ExperimentReader(os.path.join(base_dir, experiment_path), name=experiment_path)
         experiments.append(exp)
 
     # Assign unique names

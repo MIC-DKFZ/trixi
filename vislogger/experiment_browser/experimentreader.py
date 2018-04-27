@@ -1,20 +1,23 @@
 import json
 import os
-from itertools import filterfalse, tee
 
 from vislogger import Config
 
 
-def partition(pred, iterable):
-    t1, t2 = tee(iterable)
-    return filter(pred, t1), filterfalse(pred, t2)
+class ExperimentReader(object):
+    """Reader class to read out experiments created by :class:`vislogger.experimentlogger.ExperimentLogger`.
 
+    Args:
+        work_dir (str): Directory with the structure defined by
+                        :class:`vislogger.experimentlogger.ExperimentLogger`.
+        name (str): Optional name for the experiment. If None, will try
+                    to read name from experiment config.
 
-class ExperimentHelper(object):
+    """
 
     def __init__(self, work_dir, name=None):
 
-        super(ExperimentHelper, self).__init__()
+        super(ExperimentReader, self).__init__()
 
         self.work_dir = os.path.abspath(work_dir)
         self.config_dir = os.path.join(self.work_dir, "config")
@@ -46,7 +49,13 @@ class ExperimentHelper(object):
         if os.path.exists(os.path.join(self.work_dir, "ignore.txt")):
             self.ignore = True
 
-    def get_file_contents(self, folder):
+    @staticmethod
+    def get_file_contents(folder):
+        """Get all files in a folder.
+
+        Returns:
+            list: All files joined with folder path.
+        """
 
         if os.path.isdir(folder):
             list_ = map(lambda x: os.path.join(folder, x), sorted(os.listdir(folder)))
@@ -55,18 +64,26 @@ class ExperimentHelper(object):
             return []
 
     def get_images(self):
-        return self.get_file_contents(self.img_dir)
+        return ExperimentReader.get_file_contents(self.img_dir)
 
     def get_plots(self):
-        return self.get_file_contents(self.plot_dir)
+        return ExperimentReader.get_file_contents(self.plot_dir)
 
     def get_checkpoints(self):
-        return self.get_file_contents(self.checkpoint_dir)
+        return ExperimentReader.get_file_contents(self.checkpoint_dir)
 
     def get_logs(self):
-        return self.get_file_contents(self.log_dir)
+        return ExperimentReader.get_file_contents(self.log_dir)
 
     def get_log_file_content(self, file_name):
+        """Read out log file and HTMLify.
+
+        Args:
+            file_name (str): Name of the log file.
+
+        Returns:
+            str: Log file contents as HTML ready string.
+        """
 
         content = ""
         log_file = os.path.join(self.log_dir, file_name)
@@ -79,6 +96,26 @@ class ExperimentHelper(object):
         return content
 
     def get_results_log(self):
+        """Build result dictionary.
+
+        During the experiment result items are
+        written out as a stream of quasi-atomic units. This reads the stream and
+        builds arrays of corresponding items.
+        The resulting dict looks like this::
+
+            {
+                "result group": {
+                    "result": {
+                        "counter": x-array,
+                        "data": y-array
+                    }
+                }
+            }
+
+        Returns:
+            dict: Result dictionary.
+
+        """
 
         results_merged = {}
 
@@ -86,16 +123,15 @@ class ExperimentHelper(object):
         try:
             with open(os.path.join(self.result_dir, "results-log.json"), "r") as results_file:
                 results = json.load(results_file)
-        except:
+        except Exception as e:
             try:
                 with open(os.path.join(self.result_dir, "results-log.json"), "r") as results_file:
                     results_str = results_file.readlines()
                     results_str[-1] = "{}]"
                     results_json = "".join(results_str)
                     results = json.loads(results_json)
-            except:
+            except Exception as ee:
                 print("Could not load result log from", self.result_dir)
-            results_merged = {}
 
         for result in results:
             for key in result.keys():
@@ -115,6 +151,12 @@ class ExperimentHelper(object):
         return results_merged
 
     def get_results(self):
+        """Get the last result item.
+
+        Returns:
+            dict: The last result item in the experiment.
+
+        """
 
         if self.__results_dict is None:
 
@@ -125,12 +167,14 @@ class ExperimentHelper(object):
                 try:
                     with open(results_file, "r") as f:
                         self.__results_dict = json.load(f)
-                except:
+                except Exception as e:
                     pass
 
         return self.__results_dict
 
     def ignore_experiment(self):
+        """Create a flag file, so the browser ignores this experiment."""
+
         ignore_flag_file = os.path.join(self.work_dir, "ignore.txt")
         with open(ignore_flag_file, "w+") as f:
             f.write("ignore")

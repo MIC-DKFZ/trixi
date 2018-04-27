@@ -105,7 +105,9 @@ ENV/
 
 ### Except build folder in docs:
 
-!docs/build/ 
-
-
-
+doc/
+!doc/conf.py
+!doc/index.rst
+!doc/Makefile
+!doc/readme_link.rst
+!doc/sphinx.rst
