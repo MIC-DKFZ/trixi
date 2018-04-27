@@ -4,7 +4,7 @@ Install Dependencies
 pip install numpy seaborn matplotlib
 ```
 
-If you want to use pytorch*logger:
+If you want to use any of the PyTorch loggers or the Experiment class:
 ```
 #install pytorch: http://pytorch.org/
 pip install torchvision
@@ -23,7 +23,7 @@ your program will get stuck. So you can only use vislogger with lasagne/theano i
 have pytorch installed. If you need both you can use virtual_envs.
 
 # Use on remote server in same network
-Simple run visdom on remote server and then on your local computer go to `MY_REMOTE_SERVER_NAME:8097`.
+Simple run visdom on remote server and then on your local computer go to `MY_REMOTE_SERVER_NAME:8080`.
 
 # Use on remote server in different network
 
@@ -32,11 +32,11 @@ you can do:
 
 ```
 # On local computer:
-ssh -N -f -L localhost:8099:localhost:8097 USERNAME@REMOTE_SERVERNAME
+ssh -N -f -L localhost:8080:localhost:8080 USERNAME@REMOTE_SERVERNAME
 
 # On remote server:
-python -m visdom.server
+python -m visdom.server -port 8080
 python my_random_vislogger_script.py
 ```
 
-Now on your local computer you can go to `localhost:8099` and see the visdom dashboard.
+Now on your local computer you can go to `localhost:8080` and see the visdom dashboard.
