@@ -420,7 +420,7 @@ class PyTorchExperiment(Experiment):
             self.elog.save_config(Config(**{'name': self.exp_name, 'time': self.time_start, 'state': self.exp_state}),
                                   "exp")
             self.elog.print("Experiment exited. Checkpoints stored =)")
-        time.sleep(2)  # allow checkpoint saving to finish
+        time.sleep(10)  # allow checkpoint saving to finish
 
     def _setup_internal(self):
         self.prepare_resume()
