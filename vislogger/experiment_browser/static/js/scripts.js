@@ -74,22 +74,28 @@ function alignImages() {
 
     var x = document.getElementById("imageAlignButton").checked;
     var imageSpaces = document.getElementsByClassName("imageSpace");
+    var imgmaindiv = document.getElementById("theallimagediv");
+    var imgcontentdivs = document.getElementsByClassName("theimagecontentdiv");
 
     if (x == true) {
         for (i = 0; i < imageSpaces.length; i++) {
-            imageSpaces[i].style.display = 'inline-block'
+            imageSpaces[i].style.display = 'inline-block';
+        }
+        imgmaindiv.style.overflowX = "scroll";
+        for (i = 0; i < imgcontentdivs.length; i++) {
+            imgcontentdivs[i].style.overflowX = 'visible';
         }
     }
     else {
         for (i = 0; i < imageSpaces.length; i++) {
-            imageSpaces[i].style.display = 'none'
+            imageSpaces[i].style.display = 'none';
         }
-
-
+        imgmaindiv.style.overflowX = "visible";
+        for (i = 0; i < imgcontentdivs.length; i++) {
+            imgcontentdivs[i].style.overflowX = 'scroll';
+        }
     }
-    // for (i = 0; i < imageSpaces.length; i++) {
-    //     dots[i].className = dots[i].className.replace(" active", "");
-    // }
 
+    console.log(imgcontentdivs);
 
 }

@@ -82,79 +82,80 @@
     <!-- Page content -->
     <div id="page-content-wrapper">
 
-            <div id="section1" class="card border-primary">
+        <div id="section1" class="card border-primary">
 
-                <div class="card-header card-header-color">
-                    <h3>Config</h3>
-                </div>
+            <div class="card-header card-header-color">
+                <h3>Config</h3>
+            </div>
 
-                <div class="card-body">
+            <div class="card-body">
 
-                    {% set exps = config["exps"] %}
-                    {% set configs = config["configs"] %}
-                    {% set ckeys = config["keys"] %}
-                    {% set dkeys = config["diff_keys"] %}
+                {% set exps = config["exps"] %}
+                {% set configs = config["configs"] %}
+                {% set ckeys = config["keys"] %}
+                {% set dkeys = config["diff_keys"] %}
 
-                    <div class="table-responsive">
-                        <table class="ctable table-hover">
+                <div class="table-responsive">
+                    <table class="ctable table-hover">
 
-                            <colgroup class="cgroupstart"></colgroup>
+                        <colgroup class="cgroupstart"></colgroup>
+                        {% for exp in exps %}
+                        <colgroup class="cgroup"></colgroup>
+                        {% endfor %}
+
+                        <thead class="ctable">
+                        <tr class="ctable">
+                            <th>&nbsp;</th>
+
                             {% for exp in exps %}
-                            <colgroup class="cgroup"></colgroup>
+                            <th class="ctable">
+                                <h4>{{exp}}</h4>
+                            </th>
                             {% endfor %}
 
-                            <thead class="ctable">
-                            <tr class="ctable">
-                                <th>&nbsp;</th>
+                        </tr>
+                        </thead>
 
-                                {% for exp in exps %}
-                                <th class="ctable">
-                                    <h4>{{exp}}</h4>
-                                </th>
-                                {% endfor %}
+                        <tbody class="ctable">
 
-                            </tr>
-                            </thead>
+                        {% for k in ckeys %}
+                        <tr {% if k in dkeys %}class="ctable ctable-diff" {% else %}class="ctable" {% endif %}>
 
-                            <tbody class="ctable">
+                            <th class="ctable">{{k}}</th>
 
-                                {% for k in ckeys %}
-                                <tr {% if k in dkeys %}class="ctable ctable-diff"{% else %}class="ctable"{% endif %}>
+                            {% for val in configs[k] %}
+                            <td class="ctable">{{val}}</td>
+                            {% endfor %}
 
-                                    <th class="ctable">{{k}}</th>
+                        </tr>
+                        {% endfor %}
 
-                                    {% for val in configs[k] %}
-                                    <td class="ctable">{{val}}</td>
-                                    {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
 
-                                </tr>
-                                {% endfor %}
+            </div>
+        </div>
 
-                            </tbody>
-                        </table>
-                    </div>
+        <hr>
 
+        <div id="section2" class="card border-primary" style="margin: 10px;">
+            <div class="card-header" style="color: #4285F4">
+                <div style="float: left">
+                    <h2>Images</h2>
+                </div>
+                <div style="float: right;">
+                    <label class="switch">
+                        <input type="checkbox" onchange="alignImages()" id="imageAlignButton" style="z-index: 1;">
+                        <span class="slider round"></span>
+                    </label>
+                    <div>Align</div>
                 </div>
             </div>
 
-            <hr>
+            <div class="card-body">
 
-            <div id="section2" class="card border-primary" style="margin: 10px;">
-                <div class="card-header" style="color: #4285F4">
-                    <div style="float: left">
-                        <h2>Images</h2>
-                    </div>
-                    <div style="float: right;">
-                        <label class="switch">
-                            <input type="checkbox" onchange="alignImages()" id="imageAlignButton" style="z-index: 1;">
-                            <span class="slider round"></span>
-                        </label>
-                        <div>Align</div>
-                    </div>
-                </div>
-
-                <div class="card-body">
-
+                <div id="theallimagediv" style="overflow-x: visible">
 
                     {% set imgs = images["imgs"] %}
                     {% set img_keys = images["img_keys"] %}
@@ -167,7 +168,7 @@
 
                     <h4 style="text-align: center">{{ exps }}</h4>
 
-                    <div style="overflow-x: scroll; white-space:nowrap;">
+                    <div style="overflow-x: auto; white-space:nowrap;" class="theimagecontentdiv">
                         {% for group_key in img_keys %}
                         {% if group_key in exp_imgs %}
 
@@ -222,127 +223,128 @@
                     <hr>
                     <br>
                     {% endfor %}
-
                 </div>
             </div>
+        </div>
 
-            <hr>
+        <hr>
 
-            <div id="section3" class="card border-primary" style="margin: 10px;">
-                <div class="card-header" style="color: #4285F4">
-                    <h3>Plots</h3>
-                </div>
-
-                <div class="card-body">
-
-                    <div style="text-align: center;" class="plots" id="plotlyplots">
-                        <i class="fa fa-circle-o-notch fa-spin" style="font-size:24px"></i>
-                    </div>
-
-                    <br>
-                </div>
+        <div id="section3" class="card border-primary" style="margin: 10px;">
+            <div class="card-header" style="color: #4285F4">
+                <h3>Plots</h3>
             </div>
 
+            <div class="card-body">
 
-            <hr>
-
-
-            <div id="section4" class="card border-primary" style="margin: 10px;">
-                <div class="card-header" style="color: #4285F4">
-                    <h3>Results</h3>
+                <div style="text-align: center;" class="plots" id="plotlyplots">
+                    <i class="fa fa-circle-o-notch fa-spin" style="font-size:24px"></i>
                 </div>
 
-                <div class="card-body">
+                <br>
+            </div>
+        </div>
 
-                    {% set exps = results["exps"] %}
-                    {% set res = results["results"] %}
-                    {% set rkeys = results["keys"] %}
 
-                    <div>
-                        <table class="table table-hover">
-                            <thead>
-                            <tr>
-                                <th>&nbsp;</th>
+        <hr>
 
-                                {% for exp in exps %}
-                                <th>{{exp}}</th>
-                                {% endfor %}
 
-                            </tr>
-                            </thead>
+        <div id="section4" class="card border-primary" style="margin: 10px;">
+            <div class="card-header" style="color: #4285F4">
+                <h3>Results</h3>
+            </div>
 
-                            <tbody>
+            <div class="card-body">
 
-                            {% for k in rkeys %}
-                            <tr>
-                                <th>{{k}}</th>
+                {% set exps = results["exps"] %}
+                {% set res = results["results"] %}
+                {% set rkeys = results["keys"] %}
 
-                                {% for val in res[k] %}
-                                <td>{{val}}</td>
-                                {% endfor %}
+                <div>
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>&nbsp;</th>
 
-                            </tr>
+                            {% for exp in exps %}
+                            <th>{{exp}}</th>
                             {% endfor %}
 
-                            </tbody>
-                        </table>
-                    </div>
+                        </tr>
+                        </thead>
 
-                </div>
-            </div>
+                        <tbody>
 
+                        {% for k in rkeys %}
+                        <tr>
+                            <th>{{k}}</th>
 
-            <hr>
+                            {% for val in res[k] %}
+                            <td>{{val}}</td>
+                            {% endfor %}
 
-            <div id="section5" class="card border-primary" style="margin: 10px;">
-                <div class="card-header" style="color: #4285F4">
-                    <h3>Logs</h3>
-                </div>
-
-                <div class="card-body">
-
-
-                    <div>
-
-                        {% for exp in logs["logs_dict"] %}
-                        <h4 style="text-align: center">{{ exp }}</h4>
-
-                        <div class="card text-center">
-
-                            <div class="card-header">
-                                <ul class="nav nav-tabs card-header-tabs">
-
-                                    {% for log_file in logs["logs_dict"][exp] %}
-                                    <!--<p>{{ log_file }}</p>-->
-
-                                    <li class="nav-item">
-                                        <a class="nav-link log-file-link log-file-link-{{exp}}" href="#"
-                                           expname="{{ exp }}"
-                                           logfile="{{ log_file }}">
-                                            {{log_file}}</a>
-                                    </li>
-
-                                    {% endfor %}
-
-                                    <li class="nav-item ml-auto">
-                                        <a class="nav-link log-file-close float-right" href="#" expname="{{ exp }}">Close</a>
-                                    </li>
-
-                                </ul>
-                            </div>
-                            <div class="card-body" style="max-height: 40em; overflow-y: scroll;">
-                                <p class="card-text" id="{{ exp }}-log-content" style="text-align: left; white-space:
-                                 pre"></p>
-                            </div>
-                        </div>
-                        <hr>
-                        <br>
+                        </tr>
                         {% endfor %}
 
+                        </tbody>
+                    </table>
+                </div>
 
+            </div>
+        </div>
+
+
+        <hr>
+
+        <div id="section5" class="card border-primary" style="margin: 10px;">
+            <div class="card-header" style="color: #4285F4">
+                <h3>Logs</h3>
+            </div>
+
+            <div class="card-body">
+
+
+                <div>
+
+                    {% for exp in logs["logs_dict"] %}
+                    <h4 style="text-align: center">{{ exp }}</h4>
+
+                    <div class="card text-center">
+
+                        <div class="card-header">
+                            <ul class="nav nav-tabs card-header-tabs">
+
+                                {% for log_file in logs["logs_dict"][exp] %}
+                                <!--<p>{{ log_file }}</p>-->
+
+                                <li class="nav-item">
+                                    <a class="nav-link log-file-link log-file-link-{{exp}}" href="#"
+                                       expname="{{ exp }}"
+                                       logfile="{{ log_file }}">
+                                        {{log_file}}</a>
+                                </li>
+
+                                {% endfor %}
+
+                                <li class="nav-item ml-auto">
+                                    <a class="nav-link log-file-close float-right" href="#"
+                                       expname="{{ exp }}">Close</a>
+                                </li>
+
+                            </ul>
+                        </div>
+                        <div class="card-body" style="max-height: 40em; overflow-y: scroll;">
+                            <p class="card-text" id="{{ exp }}-log-content" style="text-align: left; white-space:
+                                 pre"></p>
+                        </div>
                     </div>
+                    <hr>
+                    <br>
+                    {% endfor %}
+
 
                 </div>
+
+            </div>
 
         </div>
     </div>
