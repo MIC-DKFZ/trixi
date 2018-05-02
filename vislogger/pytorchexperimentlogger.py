@@ -25,6 +25,9 @@ class PytorchExperimentLogger(ExperimentLogger):
     def show_image_grid(self, image, name, **kwargs):
         self.plot_logger.show_image_grid(image, name, **kwargs)
 
+    def show_image_gradient(self, *args, **kwargs):
+        self.plot_logger.show_image_gradient(*args, **kwargs)
+
     @staticmethod
     @threaded
     def save_model_static(model, model_dir, name):

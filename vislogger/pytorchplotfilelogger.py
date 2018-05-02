@@ -1,4 +1,5 @@
 import os
+import warnings
 
 import torch
 from torch.autograd import Variable
@@ -6,6 +7,7 @@ from torchvision.utils import save_image as tv_save_image
 
 from vislogger.abstractlogger import threaded
 from vislogger.numpyplotfilelogger import NumpyPlotFileLogger
+from vislogger.pytorchutils import get_guided_image_gradient, get_smooth_image_gradient, get_vanilla_image_gradient
 from vislogger.util import name_and_iter_to_filename
 
 
@@ -219,3 +221,18 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
                              prefix=prefix,
                              iter_format=iter_format,
                              image_args=image_args)
+
+    def show_image_gradient(self, model, inpt, err_fn, grad_type="vanilla", n_runs=20, eps=0.1, **image_grid_params):
+        if grad_type == "vanilla":
+            grad = get_vanilla_image_gradient(model, inpt, err_fn)
+        elif grad_type == "guided":
+            grad = get_guided_image_gradient(model, inpt, err_fn)
+        elif grad_type == "smooth-vanilla":
+            grad = get_smooth_image_gradient(model, inpt, err_fn, n_runs, eps, grad_type="vanilla")
+        elif grad_type == "smooth-guided":
+            grad = get_smooth_image_gradient(model, inpt, err_fn, n_runs, eps, grad_type="guided")
+        else:
+            warnings.warn("This grad_type is not implemented yet")
+            grad = torch.zeros_like(inpt)
+
+        self.show_image_grid(grad, **image_grid_params)
