@@ -2,6 +2,7 @@ import ast
 import importlib
 import json
 import logging
+import numpy as np
 import os
 import random
 import re
@@ -306,10 +307,10 @@ class ResultLogDict(LogDict):
             data = item["data"]
             if "counter" in item and item["counter"] is not None:
                 self.cntr_dict[key] = item["counter"]
-            json_dict = {key: dict(data=data, label=item["label"], epoch=item["epoch"],
-                                   counter=self.cntr_dict[key])}
+            json_dict = {key: ResultElement(data=data, label=item["label"], epoch=item["epoch"],
+                                            counter=self.cntr_dict[key])}
         else:
-            json_dict = {key: dict(data=data, counter=self.cntr_dict[key])}
+            json_dict = {key: ResultElement(data=data, counter=self.cntr_dict[key])}
         self.cntr_dict[key] += 1
         self.logger.info(json.dumps(json_dict) + ",")
 
@@ -324,6 +325,10 @@ class ResultElement(dict):
         super(ResultElement, self).__init__()
 
         if data is not None:
+            if issubclass(type(data), np.float):
+                data = float(data)
+            if issubclass(type(data), np.int):
+                data = int(data)
             self["data"] = data
         if label is not None:
             self["label"] = label

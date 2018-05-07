@@ -82,6 +82,8 @@ def process_base_dir(base_dir, default_val="-", short_len=25):
                 exps.append(exp)
             except Exception as e:
                 print("Could not load experiment: ", dir_path)
+                print(e)
+                print("-" * 20)
 
     ### Remove unwanted keys
     config_keys -= set(IGNORE_KEYS)
