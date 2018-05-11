@@ -1,28 +1,27 @@
-.. TRIXI documentation master file, created by
+.. trixi documentation master file, created by
    sphinx-quickstart on Fri Apr 13 12:45:46 2018.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to TRIXI's documentation!
-=================================
+.. image:: ../trixi/experiment_browser/static/assets/trixi-small.png
+   :align: center
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Sphinx Setup
+=================
 
-   sphinx.rst
+This is the documentation of **trixi** (Training & Retrospective Insights eXperiment Infrastructure). TRIXI is a python package aiming to facilitate the setup, visualization and comparison of reproducible experiments, currently with a focus on experiments using PyTorch.
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Readme
-
-   readme_link.rst
+You can jump right into the package by looking into our :ref:`quick-start-label`.
 
 .. toctree::
    :maxdepth: 3
-   :caption: Package Reference
+   :caption: Contents
 
-   modules.rst
+   installation.rst
+   quickstart.rst
+   trixi.rst
+   authors.rst
+   license.rst
+   changes.rst
 
 
 Indices and tables

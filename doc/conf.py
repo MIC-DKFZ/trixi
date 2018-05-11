@@ -52,7 +52,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'TRIXI'
+project = 'trixi'
 copyright = '2018, MIC'
 author = 'MIC'
 

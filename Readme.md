@@ -10,12 +10,45 @@ If you want to use any of the PyTorch loggers or the Experiment class:
 pip install torchvision
 ```
 
-Install vislogger
+Install trixi:
 ```
 git clone https://phabricator.mitk.org/source/vislogger.git
-cd vislogger
+cd trixi
 pip install -e .
 ```
+
+# Sphinx Setup
+
+### Setup
+
+Install Sphinx:
+`pip install sphinx`
+
+Generate Api-docs:
+`path/to/PROJECT/doc$ sphinx-apidoc -f -o . ..` 
+
+Open index.html:
+`firefox path/to/PROJECT/doc/_build/html/index.html`
+
+### Notes
+* rerun make html each time existing modules are updated
+* DO NOT forget indent or blank lines
+* Code with no classes or functions is not automatically captured using apidoc
+
+
+### Example Documentation
+
+This follows the Google style docstring guidelines:
+
+	def show_image(self, image, name, file_format=".png", **kwargs):
+        """
+        This function shows an image.
+
+        Args:
+            image(np.ndarray): image to be shown
+            name(str): image title
+        """
+
 
 **IMPORTANT NOTE**: Somehow pytorch and lasagne/theano do not play nicely together. So if you 
 import lasagne/theano and vislogger (which imports pytorch if you have it installed), 
