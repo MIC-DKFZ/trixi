@@ -5,14 +5,17 @@ from visdom import Visdom, _assert_opts, _opts2layout
 class ExtraVisdom(Visdom):
     def histogram_3d(self, X, win=None, env=None, opts=None):
         """
-        Given an array it plots the histrograms of the entries
+        Given an array it plots the histrograms of the entries.
 
-        :param X: An array of at least 2 dimensions, where the first dimensions gives the number of histograms
-        :param win: Window name
-        :param env: Env name
-        :param opts: dict with options, especially opts['numbins'] (number of histogram bins) and opts['mutiplier']
-        ( factor to stretch / queeze the values on the x axis) should ne considered
-        :return: The send result
+        Args:
+            X : An array of at least 2 dimensions, where the first dimensions gives the number of histograms.
+            win: Window name.
+            env: Env name.
+            opts: dict with options, especially opts['numbins'] (number of histogram bins) and opts['mutiplier']
+        ( factor to stretch / queeze the values on the x axis) should be considered.
+
+        Returns:
+            The send result.
         """
 
         opts = {} if opts is None else opts

@@ -24,7 +24,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
     def process_params(self, f, *args, **kwargs):
         """
-        Inherited "decorator": convert Pytorch variables and Tensors to numpy arrays
+        Inherited "decorator": convert Pytorch variables and Tensors to numpy arrays.
         """
 
         ### convert args
@@ -42,12 +42,13 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
     def plot_model_statistics(self, model, env_appendix=None, model_name="", plot_grad=False, **kwargs):
         """
-        Plots statstics (mean, std, abs(max)) of the weights or the corresponding gradients of a model as a barplot
+        Plots statstics (mean, std, abs(max)) of the weights or the corresponding gradients of a model as a barplot.
 
-        :param model: Model with the weights
-        :param env_appendix: visdom environment name appendix, if none is given, it uses "-histogram"
-        :param model_name: Name of the model (is used as window name)
-        :param plot_grad: If false plots weight statistics, if true plot the gradients of the weights
+        Args:
+            model: Model with the weights.
+            env_appendix: Visdom environment name appendix, if none is given, it uses "-histogram".
+            model_name: Name of the model (is used as window name).
+            plot_grad: If false plots weight statistics, if true plot the gradients of the weights.
         """
 
         if env_appendix is None:
@@ -80,23 +81,23 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
     def plot_model_statistics_weights(self, model, env_appendix=None, model_name="", **kwargs):
         """
-        Plots statstics (mean, std, abs(max)) of the weights of a model as a barplot (uses plot model statistics with
-        plot_grad=False  )
+        Plots statstics (mean, std, abs(max)) of the weights of a model as a barplot (uses plot model statistics with plot_grad=False).
 
-        :param model: Model with the weights
-        :param env_appendix: visdom environment name appendix, if none is given, it uses "-histogram"
-        :param model_name: Name of the model (is used as window name)
+        Args:
+            model: Model with the weights.
+            env_appendix: Visdom environment name appendix, if none is given, it uses "-histogram".
+            model_name: Name of the model (is used as window name).
         """
         self.plot_model_statistics(model=model, env_appendix=env_appendix, model_name=model_name, plot_grad=False)
 
     def plot_model_statistics_grads(self, model, env_appendix=None, model_name="", **kwargs):
         """
-        Plots statstics (mean, std, abs(max)) of the gradients of a model as a barplot (uses plot model statistics with
-        plot_grad=True )
+        Plots statstics (mean, std, abs(max)) of the gradients of a model as a barplot (uses plot model statistics with plot_grad=True).
 
-        :param model: Model with the weights and the corresponding gradients (have to calculated previously)
-        :param env_appendix: visdom environment name appendix, if none is given, it uses "-histogram"
-        :param model_name: Name of the model (is used as window name)
+        Args:
+            model: Model with the weights and the corresponding gradients (have to calculated previously).
+            env_appendix: Visdom environment name appendix, if none is given, it uses "-histogram".
+            model_name: Name of the model (is used as window name).
         """
         self.plot_model_statistics(model=model, env_appendix=env_appendix, model_name=model_name, plot_grad=True)
 
@@ -104,8 +105,9 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         """
         Given models in a dict, plots the weight statistics of the models.
 
-        :param model_dict: Dict with models, the key is assumed to be the name, while the value is the model
-        :param env_appendix: visdom environment name appendix, if none is given, it uses "-histogram"
+        Args:
+            model_dict: Dict with models, the key is assumed to be the name, while the value is the model.
+            env_appendix: visdom environment name appendix, if none is given, it uses "-histogram".
         """
         for model_name, model in model_dict.items():
             self.plot_model_statistics_weights(model=model, env_appendix=env_appendix, model_name=model_name)
@@ -114,8 +116,9 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         """
         Given models in a dict, plots the gradient statistics of the models.
 
-        :param model_dict: Dict with models, the key is assumed to be the name, while the value is the model
-        :param env_appendix: visdom environment name appendix, if none is given, it uses "-histogram"
+        Args:
+            model_dict: Dict with models, the key is assumed to be the name, while the value is the model.
+            env_appendix: Visdom environment name appendix, if none is given, it uses "-histogram".
         """
         for model_name, model in model_dict.items():
             self.plot_model_statistics_grads(model=model, env_appendix=env_appendix, model_name=model_name)
@@ -124,18 +127,20 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         """
         Plots the model structure/ model graph of a pytorch module (this only works correctly with pytorch 0.2.0).
 
-        :param model: The graph of this model will be plotted
-        :param input_size: Input size of the model (with batch dim)
-        :param name: The name of the window in the visdom env
-        :param use_cuda: Perform model dimension calculations on the gpu (cuda)
-        :param delete_tmp_on_close: Determines if the tmp file will be deleted on close. If set true, can cause problems
-        due to the multi threadded plotting.
+        Args:
+            model: The graph of this model will be plotted.
+            input_size: Input size of the model (with batch dim).
+            name: The name of the window in the visdom env.
+            use_cuda: Perform model dimension calculations on the gpu (cuda).
+            delete_tmp_on_close: Determines if the tmp file will be deleted on close. If set true, can cause problems due to the multi threadded plotting.
         """
 
         def make_dot(output_var, state_dict=None):
-            """ Produces Graphviz representation of Pytorch autograd graph
+            """
+            Produces Graphviz representation of Pytorch autograd graph.
             Blue nodes are the Variables that require grad, orange are Tensors
-            saved for backward in torch.autograd.Function
+            saved for backward in torch.autograd.Function.
+
             Args:
                 output_var: output Variable
                 state_dict: dict of (name, parameter) to add names to node that require grad
