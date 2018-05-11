@@ -1,9 +1,13 @@
 from __future__ import division, print_function
 
+import atexit
 from collections import defaultdict
 
-import atexit
-import multiprocessing as mp
+try:
+    import torch.multiprocessing as mp
+    print("Using torch multi processing")
+except:
+    import multiprocessing as mp
 import sys
 import traceback
 
@@ -200,7 +204,7 @@ class NumpyVisdomLogger(AbstractLogger):
         }
         self._queue.put_nowait(vis_task)
 
-    def __show_value(self, value, name=None, counter=None, tag=None, show_legend=True,  env_appendix="", opts=None,
+    def __show_value(self, value, name=None, counter=None, tag=None, show_legend=True, env_appendix="", opts=None,
                      **kwargs):
         """
        Internal show_value method, called by the internal process.

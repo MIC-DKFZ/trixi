@@ -5,6 +5,8 @@ import json
 import os
 import re
 import shutil
+import warnings
+
 try:
     import cPickle as pickle
 except ImportError:
@@ -61,9 +63,9 @@ class ExperimentLogger(AbstractLogger):
                 makedir_exception = e
                 makedir_counter -= 1
         if makedir_exception is not None:
-            raise RuntimeWarning("Last exception encountered in makedir process:\n" +
+            warnings.warn("Last exception encountered in makedir process:\n" +
                                  "{}\n".format(makedir_exception) +
-                                 "There may or may not be a folder for the experiment to run in.")
+                                 "There may or may not be a folder for the experiment to run in.", RuntimeWarning)
 
         self.config_dir = os.path.join(self.work_dir, "config")
         self.log_dir = os.path.join(self.work_dir, "log")
