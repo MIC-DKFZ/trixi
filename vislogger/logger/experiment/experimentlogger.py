@@ -12,8 +12,8 @@ except ImportError:
 
 import numpy as np
 
-from vislogger import AbstractLogger, TextLogger, NumpyPlotFileLogger, Config
-from vislogger.util import create_folder, MultiTypeEncoder, MultiTypeDecoder
+from vislogger.logger import AbstractLogger, TextLogger, NumpyPlotFileLogger
+from vislogger.util import create_folder, MultiTypeEncoder, MultiTypeDecoder, Config
 
 
 REPLACEMENTS = [("%Y", 4), ("%m", 2), ("%d", 2), ("%H", 2), ("%M", 2), ("%S", 2),

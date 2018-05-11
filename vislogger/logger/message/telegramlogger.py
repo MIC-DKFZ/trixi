@@ -7,7 +7,7 @@ import torch
 import torchvision
 from PIL import Image
 
-from vislogger.numpyseabornplotlogger import NumpySeabornPlotLogger
+from vislogger.logger import NumpySeabornPlotLogger
 
 
 class TelegramLogger(NumpySeabornPlotLogger):

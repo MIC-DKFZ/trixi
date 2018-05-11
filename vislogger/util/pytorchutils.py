@@ -70,3 +70,26 @@ def get_smooth_image_gradient(model, inpt, err_fn, n_runs=20, eps=0.1, grad_type
 
     grad = torch.mean(torch.stack(grads), dim=0)
     return grad
+
+
+def update_model(original_model, update_dict, exclude_layers=(), do_warnings=True):
+    # also allow loading of partially pretrained net
+    model_dict = original_model.state_dict()
+
+    # 1. Give warnings for unused update values
+    unused = set(update_dict.keys()) - set(exclude_layers) - set(model_dict.keys())
+    not_updated = set(model_dict.keys()) - set(exclude_layers) - set(update_dict.keys())
+    for item in unused:
+        warnings.warn("Update layer {} not used.".format(item))
+    for item in not_updated:
+        warnings.warn("{} layer not updated.".format(item))
+
+    # 2. filter out unnecessary keys
+    update_dict = {k: v for k, v in update_dict.items() if
+                   k in model_dict and k not in exclude_layers}
+
+    # 3. overwrite entries in the existing state dict
+    model_dict.update(update_dict)
+
+    # 4. load the new state dict
+    original_model.load_state_dict(model_dict)

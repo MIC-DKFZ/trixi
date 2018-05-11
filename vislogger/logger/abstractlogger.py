@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 import _thread
 
+
 def convert_params(f):
     """Decorator to call the process_params method of the class."""
 
@@ -8,6 +9,7 @@ def convert_params(f):
         return self.process_params(f, *args, **kwargs)
 
     return wrapper
+
 
 def threaded(f):
     """Decorator to run the process in an extra thread."""

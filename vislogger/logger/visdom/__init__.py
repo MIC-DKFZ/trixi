@@ -1,0 +1,2 @@
+from vislogger.logger.visdom.numpyvisdomlogger import NumpyVisdomLogger
+from vislogger.logger.visdom.pytorchvisdomlogger import PytorchVisdomLogger

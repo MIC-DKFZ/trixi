@@ -9,9 +9,9 @@ from graphviz import Digraph
 from torch.autograd import Variable
 from torchvision.utils import make_grid
 
-from vislogger import NumpyVisdomLogger
-from vislogger.abstractlogger import convert_params
-from vislogger.pytorchutils import get_guided_image_gradient, get_smooth_image_gradient, get_vanilla_image_gradient
+from vislogger.logger import NumpyVisdomLogger
+from vislogger.logger.abstractlogger import convert_params
+from vislogger.util.pytorchutils import get_guided_image_gradient, get_smooth_image_gradient, get_vanilla_image_gradient
 
 
 class PytorchVisdomLogger(NumpyVisdomLogger):

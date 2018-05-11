@@ -1,7 +1,7 @@
 import json
 import os
 
-from vislogger import Config
+from vislogger.util import Config
 
 
 class ExperimentReader(object):

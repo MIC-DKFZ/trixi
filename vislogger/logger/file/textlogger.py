@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 
-from vislogger import AbstractLogger
+from vislogger.logger import AbstractLogger
 from vislogger.util import random_string
 
 
