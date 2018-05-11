@@ -9,7 +9,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import vislogger
+import trixi
 
 
 test_dir = "test_dir"
@@ -19,7 +19,7 @@ class TestExperimentLogger(unittest.TestCase):
 
     def setUp(self):
         remove_if_exists(test_dir)
-        self.experimentLogger = vislogger.PytorchExperimentLogger(experiment_name="test",
+        self.experimentLogger = trixi.PytorchExperimentLogger(experiment_name="test",
                                                                   base_dir=test_dir,
                                                                   folder_format="{experiment_name}")
 
@@ -28,7 +28,7 @@ class TestExperimentLogger(unittest.TestCase):
 
     def test_two_experiment_loggers_same_test_dir_no_run_number_throws_error(self):
         with self.assertRaises(FileExistsError):
-            vislogger.PytorchExperimentLogger(experiment_name="test",
+            trixi.PytorchExperimentLogger(experiment_name="test",
                                               base_dir=test_dir,
                                               folder_format="{experiment_name}")
 

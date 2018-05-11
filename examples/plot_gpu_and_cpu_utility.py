@@ -10,7 +10,7 @@ import numpy as np
 from time import sleep
 import GPUtil
 import psutil
-from vislogger import NumpyVisdomLogger as Nvl
+from trixi import NumpyVisdomLogger as Nvl
 nvl = Nvl(name="my_environment")
 
 WINDOW_LEN = 250

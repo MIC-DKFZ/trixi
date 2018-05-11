@@ -1,0 +1,1 @@
+from trixi.logger.plt.numpyseabornplotlogger import NumpySeabornPlotLogger

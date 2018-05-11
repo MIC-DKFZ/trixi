@@ -1,0 +1,2 @@
+from trixi.logger.visdom.numpyvisdomlogger import NumpyVisdomLogger
+from trixi.logger.visdom.pytorchvisdomlogger import PytorchVisdomLogger

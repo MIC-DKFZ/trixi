@@ -2,12 +2,12 @@ import torch
 import torchvision
 from torch.autograd import Variable
 
-import vislogger
+import trixi
 
 ###############################################
 #
 # Basic Training script for a neural network. Does not really train, and the images look fancy, but only for
-# vislogger demo (including error plots, image plots, model checkpoint storing).
+# trixi demo (including error plots, image plots, model checkpoint storing).
 #
 ################################################
 
@@ -20,9 +20,9 @@ param = dict(
 )
 
 ### Init stuff
-vizLog = vislogger.PytorchVisdomLogger(name=param["name"], port=8080)
-expLog = vislogger.PytorchExperimentLogger(experiment_name=param["name"], base_dir=param["output_folder"])
-combiLog = vislogger.CombinedLogger((vizLog, 1), (expLog, 10))
+vizLog = trixi.PytorchVisdomLogger(name=param["name"], port=8080)
+expLog = trixi.PytorchExperimentLogger(experiment_name=param["name"], base_dir=param["output_folder"])
+combiLog = trixi.CombinedLogger((vizLog, 1), (expLog, 10))
 
 expLog.print(expLog.base_dir)
 expLog.text_logger.log_to(param, "config")

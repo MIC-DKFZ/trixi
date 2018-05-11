@@ -6,14 +6,14 @@ with open("README.md") as f:
 with open("LICENSE") as f:
     license = f.read()
 
-setup(name='vislogger',
+setup(name='trixi',
       version='0.1',
-      description='Package to log visualizations, e.g. with visdom',
+      description='Package to log visualizations and experiments, e.g. with visdom',
       long_description=readme,
       url='http://phabricator.mitk.org/source/vislogger',
       author='Medical Image Computing Group, DKFZ',
       author_email='mic@dkfz-heidelberg.de',
       license=license,
-      packages=['vislogger'],
+      packages=['trixi'],
       install_requires=['numpy', 'visdom', 'graphviz', 'matplotlib', 'seaborn', 'portalocker'],
       zip_safe=True)
