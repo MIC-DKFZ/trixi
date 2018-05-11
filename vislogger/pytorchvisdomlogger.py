@@ -389,11 +389,12 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         atexit.register(p.terminate)
         p.start()
 
-    def show_image_gradient(self, model, inpt, err_fn, grad_type="vanilla", n_runs=20, eps=0.1, **image_grid_params):
+    def show_image_gradient(self, model, inpt, err_fn, grad_type="vanilla", n_runs=20, eps=0.1,
+                            abs=False, **image_grid_params):
         if grad_type == "vanilla":
-            grad = get_vanilla_image_gradient(model, inpt, err_fn)
+            grad = get_vanilla_image_gradient(model, inpt, err_fn, abs)
         elif grad_type == "guided":
-            grad = get_guided_image_gradient(model, inpt, err_fn)
+            grad = get_guided_image_gradient(model, inpt, err_fn, abs)
         elif grad_type == "smooth-vanilla":
             grad = get_smooth_image_gradient(model, inpt, err_fn, n_runs, eps, grad_type="vanilla")
         elif grad_type == "smooth-guided":
