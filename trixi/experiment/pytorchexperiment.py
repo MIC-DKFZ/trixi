@@ -1,6 +1,7 @@
 import atexit
 import fnmatch
 import json
+import os
 import random
 import shutil
 import string
@@ -8,16 +9,51 @@ import time
 import traceback
 import warnings
 
-import os.path
 import torch
 
 from trixi.experiment.experiment import Experiment
-from trixi.logger import PytorchExperimentLogger, PytorchVisdomLogger, TelegramLogger, CombinedLogger
+from trixi.logger import CombinedLogger, PytorchExperimentLogger, PytorchVisdomLogger, TelegramLogger
 from trixi.util import Config, ResultElement, ResultLogDict, SourcePacker, name_and_iter_to_filename
 from trixi.util.pytorchutils import set_seed
 
 
 class PytorchExperiment(Experiment):
+    """
+    A Pytorch Experiment is a abstract class which extends the basic functionallity of the Experiment class with
+    convenience features for pytorch such as creating a folder structur, saving and plotting results and
+    checkpointing your experiment.
+
+    The basic life cycle of a PytorchExperiment is the same a Experiment:
+
+        setup()
+        (--> Automatically restore values if a previous checkpoint is given)
+        prepare()
+
+        for epoch in n_epochs:
+            train()
+            validate()
+            (--> save current checkpoint)
+
+        end()
+
+    To get your own experiment simply inherit from the PytorchExperiment and overwrite the setup(), prepare(),
+    train(), validate() and end() method (or you can use the experimental decorator "experimentify" to convert your
+    class into a experiment).
+    Then you can run your own experiment by calling the run() method.
+
+    Internally experiment will provide you some member variables which you can access:
+        - n_epochs: Number of epochs
+        - exp_name: Name of your experiment
+        - config: The (initialized) config of your experiment (the serializable/uninitialized config is in _config_raw)
+        - result: A dict in which you can store your result values (can and will be persisted if you use a experiment
+            logger)
+        - vlog (if the flag in the init is True): A visdom logger instance which can log your results to a visdom server
+        - elog (flag in init): A experiment logger instance which can log your results to a given folder
+        - tlog (flat in init): A telegram logger which can send the results to your telegram account
+        - clog: A combined logger which logs to all loggers in different frequencies (which can be defined)
+
+     """
+
     def __init__(self,
                  config=None,
                  name=None,
@@ -62,29 +98,29 @@ class PytorchExperiment(Experiment):
             self._config_raw = Config(update_from_argv=True)
 
         self.n_epochs = n_epochs
-        if "n_epochs" in self._config_raw:
-            self.n_epochs = self._config_raw.n_epochs
+        if 'n_epochs' in self._config_raw:
+            self.n_epochs = self._config_raw["n_epochs"]
 
-        self.seed = seed
-        if "seed" in self._config_raw:
-            self.seed = self._config_raw.seed
-        if self.seed is None:
+        self._seed = seed
+        if 'seed' in self._config_raw:
+            self._seed = self._config_raw.seed
+        if self._seed is None:
             random_data = os.urandom(4)
             seed = int.from_bytes(random_data, byteorder="big")
             self._config_raw.seed = seed
-            self.seed = seed
+            self._seed = seed
 
         self.exp_name = name
-        if "name" in self._config_raw:
-            self.exp_name = self._config_raw.name
+        if 'name' in self._config_raw:
+            self.exp_name = self._config_raw["name"]
         if append_rnd_to_name:
             rnd_str = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(5))
             self.exp_name += "-" + rnd_str
 
-        if "base_dir" in self._config_raw:
-            base_dir = self._config_raw.base_dir
+        if 'base_dir' in self._config_raw:
+            base_dir = self._config_raw["base_dir"]
 
-        self.checkpoint_to_cpu = checkpoint_to_cpu
+        self._checkpoint_to_cpu = checkpoint_to_cpu
         self.results = dict()
 
         # Init loggers
@@ -117,17 +153,17 @@ class PytorchExperiment(Experiment):
 
         self.clog = CombinedLogger(*logger_list)
 
-        set_seed(self.seed)
+        set_seed(self._seed)
 
         # Do the resume stuff
-        self.resume_path = None
-        self.resume_save_types = resume_save_types
-        self.ignore_resume_config = ignore_resume_config
+        self._resume_path = None
+        self._resume_save_types = resume_save_types
+        self._ignore_resume_config = ignore_resume_config
         if resume is not None:
             if isinstance(resume, str):
-                self.resume_path = resume
+                self._resume_path = resume
             elif isinstance(resume, PytorchExperiment):
-                self.resume_path = resume.elog.base_dir
+                self._resume_path = resume.elog.base_dir
 
         # self.elog.save_config(self.config, "config_pre")
         if globs is not None:
@@ -233,7 +269,7 @@ class PytorchExperiment(Experiment):
         checkpoint_dict = {**model_dict, **optimizer_dict, **simple_dict, **th_vars_dict, **results_dict}
 
         self.elog.save_checkpoint(name=name, n_iter=n_iter, iter_format=iter_format, prefix=prefix,
-                                  move_to_cpu=self.checkpoint_to_cpu, **checkpoint_dict)
+                                  move_to_cpu=self._checkpoint_to_cpu, **checkpoint_dict)
 
     def load_checkpoint(self, name="checkpoint", save_types=("model", "optimizer", "simple", "th_vars", "results"),
                         n_iter=None, iter_format="{:05d}", prefix=False, path=None):
@@ -279,23 +315,23 @@ class PytorchExperiment(Experiment):
             self.results.print_to_file("]")
         self.save_results()
         self.save_end_checkpoint()
-        self.elog.save_config(Config(**{'name': self.exp_name, 'time': self.time_start, 'state': self.exp_state}),
+        self.elog.save_config(Config(**{'name': self.exp_name, 'time': self._time_start, 'state': self._exp_state}),
                               "exp")
         self.elog.print("Experiment ended. Checkpoints stored =)")
 
     def end_test(self):
         self.save_results()
-        self.elog.save_config(Config(**{'name': self.exp_name, 'time': self.time_start, 'state': self.exp_state}),
+        self.elog.save_config(Config(**{'name': self.exp_name, 'time': self._time_start, 'state': self._exp_state}),
                               "exp")
         self.elog.print("Testing ended. Results stored =)")
 
     def at_exit_func(self):
-        if self.exp_state not in ("Ended", "Tested"):
+        if self._exp_state not in ("Ended", "Tested"):
             if isinstance(self.results, ResultLogDict):
                 self.results.print_to_file("]")
-            self.save_checkpoint(name="checkpoint_exit-" + self.exp_state)
+            self.save_checkpoint(name="checkpoint_exit-" + self._exp_state)
             self.save_results()
-            self.elog.save_config(Config(**{'name': self.exp_name, 'time': self.time_start, 'state': self.exp_state}),
+            self.elog.save_config(Config(**{'name': self.exp_name, 'time': self._time_start, 'state': self._exp_state}),
                                   "exp")
             self.elog.print("Experiment exited. Checkpoints stored =)")
         time.sleep(10)  # allow checkpoint saving to finish
@@ -303,38 +339,38 @@ class PytorchExperiment(Experiment):
     def _setup_internal(self):
         self.prepare_resume()
         self.elog.save_config(self._config_raw, "config")
-        self.elog.save_config(Config(**{'name': self.exp_name, 'time': self.time_start, 'state': self.exp_state}),
+        self.elog.save_config(Config(**{'name': self.exp_name, 'time': self._time_start, 'state': self._exp_state}),
                               "exp")
 
     def _start_internal(self):
-        self.elog.save_config(Config(**{'name': self.exp_name, 'time': self.time_start, 'state': self.exp_state}),
+        self.elog.save_config(Config(**{'name': self.exp_name, 'time': self._time_start, 'state': self._exp_state}),
                               "exp")
 
     def prepare_resume(self):
         checkpoint_file = ""
         base_dir = ""
 
-        if self.resume_path is not None:
-            if isinstance(self.resume_path, str):
-                if self.resume_path.endswith(".pth.tar"):
-                    checkpoint_file = self.resume_path
+        if self._resume_path is not None:
+            if isinstance(self._resume_path, str):
+                if self._resume_path.endswith(".pth.tar"):
+                    checkpoint_file = self._resume_path
                     base_dir = os.path.dirname(os.path.dirname(checkpoint_file))
-                elif self.resume_path.endswith("checkpoint") or self.resume_path.endswith("checkpoint/"):
-                    checkpoint_file = get_last_file(self.resume_path)
+                elif self._resume_path.endswith("checkpoint") or self._resume_path.endswith("checkpoint/"):
+                    checkpoint_file = get_last_file(self._resume_path)
                     base_dir = os.path.dirname(os.path.dirname(checkpoint_file))
-                elif "checkpoint" in os.listdir(self.resume_path) and "config" in os.listdir(self.resume_path):
-                    checkpoint_file = get_last_file(self.resume_path)
-                    base_dir = self.resume_path
+                elif "checkpoint" in os.listdir(self._resume_path) and "config" in os.listdir(self._resume_path):
+                    checkpoint_file = get_last_file(self._resume_path)
+                    base_dir = self._resume_path
                 else:
                     warnings.warn("You have not selected a valid experiment folder, will search all sub folders",
                                   UserWarning)
                     self.elog.text_logger.log_to("You have not selected a valid experiment folder, will search all "
                                                  "sub folders", "warnings")
-                    checkpoint_file = get_last_file(self.resume_path)
+                    checkpoint_file = get_last_file(self._resume_path)
                     base_dir = os.path.dirname(os.path.dirname(checkpoint_file))
 
         if base_dir:
-            if not self.ignore_resume_config:
+            if not self._ignore_resume_config:
                 load_config = Config()
                 load_config.load(os.path.join(base_dir, "config/config.json"))
                 self._config_raw = load_config
@@ -342,8 +378,8 @@ class PytorchExperiment(Experiment):
                 self.elog.print("Loaded existing config from:", base_dir)
 
         if checkpoint_file:
-            self.load_checkpoint(name="", path=checkpoint_file, save_types=self.resume_save_types)
-            self.resume_path = checkpoint_file
+            self.load_checkpoint(name="", path=checkpoint_file, save_types=self._resume_save_types)
+            self._resume_path = checkpoint_file
             shutil.copyfile(checkpoint_file, os.path.join(self.elog.checkpoint_dir, "0_checkpoint.pth.tar"))
             self.elog.print("Loaded existing checkpoint from:", checkpoint_file)
 
@@ -362,7 +398,7 @@ class PytorchExperiment(Experiment):
         if label_name is None:
             label_name = name
 
-        r_elem = ResultElement(data=value, label=label_name, epoch=self.epoch_idx, counter=counter)
+        r_elem = ResultElement(data=value, label=label_name, epoch=self._epoch_idx, counter=counter)
 
         self.results[name] = r_elem
 
