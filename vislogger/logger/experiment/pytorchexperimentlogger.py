@@ -7,7 +7,8 @@ import os
 import torch
 
 from vislogger.logger.abstractlogger import threaded
-from vislogger.logger import ExperimentLogger, PytorchPlotFileLogger
+from vislogger.logger.experiment import ExperimentLogger
+from vislogger.logger.file.pytorchplotfilelogger import PytorchPlotFileLogger
 from vislogger.util import name_and_iter_to_filename
 from vislogger.util.pytorchutils import update_model
 

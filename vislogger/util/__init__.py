@@ -1,6 +1,3 @@
-from vislogger.util.config import Config
-from vislogger.util.extravisdom import ExtraVisdom
-from vislogger.util.sourcepacker import SourcePacker
 from vislogger.util.util import (
     CustomJSONEncoder,
     CustomJSONDecoder,
@@ -19,6 +16,9 @@ from vislogger.util.util import (
     ResultLogDict,
     ResultElement
 )
+from vislogger.util.config import Config
+from vislogger.util.extravisdom import ExtraVisdom
+from vislogger.util.sourcepacker import SourcePacker
 
 try:
     from vislogger.util.gpu_monitor import GpuMonitor

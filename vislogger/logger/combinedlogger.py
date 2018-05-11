@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from vislogger.logger import AbstractLogger
+from vislogger.logger.abstractlogger import AbstractLogger
 
 
 def create_function(self, sub_methods):

@@ -1,6 +1,6 @@
 import os
 
-from vislogger.logger import NumpySeabornPlotLogger
+from vislogger.logger.plt.numpyseabornplotlogger import NumpySeabornPlotLogger
 from vislogger.logger.abstractlogger import convert_params
 from vislogger.util import savefig_and_close
 

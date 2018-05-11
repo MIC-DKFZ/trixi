@@ -10,7 +10,7 @@ from flask import Blueprint, Flask, Markup, abort, render_template, request
 from plotly.offline import plot
 from scipy.signal import savgol_filter
 
-from vislogger.experiment_browser import ExperimentReader
+from vislogger.experiment_browser.experimentreader import ExperimentReader
 from vislogger.util import Config
 
 # These keys will be ignored when in a config file

@@ -3,7 +3,7 @@
 
 import json
 
-from vislogger.util import ModuleMultiTypeDecoder, ModuleMultiTypeEncoder
+from vislogger.util.util import ModuleMultiTypeDecoder, ModuleMultiTypeEncoder
 
 
 class Config(dict):

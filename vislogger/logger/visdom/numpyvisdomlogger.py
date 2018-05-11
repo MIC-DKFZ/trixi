@@ -9,8 +9,7 @@ import traceback
 
 import numpy as np
 
-from vislogger.logger import AbstractLogger
-from vislogger.logger.abstractlogger import convert_params
+from vislogger.logger.abstractlogger import AbstractLogger, convert_params
 from vislogger.util import ExtraVisdom
 
 

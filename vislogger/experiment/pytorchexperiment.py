@@ -13,7 +13,7 @@ import os.path
 import torch
 
 import vislogger
-from vislogger.experiment import Experiment
+from vislogger.experiment.experiment import Experiment
 from vislogger.util import Config, SourcePacker, ResultElement, ResultLogDict, name_and_iter_to_filename
 
 
@@ -92,7 +92,7 @@ class PytorchExperiment(Experiment):
         if use_vislogger:
             if vislogger_kwargs is None:
                 vislogger_kwargs = {}
-            self.vlog = vislogger.pytorchvisdomlogger.PytorchVisdomLogger(name=self.exp_name, **vislogger_kwargs)
+            self.vlog = vislogger.logger.PytorchVisdomLogger(name=self.exp_name, **vislogger_kwargs)
             if vislogger_c_freq is not None and vislogger_c_freq > 0:
                 logger_list.append((self.vlog, vislogger_c_freq))
         if use_explogger:

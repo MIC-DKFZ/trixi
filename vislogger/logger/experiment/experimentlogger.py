@@ -12,7 +12,9 @@ except ImportError:
 
 import numpy as np
 
-from vislogger.logger import AbstractLogger, TextLogger, NumpyPlotFileLogger
+from vislogger.logger.abstractlogger import AbstractLogger
+from vislogger.logger.file.textlogger import TextLogger
+from vislogger.logger.file.numpyplotfilelogger import NumpyPlotFileLogger
 from vislogger.util import create_folder, MultiTypeEncoder, MultiTypeDecoder, Config
 
 

@@ -6,7 +6,7 @@ from torch.autograd import Variable
 from torchvision.utils import save_image as tv_save_image
 
 from vislogger.logger.abstractlogger import threaded
-from vislogger.logger import NumpyPlotFileLogger
+from vislogger.logger.file.numpyplotfilelogger import NumpyPlotFileLogger
 from vislogger.util.pytorchutils import get_guided_image_gradient, get_smooth_image_gradient, get_vanilla_image_gradient
 from vislogger.util import name_and_iter_to_filename
 
