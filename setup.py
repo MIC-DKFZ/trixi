@@ -1,9 +1,10 @@
 from setuptools import setup
+import os
 
-with open("README.md") as f:
+with open(os.path.join(os.path.dirname(__file__), "Readme.md")) as f:
     readme = f.read()
 
-with open("LICENSE") as f:
+with open(os.path.join(os.path.dirname(__file__), "LICENSE")) as f:
     license = f.read()
 
 setup(name='trixi',
