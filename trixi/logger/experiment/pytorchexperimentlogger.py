@@ -14,20 +14,69 @@ from trixi.util.pytorchutils import update_model
 
 
 class PytorchExperimentLogger(ExperimentLogger):
-    """A single class for logging"""
+    """
+    A single class for logging your pytorch experiments to file.
+    Extends the ExperimentLogger also also creates a experiment folder with a file structure:
+
+    The folder structure is :
+        base_dir/
+            new_experiment_folder/
+                checkpoint/
+                config/
+                img/
+                log/
+                plot/
+                result/
+                save/
+
+
+    """
 
     def __init__(self, *args, **kwargs):
+        """Initializes the PytorchExperimentLogger and parses the arguments to the ExperimentLogger"""
 
         super(PytorchExperimentLogger, self).__init__(*args, **kwargs)
         self.plot_logger = PytorchPlotFileLogger(self.img_dir, self.plot_dir)
 
     def show_images(self, images, name, **kwargs):
+        """
+        Saves images in the img folder
+
+        Args:
+            images: The images to be saved
+            name: file name of the new image file
+
+        """
         self.plot_logger.show_images(images, name, **kwargs)
 
     def show_image_grid(self, image, name, **kwargs):
+        """
+        Saves images in the img folder as a image grid
+
+        Args:
+            images: The images to be saved
+            name: file name of the new image file
+
+        """
         self.plot_logger.show_image_grid(image, name, **kwargs)
 
     def show_image_gradient(self, *args, **kwargs):
+        """
+        Given a model creates calculates the error and backpropagates it to the image and saves it.
+
+        Args:
+            model: The model to be evaluated
+            inpt: Input to the model
+            err_fn: The error function the evaluate the output of the model on
+            grad_type: Gradient calculation method, currently supports (vanilla, vanilla-smooth, guided,
+            guided-smooth) ( the guided backprob can lead to segfaults -.-)
+            n_runs: Number of runs for the smooth variants
+            eps: noise scaling to be applied on the input image (noise is drawn from N(0,1))
+            abs (bool): Flag, if the gradient should be a absolute value
+            **image_grid_params: Params for make image grid.
+
+
+        """
         self.plot_logger.show_image_gradient(*args, **kwargs)
 
     @staticmethod
