@@ -138,7 +138,7 @@ class Experiment(object):
         pass
 
 
-class PyTorchExperiment(Experiment):
+class PytorchExperiment(Experiment):
     def __init__(self,
                  config=None,
                  name=None,
@@ -162,7 +162,7 @@ class PyTorchExperiment(Experiment):
                  telegramlogger_c_freq=1000,
                  append_rnd_to_name=False):
         """Inits an algo with a config, config needs to a n_epochs, name, output_folder and seed !"""
-        # super(PyTorchExperiment, self).__init__()
+        # super(PytorchExperiment, self).__init__()
         Experiment.__init__(self)
 
         if parse_sys_argv:
@@ -247,7 +247,7 @@ class PyTorchExperiment(Experiment):
         if resume is not None:
             if isinstance(resume, str):
                 self.resume_path = resume
-            elif isinstance(resume, PyTorchExperiment):
+            elif isinstance(resume, PytorchExperiment):
                 self.resume_path = resume.elog.base_dir
 
         # self.elog.save_config(self.config, "config_pre")
@@ -569,7 +569,7 @@ def experimentify(setup_fn="setup", train_fn="train", validate_fn="validate", en
         def new_init(*args, **kwargs):
             prev_init(*args, **kwargs)
             kwargs.update(decoargs)
-            PyTorchExperiment.__init__(*args, **kwargs)
+            PytorchExperiment.__init__(*args, **kwargs)
 
         cls.__init__ = new_init
 
@@ -599,10 +599,10 @@ def experimentify(setup_fn="setup", train_fn="train", validate_fn="validate", en
         elif hasattr(cls, "test") and test_fn != "test":
             warnings.warn("Found already exisiting test function in class, so will use the exisiting one")
 
-        ### Copy methods from PyTorchExperiment into the original class
-        for elem in dir(PyTorchExperiment):
+        ### Copy methods from PytorchExperiment into the original class
+        for elem in dir(PytorchExperiment):
             if not hasattr(cls, elem):
-                trans_fn = getattr(PyTorchExperiment, elem)
+                trans_fn = getattr(PytorchExperiment, elem)
                 setattr(cls, elem, trans_fn)
 
         return cls
