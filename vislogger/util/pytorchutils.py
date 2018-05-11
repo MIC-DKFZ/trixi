@@ -1,6 +1,8 @@
+import random
 import warnings
 from functools import lru_cache
 
+import numpy as np
 import torch
 
 
@@ -98,3 +100,12 @@ def update_model(original_model, update_dict, exclude_layers=(), do_warnings=Tru
 
     # 4. load the new state dict
     original_model.load_state_dict(model_dict)
+
+
+def set_seed(seed):
+    """Sets the seed"""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    # if torch.cuda.is_available():
+    #     torch.cuda.manual_seed_all(seed)

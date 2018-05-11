@@ -8,13 +8,13 @@ import time
 import traceback
 import warnings
 
-import numpy as np
 import os.path
 import torch
 
-import vislogger
 from vislogger.experiment.experiment import Experiment
-from vislogger.util import Config, SourcePacker, ResultElement, ResultLogDict, name_and_iter_to_filename
+from vislogger.logger import PytorchExperimentLogger, PytorchVisdomLogger, TelegramLogger, CombinedLogger
+from vislogger.util import Config, ResultElement, ResultLogDict, SourcePacker, name_and_iter_to_filename
+from vislogger.util.pytorchutils import set_seed
 
 
 class PytorchExperiment(Experiment):
@@ -92,15 +92,15 @@ class PytorchExperiment(Experiment):
         if use_vislogger:
             if vislogger_kwargs is None:
                 vislogger_kwargs = {}
-            self.vlog = vislogger.logger.PytorchVisdomLogger(name=self.exp_name, **vislogger_kwargs)
+            self.vlog = PytorchVisdomLogger(name=self.exp_name, **vislogger_kwargs)
             if vislogger_c_freq is not None and vislogger_c_freq > 0:
                 logger_list.append((self.vlog, vislogger_c_freq))
         if use_explogger:
             if explogger_kwargs is None:
                 explogger_kwargs = {}
-            self.elog = vislogger.pytorchexperimentlogger.PytorchExperimentLogger(base_dir=base_dir,
-                                                                                  experiment_name=self.exp_name,
-                                                                                  **explogger_kwargs)
+            self.elog = PytorchExperimentLogger(base_dir=base_dir,
+                                                experiment_name=self.exp_name,
+                                                **explogger_kwargs)
             if explogger_c_freq is not None and explogger_c_freq > 0:
                 logger_list.append((self.elog, explogger_c_freq))
 
@@ -109,13 +109,13 @@ class PytorchExperiment(Experiment):
         if use_telegramlogger:
             if telegramlogger_kwargs is None:
                 telegramlogger_kwargs = {}
-            self.tlog = vislogger.TelegramLogger(**telegramlogger_kwargs, exp_name=self.exp_name)
+            self.tlog = TelegramLogger(**telegramlogger_kwargs, exp_name=self.exp_name)
             if telegramlogger_c_freq is not None and telegramlogger_c_freq > 0:
                 logger_list.append((self.tlog, telegramlogger_c_freq))
 
             # Set results log dict to the right path
 
-        self.clog = vislogger.CombinedLogger(*logger_list)
+        self.clog = CombinedLogger(*logger_list)
 
         set_seed(self.seed)
 
@@ -428,15 +428,6 @@ def get_vars_from_sys_argv():
 
         # update dict
         return param.get("config_path"), param.get("resume_path")
-
-
-def set_seed(seed):
-    """Sets the seed"""
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    # if torch.cuda.is_available():
-    #     torch.cuda.manual_seed_all(seed)
 
 
 def experimentify(setup_fn="setup", train_fn="train", validate_fn="validate", end_fn="end", test_fn="test", **decoargs):
