@@ -26,7 +26,22 @@ REPLACEMENTS = [("%Y", 4), ("%m", 2), ("%d", 2), ("%H", 2), ("%M", 2), ("%S", 2)
 
 
 class ExperimentLogger(AbstractLogger):
-    """A single class for logging"""
+    """A single class for logging your experiments to file.
+
+    It creates a experiment folder in your base folder and a folder structure to store your experiment files.
+    The folder structure is :
+        base_dir/
+            new_experiment_folder/
+                checkpoint/
+                config/
+                img/
+                log/
+                plot/
+                result/
+                save/
+
+
+    """
 
     def __init__(self,
                  experiment_name,
@@ -36,6 +51,17 @@ class ExperimentLogger(AbstractLogger):
                  text_logger_args=None,
                  plot_logger_args=None,
                  **kwargs):
+        """
+        Initializes the Experiment logger and creates the experiment folder structure
+
+        Args:
+            experiment_name (str): The name of the experiment
+            base_dir (str): The base directory in which the experiment folder will be created
+            folder_format (str): The format for the naming of the experiment folder
+            resume (bool): if True use the given folder and do not create new ones
+            text_logger_args: Parameters for the TextLogger initialization
+            plot_logger_args: Parameters for the NumpyPlotFileLogger initialization
+        """
 
         super(ExperimentLogger, self).__init__(**kwargs)
 
@@ -95,34 +121,88 @@ class ExperimentLogger(AbstractLogger):
 
     def show_image(self, image, name, file_format=".png", **kwargs):
         """
-        This function shows an image.
+        This function saves an image in the experiment img folder.
 
         Args:
             image(np.ndarray): image to be shown
             name(str): image title
+            file_format (str): file format of the image
         """
         self.plot_logger.show_image(image, name, file_format=".png", **kwargs)
 
     def show_barplot(self, array, name, file_format=".png", **kwargs):
+        """
+        This function saves a barplot in the experiment plot folder.
+
+        Args:
+            array(np.ndarray): array to be plotted
+            name(str): image title
+            file_format (str): file format of the image
+        """
         self.plot_logger.show_barplot(
             array, name, file_format=".png", **kwargs)
 
     def show_lineplot(self, y_vals, x_vals, name, file_format=".png", **kwargs):
+        """
+        This function saves a line plot in the experiment plot folder.
+
+        Args:
+            x_vals: x values of the line
+            y_vals: y values of the line
+            name(str): image title
+            file_format (str): file format of the image
+        """
         self.plot_logger.show_lineplot(
             y_vals, x_vals, name, file_format=".png", **kwargs)
 
     def show_piechart(self, array, name, file_format=".png", **kwargs):
+        """
+        This function saves a piechart in the experiment plot folder.
+
+        Args:
+            array(np.ndarray): array to be plotted
+            name(str): image title
+            file_format (str): file format of the image
+        """
         self.plot_logger.show_piechart(
             array, name, file_format=".png", **kwargs)
 
     def show_scatterplot(self, array, name, file_format=".png", **kwargs):
+        """
+        This function saves a scatterplot in the experiment plot folder.
+
+        Args:
+            array(np.ndarray): array to be plotted
+            name(str): image title
+            file_format (str): file format of the image
+        """
         self.plot_logger.show_scatterplot(
             array, name, file_format=".png", **kwargs)
 
     def show_value(self, value, name=None, counter=None, tag=None, file_format=".png", **kwargs):
+        """
+        This function saves a value as a consequtive line plot.
+
+        Args:
+            value(np.ndarray): value to be plotted
+            name(str): image title
+            counter: y-value of the image (if not suppled simply increases for each call)
+            tag: group/label for the value. Values with the same tag will be plotted in the same plot
+            file_format (str): file format of the image
+        """
         self.plot_logger.show_value(value, name, counter, tag, file_format, **kwargs)
 
     def show_text(self, text, name=None, logger="default", **kwargs):
+        """
+        Logs a text to a log file.
+
+        Args:
+            text: The text to be logged
+            name: Name of the text
+            logger: log file (in the experiment log folder) in which the text will be logged.
+            **kwargs:
+
+        """
         self.text_logger.show_text(text, name, logger, **kwargs)
 
     def save_model(self):
@@ -132,12 +212,29 @@ class ExperimentLogger(AbstractLogger):
         raise NotImplementedError
 
     def save_config(self, data, name, **kwargs):
+        """
+        Saves a config as a json file in the experiment config dir
+
+        Args:
+            data: The data to be stored as config json
+            name: The name of the json file in which the data will be stored
+
+        """
 
         if not name.endswith(".json"):
             name += ".json"
         data.dump(os.path.join(self.config_dir, name), **kwargs)
 
     def load_config(self, name, **kwargs):
+        """
+        Loads a config from a json file from the experiment config dir
+
+        Args:
+            name: the name of the config file
+
+        Returns: A Config/ dict filled with the json file content
+
+        """
 
         if not name.endswith(".json"):
             name += ".json"
@@ -152,6 +249,16 @@ class ExperimentLogger(AbstractLogger):
         raise NotImplementedError
 
     def save_result(self, data, name, indent=4, separators=(",", ": "), **kwargs):
+        """
+        Saves data as a json file in the experiment result dir
+
+        Args:
+            data: The data to be stored as result json
+            name: name of the result json file
+            indent: Indent for the json file
+            separators: Separators for the json file
+
+        """
 
         if not name.endswith(".json"):
             name += ".json"
@@ -164,6 +271,15 @@ class ExperimentLogger(AbstractLogger):
                   **kwargs)
 
     def save_dict(self, data, path, indent=4, separators=(",", ": "), **kwargs):
+        """
+        Saves a dict as a json file in the experiment save dir
+
+        Args:
+            data: The data to be stored as save file
+            path: sub path in the save folder (or simply filename)
+            indent: Indent for the json file
+            separators: Separators for the json file
+        """
 
         if not path.endswith(".json"):
             path += ".json"
@@ -176,6 +292,14 @@ class ExperimentLogger(AbstractLogger):
                   **kwargs)
 
     def load_dict(self, path):
+        """
+        Loads a json file as dict from a sub path in the experiment save dir
+
+        Args:
+            path: sub path to the file (starting from the experiment save dir)
+
+        Returns: The restored data as a dict
+        """
 
         if not path.endswith(".json"):
             path += ".json"
@@ -183,6 +307,13 @@ class ExperimentLogger(AbstractLogger):
         return json.load(open(path, "r"), cls=MultiTypeDecoder)
 
     def save_numpy_data(self, data, path):
+        """
+            Saves a numpy array in the experiment save dir
+
+            Args:
+                data: The array to be stored as a save file
+                path: sub path in the save folder (or simply filename)
+        """
 
         if not path.endswith(".npy"):
             path += ".npy"
@@ -191,6 +322,14 @@ class ExperimentLogger(AbstractLogger):
         np.save(path, data)
 
     def load_numpy_data(self, path):
+        """
+        Loads a numpy file from a sub path in the experiment save dir
+
+        Args:
+            path: sub path to the file (starting from the experiment save dir)
+
+        Returns: The restored numpy array
+        """
 
         if not path.endswith(".npy"):
             path += ".npy"
@@ -198,6 +337,13 @@ class ExperimentLogger(AbstractLogger):
         return np.load(path)
 
     def save_pickle(self, data, path):
+        """
+            Saves a object data in the experiment save dir via pickle
+
+            Args:
+                data: The data to be stored as a save file
+                path: sub path in the save folder (or simply filename)
+        """
 
         path = os.path.join(self.save_dir, path)
         create_folder(os.path.dirname(path))
@@ -205,12 +351,28 @@ class ExperimentLogger(AbstractLogger):
             pickle.dump(data, out)
 
     def load_pickle(self, path):
+        """
+        Loads a object via pickle from a sub path in the experiment save dir
+
+        Args:
+            path: sub path to the file (starting from the experiment save dir)
+
+        Returns: The restored object
+        """
 
         path = os.path.join(self.save_dir, path)
         with open(path, "rb") as in_:
             return pickle.load(in_)
 
     def save_file(self, filepath, path=None):
+        """
+        Copies a file to the experiment save dir
+
+        Args:
+            filepath: Path to the file to be copied to the experiment save dir
+            path: sub path to the target file (starting from the experiment save dir, does not have to exist yet)
+
+        """
 
         if path is None:
             target_dir = self.save_dir
@@ -220,6 +382,20 @@ class ExperimentLogger(AbstractLogger):
         shutil.copy(filepath, os.path.join(target_dir, filename))
 
     def resolve_format(self, input_, resume):
+        """
+        Given some input pattern, tries to find the best matching folder name by resolving the format. Options are:
+         - Run-number: {run_number}
+         - Time: "%Y%m%d-%H%M%S
+         - Member variables (e.g experiment_name) : {variable_name} (e.g. {experiment_name})
+
+
+        Args:
+            input_: The format to be resolved
+            resume: Flag if folder should be resumed
+
+        Returns: The resolved folder name
+
+        """
 
         if resume:
 
