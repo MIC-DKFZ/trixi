@@ -44,10 +44,11 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         """
         Plots statstics (mean, std, abs(max)) of the weights or the corresponding gradients of a model as a barplot
 
-        :param model: Model with the weights
-        :param env_appendix: visdom environment name appendix, if none is given, it uses "-histogram"
-        :param model_name: Name of the model (is used as window name)
-        :param plot_grad: If false plots weight statistics, if true plot the gradients of the weights
+        Args:
+            model: Model with the weights.
+            env_appendix: Visdom environment name appendix, if none is given, it uses "-histogram".
+            model_name: Name of the model (is used as window name).
+            plot_grad: If false plots weight statistics, if true plot the gradients of the weights.
         """
 
         if env_appendix is None:
@@ -133,9 +134,11 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         """
 
         def make_dot(output_var, state_dict=None):
-            """ Produces Graphviz representation of Pytorch autograd graph
+            """
+            Produces Graphviz representation of Pytorch autograd graph.
             Blue nodes are the Variables that require grad, orange are Tensors
-            saved for backward in torch.autograd.Function
+            saved for backward in torch.autograd.Function.
+
             Args:
                 output_var: output Variable
                 state_dict: dict of (name, parameter) to add names to node that require grad
