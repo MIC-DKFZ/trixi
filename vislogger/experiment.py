@@ -183,28 +183,27 @@ class PyTorchExperiment(Experiment):
             self._config_raw = Config(update_from_argv=True)
 
         self.n_epochs = n_epochs
-        if "n_epochs" in config:
-            self.n_epochs = config.n_epochs
+        if "n_epochs" in self._config_raw:
+            self.n_epochs = self._config_raw.n_epochs
 
         self.seed = seed
-        if "seed" in config:
-            self.seed = config.seed
+        if "seed" in self._config_raw:
+            self.seed = self._config_raw.seed
         if self.seed is None:
             random_data = os.urandom(4)
             seed = int.from_bytes(random_data, byteorder="big")
-            config.seed = seed
+            self._config_raw.seed = seed
             self.seed = seed
 
         self.exp_name = name
-        if "name" in config:
-            name = config.name
-            self.exp_name = config.name
+        if "name" in self._config_raw:
+            self.exp_name = self._config_raw.name
         if append_rnd_to_name:
             rnd_str = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(5))
             self.exp_name += "-" + rnd_str
 
-        if "base_dir" in config:
-            base_dir = config.base_dir
+        if "base_dir" in self._config_raw:
+            base_dir = self._config_raw.base_dir
 
         self.checkpoint_to_cpu = checkpoint_to_cpu
         self.results = dict()
@@ -221,7 +220,7 @@ class PyTorchExperiment(Experiment):
             if explogger_kwargs is None:
                 explogger_kwargs = {}
             self.elog = vislogger.pytorchexperimentlogger.PytorchExperimentLogger(base_dir=base_dir,
-                                                                                  experiment_name=name,
+                                                                                  experiment_name=self.exp_name,
                                                                                   **explogger_kwargs)
             if explogger_c_freq is not None and explogger_c_freq > 0:
                 logger_list.append((self.elog, explogger_c_freq))
