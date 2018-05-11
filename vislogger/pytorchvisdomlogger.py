@@ -133,7 +133,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         """
 
         def make_dot(output_var, state_dict=None):
-            """ Produces Graphviz representation of PyTorch autograd graph
+            """ Produces Graphviz representation of Pytorch autograd graph
             Blue nodes are the Variables that require grad, orange are Tensors
             saved for backward in torch.autograd.Function
             Args:

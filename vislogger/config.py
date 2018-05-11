@@ -75,7 +75,7 @@ class Config(dict):
                     pass
             self[superkey][subkeys] = value
         elif type(value) == dict:
-            super(Config, self).__setitem__(key, Config(**value))
+            super(Config, self).__setitem__(key, Config(config=value))
         else:
             super(Config, self).__setitem__(key, value)
 
@@ -183,10 +183,41 @@ class Config(dict):
 
     @staticmethod
     def init_objects(config):
+        """Returns a new Config with types converted to instances.
+
+        Any value that is a Config and contains a type key will be converted to
+        an instance of that type::
+
+            {
+                "stuff": "also_stuff",
+                "convert_me": {
+                    type: {
+                        "param": 1,
+                        "other_param": 2
+                    },
+                    "something_else": "hopefully_useless"
+                }
+            }
+
+        becomes::
+
+            {
+                "stuff": "also_stuff",
+                "convert_me": type(param=1, other_param=2)
+            }
+
+        Note that additional entries can be lost as shown above.
+
+        Args:
+            config (Config): New Config will be built from this one
+
+        Returns:
+            Config: A new config with instances made from type entries.
+        """
 
         def init_sub_objects(objs):
             if isinstance(objs, dict):
-                ret_dict = {}
+                ret_dict = Config()
                 for key, val in objs.items():
                     if isinstance(key, type):
                         init_param = init_sub_objects(val)
@@ -197,8 +228,6 @@ class Config(dict):
                         else:
                             init_obj = key()
                         return init_obj
-                    elif isinstance(val, Config):
-                        ret_dict[key] = Config(config=init_sub_objects(val))
                     elif isinstance(val, (dict, list, tuple, set)):
                         ret_dict[key] = init_sub_objects(val)
                     else:
@@ -212,9 +241,7 @@ class Config(dict):
             else:
                 return objs
 
-        conv_config = init_sub_objects(config)
-
-        return Config(config=conv_config)
+        return init_sub_objects(config)
 
     def __str__(self):
         return self.dumps(sort_keys=True)
@@ -226,15 +253,17 @@ class Config(dict):
     def difference_config_static(*configs):
         """Make a Config of all elements that differ between N configs.
 
-        The resulting Config looks like this:
+        The resulting Config looks like this::
 
-            {key: (config1[key], config2[key], ...)}
+            {
+                key: (config1[key], config2[key], ...)
+            }
 
         If the key is missing, None will be inserted. The inputs will not be
         modified.
 
         Args:
-            configs (Config): First config
+            configs (Config): Any number of Configs
 
         Returns:
             Config: Possibly empty
@@ -277,6 +306,67 @@ class Config(dict):
 
         return difference
 
+    def flat(self, keep_lists=True):
+        """Returns a flattened version of the Config as dict.
+
+        Nested Configs and lists will be replaced by concatenated keys like so::
+
+            {
+                "a": 1,
+                "b": [2, 3],
+                "c": {
+                    "x": 4,
+                    "y": {
+                        "z": 5
+                    }
+                },
+                "d": (6, 7)
+            }
+
+        Becomes::
+
+            {
+                "a": 1,
+                "b": [2, 3], # if keep_lists is True
+                "b.0": 2,
+                "b.1": 3,
+                "c.x": 4,
+                "c.y.z": 5,
+                "d": (6, 7)
+            }
+
+        We return a dict because dots are disallowed within Config keys.
+
+        Args:
+            keep_lists: Keeps list along with unpacked values
+
+        Returns:
+            dict: A flattened version of self
+        """
+
+        def flat_(obj):
+            def items():
+                for key, val in obj.items():
+                    if isinstance(val, dict):
+                        intermediate_dict = {}
+                        for subkey, subval in flat_(val).items():
+                            if type(subkey) == str:
+                                yield key + "." + subkey, subval
+                            else:
+                                intermediate_dict[subkey] = subval
+                        if len(intermediate_dict) > 0:
+                            yield key, intermediate_dict
+                    elif isinstance(val, list):
+                        if keep_lists:
+                            yield key, val
+                        for i, subval in enumerate(val):
+                            yield key + "." + str(i), subval
+                    else:
+                        yield key, val
+            return dict(items())
+
+        return flat_(self)
+
 
 def update_from_sys_argv(config):
     import sys
@@ -294,69 +384,41 @@ def update_from_sys_argv(config):
         else:
             raise argparse.ArgumentTypeError('Boolean value expected.')
 
-    def get_key_strings(config):
-        """Converts hierarichal keys into a list of keys (depth first transversal)"""
-
-        def parse_key_strings(config_dict, prefix_key=None):
-            if prefix_key is None:
-                prefix_key = []
-
-            output_list = []
-            for key in config_dict.keys():
-                if isinstance(config_dict[key], dict):
-                    sub_tree_list = parse_key_strings(config_dict[key], prefix_key=prefix_key + [key])
-                    output_list += sub_tree_list
-                else:
-                    output_list.append(prefix_key + [key])
-            return output_list
-
-        keys = parse_key_strings(config)
-        return keys
-
-    def get_values_for_keys(config, key_list):
-        """For a list of (hierarichal) keys return the corresponding value (--> tree search)"""
-        output_val = config
-        for key in key_list:
-            output_val = output_val.get(key, {})
-        return output_val
-
-    def set_value_for_key(config, key_list, value):
-        """For a list of (hierarichal) keys set a given value (--> tree search)"""
-        assert len(key_list) > 0
-        for key in key_list[:-1]:
-            config = config[key]
-        config[key_list[-1]] = value
-
-    def update_keys(config, update_obj):
-        for update_key, update_val in update_obj.items():
-            keys = update_key.split(".")
-            set_value_for_key(config, keys, update_val)
-
     if len(sys.argv) > 1:
 
         parser = argparse.ArgumentParser()
+        encoder = ModuleMultiTypeEncoder()
+        decoder = ModuleMultiTypeDecoder()
 
-        # parse just config keys
-        keys = get_key_strings(config)
-        for key in keys:
-            val = get_values_for_keys(config, key)
-            param_name = ".".join(key)
-            name_str = "--%s" % param_name
+        config_flat = config.flat()
+        for key, val in config_flat.items():
+            name = "--{}".format(key)
             if val is None:
-                parser.add_argument(name_str)
+                parser.add_argument(name)
             else:
                 if type(val) == bool:
-                    parser.add_argument(name_str, type=str2bool, default=val)
+                    parser.add_argument(name, type=str2bool, default=val)
                 elif isinstance(val, (list, tuple)):
-                    parser.add_argument(name_str, nargs='+', type=type(val[0]), default=val)
+                    if len(val) > 0 and type(val[0]) != type:
+                        parser.add_argument(name, nargs='+', type=type(val[0]), default=val)
+                    else:
+                        parser.add_argument(name, nargs='+', default=val)
                 else:
-                    parser.add_argument(name_str, type=type(val), default=val)
+                    if type(val) == type:
+                        val = encoder.encode(val)
+                    parser.add_argument(name, type=type(val), default=val)
 
         # parse args
         param, unknown = parser.parse_known_args()
+        param = vars(param)
 
         if len(unknown) > 0:
-            warnings.warn("Called with unknown arguments: %s" % unknown, RuntimeWarning)
+            warnings.warn("Called with unknown arguments: {}".format(unknown), RuntimeWarning)
+
+        # convert type args
+        for key, val in param.items():
+            if type(config_flat[key]) == type:
+                param[key] = decoder.decode(val)
 
         # update dict
-        update_keys(config, vars(param))
+        config.update(param)

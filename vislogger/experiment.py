@@ -138,7 +138,7 @@ class Experiment(object):
         pass
 
 
-class PyTorchExperiment(Experiment):
+class PytorchExperiment(Experiment):
     def __init__(self,
                  config=None,
                  name=None,
@@ -162,7 +162,7 @@ class PyTorchExperiment(Experiment):
                  telegramlogger_c_freq=1000,
                  append_rnd_to_name=False):
         """Inits an algo with a config, config needs to a n_epochs, name, output_folder and seed !"""
-        # super(PyTorchExperiment, self).__init__()
+        # super(PytorchExperiment, self).__init__()
         Experiment.__init__(self)
 
         if parse_sys_argv:
@@ -183,28 +183,27 @@ class PyTorchExperiment(Experiment):
             self._config_raw = Config(update_from_argv=True)
 
         self.n_epochs = n_epochs
-        if "n_epochs" in config:
-            self.n_epochs = config.n_epochs
+        if "n_epochs" in self._config_raw:
+            self.n_epochs = self._config_raw.n_epochs
 
         self.seed = seed
-        if "seed" in config:
-            self.seed = config.seed
+        if "seed" in self._config_raw:
+            self.seed = self._config_raw.seed
         if self.seed is None:
             random_data = os.urandom(4)
             seed = int.from_bytes(random_data, byteorder="big")
-            config.seed = seed
+            self._config_raw.seed = seed
             self.seed = seed
 
         self.exp_name = name
-        if "name" in config:
-            name = config.name
-            self.exp_name = config.name
+        if "name" in self._config_raw:
+            self.exp_name = self._config_raw.name
         if append_rnd_to_name:
             rnd_str = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(5))
             self.exp_name += "-" + rnd_str
 
-        if "base_dir" in config:
-            base_dir = config.base_dir
+        if "base_dir" in self._config_raw:
+            base_dir = self._config_raw.base_dir
 
         self.checkpoint_to_cpu = checkpoint_to_cpu
         self.results = dict()
@@ -221,7 +220,7 @@ class PyTorchExperiment(Experiment):
             if explogger_kwargs is None:
                 explogger_kwargs = {}
             self.elog = vislogger.pytorchexperimentlogger.PytorchExperimentLogger(base_dir=base_dir,
-                                                                                  experiment_name=name,
+                                                                                  experiment_name=self.exp_name,
                                                                                   **explogger_kwargs)
             if explogger_c_freq is not None and explogger_c_freq > 0:
                 logger_list.append((self.elog, explogger_c_freq))
@@ -248,7 +247,7 @@ class PyTorchExperiment(Experiment):
         if resume is not None:
             if isinstance(resume, str):
                 self.resume_path = resume
-            elif isinstance(resume, PyTorchExperiment):
+            elif isinstance(resume, PytorchExperiment):
                 self.resume_path = resume.elog.base_dir
 
         # self.elog.save_config(self.config, "config_pre")
@@ -570,7 +569,7 @@ def experimentify(setup_fn="setup", train_fn="train", validate_fn="validate", en
         def new_init(*args, **kwargs):
             prev_init(*args, **kwargs)
             kwargs.update(decoargs)
-            PyTorchExperiment.__init__(*args, **kwargs)
+            PytorchExperiment.__init__(*args, **kwargs)
 
         cls.__init__ = new_init
 
@@ -600,10 +599,10 @@ def experimentify(setup_fn="setup", train_fn="train", validate_fn="validate", en
         elif hasattr(cls, "test") and test_fn != "test":
             warnings.warn("Found already exisiting test function in class, so will use the exisiting one")
 
-        ### Copy methods from PyTorchExperiment into the original class
-        for elem in dir(PyTorchExperiment):
+        ### Copy methods from PytorchExperiment into the original class
+        for elem in dir(PytorchExperiment):
             if not hasattr(cls, elem):
-                trans_fn = getattr(PyTorchExperiment, elem)
+                trans_fn = getattr(PytorchExperiment, elem)
                 setattr(cls, elem, trans_fn)
 
         return cls

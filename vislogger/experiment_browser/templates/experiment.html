@@ -182,9 +182,11 @@
                                 {% for img in img_group %}
                                 <div class="mySlides">
                                     <div class="numbertext">{{ loop.index }} / {{ loop.length }}</div>
-                                    <img class="lazyimg" src="" lazysrc="{{img_path}}/{{ img }}" style="width:100%"
-                                         alt="{{ img }}"
-                                         title="{{ img }}">
+                                    <a href="{{img_path}}/{{ img }}" target="_blank">
+                                        <img class="lazyimg" src="" lazysrc="{{img_path}}/{{ img }}" style="width:100%"
+                                             alt="{{ img }}"
+                                             title="{{ img }}">
+                                    </a>
                                     <div class="text">{{ img }}</div>
                                 </div>
                                 {% endfor %}

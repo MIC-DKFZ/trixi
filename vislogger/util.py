@@ -2,6 +2,7 @@ import ast
 import importlib
 import json
 import logging
+import numpy as np
 import os
 import random
 import re
@@ -9,6 +10,7 @@ import string
 import matplotlib.pyplot as plt
 import subprocess as subp
 import time
+import traceback
 import warnings
 from collections import defaultdict
 from hashlib import sha256
@@ -60,7 +62,7 @@ class MultiTypeEncoder(CustomJSONEncoder):
 
 class ModuleMultiTypeEncoder(MultiTypeEncoder):
 
-    def _encode(self, obj):
+    def _encode(self, obj, strict=False):
         if type(obj) == type:
             return "__type__({}.{})".format(obj.__module__, obj.__name__)
         elif isinstance(obj, FunctionType):
@@ -68,7 +70,16 @@ class ModuleMultiTypeEncoder(MultiTypeEncoder):
         elif isinstance(obj, ModuleType):
             return "__module__({})".format(obj.__name__)
         else:
-            return super(ModuleMultiTypeEncoder, self)._encode(obj)
+            try:
+                return super(ModuleMultiTypeEncoder, self)._encode(obj)
+            except Exception as e:
+                if strict:
+                    raise e
+                else:
+                    message = "Could not pickle object of type {}\n".format(type(obj))
+                    message += traceback.format_exc()
+                    warnings.warn(message)
+                    return repr(obj)
 
 
 class CustomJSONDecoder(json.JSONDecoder):
@@ -306,10 +317,10 @@ class ResultLogDict(LogDict):
             data = item["data"]
             if "counter" in item and item["counter"] is not None:
                 self.cntr_dict[key] = item["counter"]
-            json_dict = {key: dict(data=data, label=item["label"], epoch=item["epoch"],
-                                   counter=self.cntr_dict[key])}
+            json_dict = {key: ResultElement(data=data, label=item["label"], epoch=item["epoch"],
+                                            counter=self.cntr_dict[key])}
         else:
-            json_dict = {key: dict(data=data, counter=self.cntr_dict[key])}
+            json_dict = {key: ResultElement(data=data, counter=self.cntr_dict[key])}
         self.cntr_dict[key] += 1
         self.logger.info(json.dumps(json_dict) + ",")
 
@@ -324,6 +335,10 @@ class ResultElement(dict):
         super(ResultElement, self).__init__()
 
         if data is not None:
+            if issubclass(type(data), np.float):
+                data = float(data)
+            if issubclass(type(data), np.int):
+                data = int(data)
             self["data"] = data
         if label is not None:
             self["label"] = label

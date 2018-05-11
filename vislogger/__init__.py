@@ -32,7 +32,7 @@ try:
     from vislogger.pytorchplotfilelogger import PytorchPlotFileLogger
     from vislogger.pytorchvisdomlogger import PytorchVisdomLogger
     from vislogger.pytorchexperimentlogger import PytorchExperimentLogger
-    from vislogger.experiment import PyTorchExperiment
+    from vislogger.experiment import PytorchExperiment
 except ImportError as e:
     print("Could not import Pytorch related modules.")
     print(e)
