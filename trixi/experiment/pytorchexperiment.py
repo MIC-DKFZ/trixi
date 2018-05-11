@@ -37,7 +37,7 @@ class PytorchExperiment(Experiment):
         end()
 
     To get your own experiment simply inherit from the PytorchExperiment and overwrite the setup(), prepare(),
-    train(), validate() and end() method (or you can use the experimental decorator "experimentify" to convert your
+    train(), validate() method (or you can use the experimental decorator "experimentify" to convert your
     class into a experiment).
     Then you can run your own experiment by calling the run() method.
 
@@ -65,6 +65,7 @@ class PytorchExperiment(Experiment):
                  ignore_resume_config=False,
                  resume_save_types=("model", "optimizer", "simple", "th_vars", "results"),
                  parse_sys_argv=False,
+                 parse_config_sys_argv=True,
                  checkpoint_to_cpu=True,
                  use_visdomlogger=True,
                  visdomlogger_kwargs=None,
@@ -76,7 +77,44 @@ class PytorchExperiment(Experiment):
                  telegramlogger_kwargs=None,
                  telegramlogger_c_freq=1000,
                  append_rnd_to_name=False):
-        """Inits an algo with a config, config needs to a n_epochs, name, output_folder and seed !"""
+        """
+        Initializes the Pytorch experiment and creates the basic experiment infrastructure
+
+        Args:
+            config (dict or Config): A config, if name, n_epochs, seed, base_dir, given in the config it will
+            automatically overwrite the other args/kwargs with the values from the config. In addition (defined by
+            parse_config_sys_argv) the config automatically parses the argv arguments and updates its values if a
+             key matches a console argument
+            name (str): The name of the PytorchExperiment
+            n_epochs (int): The number of epochs (number of times the training cycle will be executed)
+            seed (int): A random seed (which will set the random, numpy and torch seed)
+            base_dir (str): A base directory in which the experiment result folder will be created
+            globs: the globals() of the script which in run. This is nesseary to get and save the executed files in
+                the experiment folder.
+            resume (str of PytorchExperiment): Another Pytorch experiment or path to the result dir from another
+                PytorchExperiment from which in will load the pytorch modules and other member variables and resume
+                the experiment
+            ignore_resume_config (bool): If True it will not load resume with the config from the resume Experiment
+                but take the current/own config
+            resume_save_types (list): A list which can define which values to restore when resuming. Choices are:
+                ("model" <-- Pytorch models, "optimizer" <-- Optimizers, "simple" <-- Simple python variables (basic
+                types and list/tuples ), "th_vars" <-- torch tensors/variables, "results" <-- The result dict)
+            parse_sys_argv (bool): Parsing the console arguments (argv) to get a config_path and/or resume_path
+            parse_config_sys_argv (bool): Parse argv to update the config (if the keys match)
+            checkpoint_to_cpu (bool): When checkpointing transfer all tensors to the cpu beforehand
+            use_visdomlogger (bool): Use a pytorch visdom logger. Is accessible via the vlog variable
+            visdomlogger_kwargs (dict): Keyword arguments will are passed to the pytorch visdom logger initialization
+            visdomlogger_c_freq (int): The frequency x ( == one in x) in which the combined logger will call the visdom
+                logger
+            use_explogger (bool): Use a experiment logger. Is accessible via the elog variable. It will create the
+                experiment folder structure
+            explogger_kwargs (dict): Keyword arguments will are passed to the experiment logger initialization
+            explogger_c_freq (int): The frequency in which the combined logger will call the experiment logger
+            use_telegramlogger (bool): Use a telegram logger. Is accessible via the tlog variable.
+            telegramlogger_kwargs (dict):  Keyword arguments will are passed to the telegram logger initialization
+            telegramlogger_c_freq (int): The frequency in which the combined logger will call the telegram logger
+            append_rnd_to_name (bool): If True will append a random six digit string to the experiment name
+        """
         # super(PytorchExperiment, self).__init__()
         Experiment.__init__(self)
 
@@ -89,13 +127,13 @@ class PytorchExperiment(Experiment):
 
         self._config_raw = None
         if isinstance(config, str):
-            self._config_raw = Config(file_=config, update_from_argv=True)
+            self._config_raw = Config(file_=config, update_from_argv=parse_config_sys_argv)
         elif isinstance(config, Config):
-            self._config_raw = Config(config=config, update_from_argv=True)
+            self._config_raw = Config(config=config, update_from_argv=parse_config_sys_argv)
         elif isinstance(config, dict):
-            self._config_raw = Config(config=config, update_from_argv=True)
+            self._config_raw = Config(config=config, update_from_argv=parse_config_sys_argv)
         else:
-            self._config_raw = Config(update_from_argv=True)
+            self._config_raw = Config(update_from_argv=parse_config_sys_argv)
 
         self.n_epochs = n_epochs
         if 'n_epochs' in self._config_raw:
@@ -140,6 +178,7 @@ class PytorchExperiment(Experiment):
             if explogger_c_freq is not None and explogger_c_freq > 0:
                 logger_list.append((self.elog, explogger_c_freq))
 
+            # Set results log dict to the right path
             self.results = ResultLogDict("results-log.json", base_dir=self.elog.result_dir)
             self.results.print_to_file("[")
         if use_telegramlogger:
@@ -148,8 +187,6 @@ class PytorchExperiment(Experiment):
             self.tlog = TelegramLogger(**telegramlogger_kwargs, exp_name=self.exp_name)
             if telegramlogger_c_freq is not None and telegramlogger_c_freq > 0:
                 logger_list.append((self.tlog, telegramlogger_c_freq))
-
-            # Set results log dict to the right path
 
         self.clog = CombinedLogger(*logger_list)
 
@@ -179,6 +216,15 @@ class PytorchExperiment(Experiment):
         self.elog.text_logger.log_to("\n".join(traceback.format_tb(e.__traceback__)), "err")
 
     def update_attributes(self, var_dict, ignore=()):
+        """
+        Updates the member attributes with the attributes given in the var_dict
+
+        Args:
+            var_dict: dict in which the values which are updated are stored. If a key matches a member attribute name
+                the member attribute will be updated
+            ignore: a list of keys to ignore
+
+        """
         for key, val in var_dict.items():
             if key in ignore:
                 continue
@@ -202,7 +248,12 @@ class PytorchExperiment(Experiment):
         return pyth_optimizers
 
     def get_simple_variables(self, ignore=()):
-        """Returns all variables in the experiment which might be interesting"""
+        """
+        Returns all variables in the experiment which might be interesting in a dict.
+
+        Args:
+            ignore: A list of names, which will be ignores
+        """
         simple_vars = dict()
         for key, val in self.__dict__.items():
             if key in ignore:
@@ -222,25 +273,36 @@ class PytorchExperiment(Experiment):
         return pytorch_vars
 
     def save_results(self, name="results.json"):
+        """
+        Saves the result dict as a json file in the result dir of the experiment logger.
+
+        Args:
+            name: The name of the json file, in which the results are written.
+
+        """
         with open(os.path.join(self.elog.result_dir, name), "w") as file_:
             json.dump(self.results, file_, indent=4)
 
     def save_pytorch_models(self):
+        """Saves all pytorch models as model files in the experiment model folder"""
         pyth_modules = self.get_pytorch_modules()
         for key, val in pyth_modules.items():
             self.elog.save_model(val, key)
 
     def load_pytorch_models(self):
+        """Loads all pytorch models as models frpom the files in the experiment model folder"""
         pyth_modules = self.get_pytorch_modules()
         for key, val in pyth_modules.items():
             self.elog.load_model(val, key)
 
     def log_simple_vars(self):
+        """Logs all simple python member variables as a json file in the log dir"""
         simple_vars = self.get_simple_variables()
         with open(os.path.join(self.elog.log_dir, "simple_vars.json"), "w") as file_:
             json.dump(simple_vars, file_)
 
     def load_simple_vars(self):
+        """Restores all simple python member variables from a json file in the log dir"""
         simple_vars = {}
         with open(os.path.join(self.elog.log_dir, "simple_vars.json"), "r") as file_:
             simple_vars = json.load(file_)
@@ -248,6 +310,19 @@ class PytorchExperiment(Experiment):
 
     def save_checkpoint(self, name="checkpoint", save_types=("model", "optimizer", "simple", "th_vars", "results"),
                         n_iter=None, iter_format="{:05d}", prefix=False):
+        """
+        Saves a current checkpoint from the experiment.
+
+        Args:
+            name: The name of the checkpoint file
+            save_types: What kind of member variables should be stored: Choices are:
+                ("model" <-- Pytorch models, "optimizer" <-- Optimizers, "simple" <-- Simple python variables (basic
+                types and list/tuples ), "th_vars" <-- torch tensors/variables, "results" <-- The result dict)
+            n_iter: Number of iteration. together with the name, defined by the iter_format a file name will be created
+            iter_format: Defines how the name and the n_iter will be combined
+            prefix: If True, the formated n_iter will be appended as a prefix, otherwise as a suffix
+
+        """
 
         model_dict = {}
         optimizer_dict = {}
@@ -273,6 +348,22 @@ class PytorchExperiment(Experiment):
 
     def load_checkpoint(self, name="checkpoint", save_types=("model", "optimizer", "simple", "th_vars", "results"),
                         n_iter=None, iter_format="{:05d}", prefix=False, path=None):
+
+        """
+        Loads a checkpoint and restores the experiment.
+
+        Args:
+            name: The name of the checkpoint file
+            save_types: What kind of member variables should be stored: Choices are:
+                ("model" <-- Pytorch models, "optimizer" <-- Optimizers, "simple" <-- Simple python variables (basic
+                types and list/tuples ), "th_vars" <-- torch tensors/variables, "results" <-- The result dict)
+            n_iter: Number of iteration. together with the name, defined by the iter_format a file name will be created
+            iter_format: Defines how the name and the n_iter will be combined
+            prefix: If True, the formated n_iter will be appended as a prefix, otherwise as a suffix
+            path: If a path is given than it will take the current experiment dir and formated name, otherwise it will
+                simple use the path and the formatted name to define the checkpoint file
+
+        """
 
         model_dict = {}
         optimizer_dict = {}
@@ -311,6 +402,7 @@ class PytorchExperiment(Experiment):
         self.update_attributes(restore_dict)
 
     def end(self):
+        """Ends the experiment and stores the final results/ checkpoint"""
         if isinstance(self.results, ResultLogDict):
             self.results.print_to_file("]")
         self.save_results()
@@ -320,12 +412,15 @@ class PytorchExperiment(Experiment):
         self.elog.print("Experiment ended. Checkpoints stored =)")
 
     def end_test(self):
+        """Ends the experiment and stores the final results and config"""
         self.save_results()
         self.elog.save_config(Config(**{'name': self.exp_name, 'time': self._time_start, 'state': self._exp_state}),
                               "exp")
         self.elog.print("Testing ended. Results stored =)")
 
     def at_exit_func(self):
+        """Stores the results and checkpoint at the end (if nor already stored). This method is also called if an
+        error occurs"""
         if self._exp_state not in ("Ended", "Tested"):
             if isinstance(self.results, ResultLogDict):
                 self.results.print_to_file("]")
@@ -347,6 +442,7 @@ class PytorchExperiment(Experiment):
                               "exp")
 
     def prepare_resume(self):
+        """Tries to resume the experiment by using the defined resume path or resume PytorchExperiment"""
         checkpoint_file = ""
         base_dir = ""
 
@@ -388,12 +484,29 @@ class PytorchExperiment(Experiment):
         self.save_temp_checkpoint()
 
     def save_temp_checkpoint(self):
+        """Saves the current checkpoint as checkpoint_current"""
         self.save_checkpoint(name="checkpoint_current")
 
     def save_end_checkpoint(self):
+        """Saves the current checkpoint as checkpoint_last"""
         self.save_checkpoint(name="checkpoint_last")
 
     def add_result(self, value, name, counter=None, label=None, plot_result=True):
+        """
+        Saves a results and add it to the result dict, this is similar to results[key] = val, but in addition also
+        logs the value to the combined logger (it also stores in the results-logs file).
+
+        **This should be your preferred method to log your numeric values**
+
+        Args:
+            value: The value of your variable
+            name: The name/ key of your variable
+            counter: A counter which can be seen a the x-axis of your value
+            label: A label/ tag which can group similar values and will plot values with the same label in the same plot
+            plot_result: By default True, will also log all your values to the combined logger (with show value)
+
+        """
+
         label_name = label
         if label_name is None:
             label_name = name
@@ -414,16 +527,52 @@ class PytorchExperiment(Experiment):
             self.clog.show_value(value=value, name=plt_name, tag=tag, counter=counter, show_legend=legend)
 
     def get_result(self, name):
+        """
+        Similar to result[key] this will return the values in result with the given name/key
+
+        Args:
+            name: the name/ key for which a value is stores
+
+        Returns: The value with the key 'name' in the results dict
+
+        """
         return self.results.get(name)
 
     def add_result_without_epoch(self, val, name):
+        """
+        A faster method to store your results, has less overhead and does not call the combined logger
+
+        Args:
+            val: the values you want to add
+            name: the name/ key of your value
+
+        """
         self.results[name] = val
 
     def get_result_without_epoch(self, name):
+        """
+        Similar to result[key] this will return the values in result with the given name/key
+
+        Args:
+            name: the name/ key for which a value is stores
+
+        Returns: The value with the key 'name' in the results dict
+
+        """
         return self.results.get(name)
 
 
 def get_last_file(dir_, name=None):
+    """
+    Returns the (alphabetically) last file in the folder which matches the name supplied
+
+    Args:
+        dir_: The base directory to start the search in
+        name: The name pattern to match with the files
+
+    Returns: the path to the (alphabetically) last file
+
+    """
     if name is None:
         name = "*checkpoint*.pth.tar"
 
@@ -445,6 +594,12 @@ def get_last_file(dir_, name=None):
 
 
 def get_vars_from_sys_argv():
+    """
+    Parses the command line args (argv) and looks for --config_path and --resume_path and returns them if found.
+
+    Returns: a Tuple of (config_path, resume_path ) , None if it is not found
+
+    """
     import sys
     import argparse
 
@@ -467,6 +622,18 @@ def get_vars_from_sys_argv():
 
 
 def experimentify(setup_fn="setup", train_fn="train", validate_fn="validate", end_fn="end", test_fn="test", **decoargs):
+    """
+    Experimental decorator with monkey patches your class into a PytorchExperiment.
+    You can then call run on your new PytorchExperiment Class.
+
+    Args:
+        setup_fn: The name of your setup() function
+        train_fn: The name of your train() function
+        validate_fn: The name of your validate() function
+        end_fn: The name of your end() function
+        test_fn: The name of your test() function
+
+    """
     def wrap(cls):
 
         ### Initilaize both Classes (as original class)
