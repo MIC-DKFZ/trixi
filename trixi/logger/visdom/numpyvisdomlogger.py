@@ -27,10 +27,14 @@ class NumpyVisdomLogger(AbstractLogger):
         """
         Creates a new NumpyVisdomLogger object.
 
-        :param name: The name of the visdom environment
-        :param server: The address of the visdom server
-        :param port: The port of the visdom server
-        :param auto_close: Close all objects and kill process at the end of the python script
+        Args:
+            name: The name of the visdom environment
+            server: The address of the visdom server
+            port: The port of the visdom server
+            auto_close: Close all objects and kill process at the end of the python script
+            auto_start: Flag, if it should try to start a visdom server on the given ports
+            auto_start_ports: Ordered list of ports, to try to start a visdom server on (only on the first available
+            port)
         """
         super(NumpyVisdomLogger, self).__init__(**kwargs)
 
@@ -63,7 +67,8 @@ class NumpyVisdomLogger(AbstractLogger):
         """
         Loop for the internal process to process all visualization tasks
 
-        :param queue: queue with all visualization tasks
+        Args:
+            queue: queue with all visualization tasks
         """
 
         while True:
@@ -86,12 +91,13 @@ class NumpyVisdomLogger(AbstractLogger):
         """
         Displays an image in a window/pane at the visdom server
 
-        :param image: The image array to be displayed
-        :param name: The name of the image window
-        :param title: The title of the image window
-        :param caption: The of the image, displayed in the window
-        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
-        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        Args:
+            image: The image array to be displayed
+            name: The name of the image window
+            title: The title of the image window
+            caption: The of the image, displayed in the window
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
         if opts is None:
@@ -135,12 +141,13 @@ class NumpyVisdomLogger(AbstractLogger):
         """
         Displays multiple images in a window/pane at a visdom server
 
-        :param images: The image array to be displayed
-        :param name: The name of the window
-        :param title: The title of the image window
-        :param caption: The of the image, displayed in the window
-        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
-        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        Args:
+            images: The image array to be displayed
+            name: The name of the window
+            title: The title of the image window
+            caption: The of the image, displayed in the window
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
         if opts is None:
@@ -182,12 +189,16 @@ class NumpyVisdomLogger(AbstractLogger):
     def show_value(self, value, name=None, counter=None, tag=None, show_legend=True, env_appendix="", opts=None,
                    **kwargs):
         """
-        Creates a line plot that is automatically appended with new values.
+        Creates a line plot that is automatically appended with new values and plots it to a visdom server.
 
-        :param value: Value to be plotted / appended to the graph
-        :param name: The name of the window
-        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
-        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        Args:
+            value: Value to be plotted / appended to the graph (y-axis value)
+            name: The name of the window
+            counter: counter, which tells the number of the sample (with the same name) (x-axis value)
+            tag: Tag, grouping similar values. Values with the same tag will be plotted in the same plot
+            show_legend (bool): Flag, if it should display a legend
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
         if opts is None:
@@ -269,10 +280,11 @@ class NumpyVisdomLogger(AbstractLogger):
         """
         Displays a text in a visdom window
 
-        :param text: The text to be displayed
-        :param name: The name of the window
-        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
-        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        Args:
+             text: The text to be displayed
+             name: The name of the window
+             env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+             opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
         if opts is None:
@@ -310,12 +322,13 @@ class NumpyVisdomLogger(AbstractLogger):
         """
         Shows the progress as a pie chart.
 
-        :param num: Current progress. Either a relative value (0 <= num <= 1) or a absolute value if total is given (
-        but has to be smaller than total)
-        :param total: This if the total number of iterations.
-        :param name: The name of the window
-        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
-        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        Args:
+            num: Current progress. Either a relative value (0 <= num <= 1) or a absolute value if total is given (
+            but has to be smaller than total)
+            total: This if the total number of iterations.
+            name: The name of the window
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
         if opts is None:
@@ -373,11 +386,12 @@ class NumpyVisdomLogger(AbstractLogger):
         """
         Displays the histogramm of an array.
 
-        :param array: The array the histogram is calculated of
-        :param name: The name of the window
-        :param bins: Number of bins (== bars) in the histogram
-        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
-        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        Args:
+            array: The array the histogram is calculated of
+            name: The name of the window
+            bins: Number of bins (== bars) in the histogram
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
         if opts is None:
@@ -419,11 +433,12 @@ class NumpyVisdomLogger(AbstractLogger):
         """
         Displays a history of histograms as consequtive lines in a 3d space (similar to tensorflow)
 
-        :param array: New sample of the array that should be plotted (i.e. results in one line of the 3d histogramm)
-        :param name: The name of the window
-        :param bins: Number of bins in the histogram
-        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
-        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        Args:
+            array: New sample of the array that should be plotted (i.e. results in one line of the 3d histogramm)
+            name: The name of the window
+            bins: Number of bins in the histogram
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
         if opts is None:
@@ -480,12 +495,13 @@ class NumpyVisdomLogger(AbstractLogger):
         """
         Displays a bar plot from an array
 
-        :param array: array of shape NxM where N is the nomber of rows and M is the number of elements in the row.
-        :param legend: list of legend names. Has to have M elements.
-        :param rownames: list of row names. Has to have N elements.
-        :param name: The name of the window
-        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
-        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        Args:
+            array: array of shape NxM where N is the nomber of rows and M is the number of elements in the row.
+            legend: list of legend names. Has to have M elements.
+            rownames: list of row names. Has to have N elements.
+            name: The name of the window
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
         if opts is None:
@@ -530,12 +546,13 @@ class NumpyVisdomLogger(AbstractLogger):
         """
         Displays (multiple) lines plot, given values Y (and optional the corresponding X values)
 
-        :param y_vals: Array of shape MxN , where M is the number of points and N is the number of different line
-        :param x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if
-         not set the points are assumed to be equally distributed in the interval [0, 1] )
-        :param name: The name of the window
-        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
-        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        Args:
+            y_vals: Array of shape MxN , where M is the number of points and N is the number of different line
+            x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if
+            not set the points are assumed to be equally distributed in the interval [0, 1] )
+            name: The name of the window
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
         if opts is None:
@@ -576,14 +593,15 @@ class NumpyVisdomLogger(AbstractLogger):
     @convert_params
     def show_scatterplot(self, array, labels=None, name=None, env_appendix="", opts=None, **kwargs):
         """
-        Displays a scatter plots, with the points given in X
+        Displays a scatter plots, with the points given in array
 
-        :param array: A 2d array with size N x dim, where each element i \in N at X[i] results in a a 2d (if dim = 2)/
-         3d (if dim = 3) point.
-        :param labels: For each point a int label (starting from 1) can be given. Has to be an array of size N.
-        :param name: The name of the window
-        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
-        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        Args:
+            array: A 2d array with size N x dim, where each element i \in N at X[i] results in a a 2d (if dim = 2)/
+            3d (if dim = 3) point.
+            labels: For each point a int label (starting from 1) can be given. Has to be an array of size N.
+            name: The name of the window
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
         if opts is None:
@@ -625,11 +643,12 @@ class NumpyVisdomLogger(AbstractLogger):
         """
         Displays a pie chart.
 
-        :param array: Array of positive integers. Each integer will be presented as a part of the pie (with the total
-        as the sum of all integers)
-        :param name: The name of the window
-        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
-        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        Args:
+            array: Array of positive integers. Each integer will be presented as a part of the pie (with the total
+            as the sum of all integers)
+            name: The name of the window
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
         if opts is None:
@@ -669,10 +688,11 @@ class NumpyVisdomLogger(AbstractLogger):
         """
         Displays a svg file.
 
-        :param svg: Filename of the svg file which should be displayed
-        :param name: The name of the window
-        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
-        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        Args:
+            svg: Filename of the svg file which should be displayed
+            name: The name of the window
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
         if opts is None:
@@ -714,7 +734,8 @@ class NumpyVisdomLogger(AbstractLogger):
         """A util function for multiple values. Simple plots all values in a dict, there the window name is the key
         in the dict and the plotted value is the value of a dict (Simply calls the show_value function).
 
-        :param val_dict: Dict with key, values pairs which will be plotted
+        Args:
+            val_dict: Dict with key, values pairs which will be plotted
         """
 
         for name, value in val_dict:
@@ -726,12 +747,13 @@ class NumpyVisdomLogger(AbstractLogger):
         """
         Displays (multiple) lines plot, given values Y (and optional the corresponding X values)
 
-        :param y_vals: Array of shape MxN , where M is the number of points and N is the number of different line
-        :param x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if
-         not set the points are assumed to be equally distributed in the interval [0, 1] )
-        :param name: The name of the window
-        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
-        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        Args:
+            y_vals: Array of shape MxN , where M is the number of points and N is the number of different line
+            x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if
+            not set the points are assumed to be equally distributed in the interval [0, 1] )
+            name: The name of the window
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
         if opts is None:
@@ -776,14 +798,14 @@ class NumpyVisdomLogger(AbstractLogger):
     @convert_params
     def send_data(self, data, name=None, layout=None, endpoint='events', append=False, **kwargs):
         """
-        Displays (multiple) lines plot, given values Y (and optional the corresponding X values)
+        Sends data to a visdom server.
 
-        :param y_vals: Array of shape MxN , where M is the number of points and N is the number of different line
-        :param x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if
-         not set the points are assumed to be equally distributed in the interval [0, 1] )
-        :param name: The name of the window
-        :param env_appendix: appendix to the environment name, if used the new env is env+env_appendix
-        :param opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        Args:
+            data: The data to be send (has to be in the plotly / visdom format, see the offical visdom github page)
+            name: The name of the window
+            layout: Layout of the data
+            endpoint: Endpoint to recieve the data (or at least to which visdom endpoint to send it to)
+            append: Flag, if data should be appended
         """
 
         if layout is None:
@@ -848,6 +870,13 @@ class NumpyVisdomLogger(AbstractLogger):
 
 
 def start_visdom(port_list=(8080, 8000)):
+    """
+    Starts a visdom server on a given port
+
+    Args:
+        port_list: Priority list of port. Will start a visdom server on the first available port.
+
+    """
     import time
     from multiprocessing import Process
     import visdom.server

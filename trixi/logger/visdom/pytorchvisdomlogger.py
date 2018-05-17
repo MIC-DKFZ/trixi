@@ -211,8 +211,21 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         # Display model graph in visdom
         self.show_svg(svg=x, name=name)
 
-    def show_image_grid(self, images, name=None, title=None, caption=None, env_appendix="", opts=None,
+    def show_image_grid(self, images, name=None, caption=None, env_appendix="", opts=None,
                         image_args=None, **kwargs):
+        """
+        Calls the save image grid method (for abstract logger combatibility)
+
+        Args:
+           images: 4d- tensor (N, C, H, W)
+           name: The name of the window
+           caption: Caption of the generated image grid
+           env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+           opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+           image_args: Arguments for the tensorvision save image method
+
+
+        """
 
         if opts is None: opts = {}
         if image_args is None: image_args = {}
@@ -222,7 +235,6 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             "type": "image_grid",
             "tensor": tensor,
             "name": name,
-            "title": title,
             "caption": caption,
             "env_appendix": env_appendix,
             "opts": opts,
@@ -230,8 +242,12 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         }
         self._queue.put_nowait(viz_task)
 
-    def __show_image_grid(self, tensor, name=None, title=None, caption=None, env_appendix="", opts=None,
+    def __show_image_grid(self, tensor, name=None, caption=None, env_appendix="", opts=None,
                           image_args=None, **kwargs):
+        """
+          Internal show_image_grid method, called by the internal process.
+          This function does all the magic.
+        """
 
         if opts is None: opts = {}
         if image_args is None: image_args = {}
@@ -266,6 +282,20 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
     @convert_params
     def show_embedding(self, tensor, labels=None, name=None, method="tsne", n_dims=2, n_neigh=30, **meth_args):
+        """
+        Displays a tensor a an embedding
+
+        Args:
+            tensor: Tensor to be embedded an then displayed
+            labels: Labels of the entries in the tensor (first dimension)
+            name: The name of the window
+            method: Method used for embedding, options are: tsne, standard, ltsa, hessian, modified, isomap, mds,
+            spectral, umap
+            n_dims: dimensions to embed the data into
+            n_neigh: Neighbour parameter to kind of determin the embedding (see t-SNE for more information)
+            **meth_args: Further arguments which can be passed to the embedding method
+
+        """
 
         from sklearn import manifold
         import umap
@@ -323,7 +353,15 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
     @convert_params
     def show_roc_curve(self, tensor, labels, name):
+        """
+        Displays a roc curve given a tensor with scores and the coresponding labels
 
+        Args:
+            tensor: Tensor with scores (e.g class probability )
+            labels: Labels of the samples to which the scores match
+            name: The name of the window
+
+        """
         from sklearn import metrics
 
         def __show_roc_curve(self, tensor, labels, name):
@@ -341,7 +379,15 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
     @convert_params
     def show_pr_curve(self, tensor, labels, name):
+        """
+        Displays a precision recall curve given a tensor with scores and the coresponding labels
 
+        Args:
+            tensor: Tensor with scores (e.g class probability )
+            labels: Labels of the samples to which the scores match
+            name: The name of the window
+
+        """
         from sklearn import metrics
 
         def __show_roc_curve(self, tensor, labels, name):
@@ -359,6 +405,19 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
     @convert_params
     def show_classification_metrics(self, tensor, labels, name, metric=("roc-auc", "pr-auc", "pr-score")):
+        """
+        Displays some classification metrics as line plots in a graph (similar to show value (also uses show value
+        for the caluclated values))
+
+        Args:
+            tensor: Tensor with scores (e.g class probability )
+            labels: Labels of the samples to which the scores match
+            name: The name of the window
+            metric: List of metrics to calculate. Options are: roc-auc, pr-auc, pr-score, mcc, f1
+
+        Returns:
+
+        """
 
         from sklearn import metrics
 
@@ -396,6 +455,21 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
     def show_image_gradient(self, model, inpt, err_fn, grad_type="vanilla", n_runs=20, eps=0.1,
                             abs=False, **image_grid_params):
+        """
+        Given a model creates calculates the error and backpropagates it to the image and saves it (saliency map).
+
+        Args:
+            model: The model to be evaluated
+            inpt: Input to the model
+            err_fn: The error function the evaluate the output of the model on
+            grad_type: Gradient calculation method, currently supports (vanilla, vanilla-smooth, guided,
+            guided-smooth) ( the guided backprob can lead to segfaults -.-)
+            n_runs: Number of runs for the smooth variants
+            eps: noise scaling to be applied on the input image (noise is drawn from N(0,1))
+            abs (bool): Flag, if the gradient should be a absolute value
+            **image_grid_params: Params for make image grid.
+
+        """
         if grad_type == "vanilla":
             grad = get_vanilla_image_gradient(model, inpt, err_fn, abs)
         elif grad_type == "guided":
