@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import re
 from collections import OrderedDict, defaultdict
 
 import colorlover as cl
@@ -130,9 +131,13 @@ def group_images(images):
     group_dict = defaultdict(list)
 
     for img in images:
-        filename = os.path.basename(img)
+        filename = img.split("/img/")[1]
         base_name = os.path.splitext(filename)[0]
-        base_name = ''.join(e for e in base_name if e.isalpha())
+        number_groups = re.findall("\d+", base_name)
+        if len(number_groups) == 0:
+            base_name = ''.join(e for e in base_name if e.isalpha())
+        else:
+            base_name = base_name.replace(number_groups[0], "")
 
         group_dict[base_name].append(filename)
 
