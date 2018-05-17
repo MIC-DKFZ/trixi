@@ -430,7 +430,5 @@ def update_from_sys_argv(config):
         for i in ignore_:
             del param[i]
 
-        print(param)
-
         # update dict
         config.update(param)
