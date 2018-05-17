@@ -52,11 +52,11 @@ blueprint = Blueprint("data", __name__, static_url_path=base_dir, static_folder=
 app.register_blueprint(blueprint)
 
 
-def process_base_dir(base_dir, default_val="-", short_len=25):
+def process_base_dir(directory, default_val="-", short_len=25):
     """Create an overview table of all experiments in the given directory.
 
     Args:
-        base_dir (str): A directory containing experiment folders.
+        directory (str): A directory containing experiment folders.
         default_val (str): Default value if an entry is missing.
         short_len (int): Cut strings to this length. Full string in alt-text.
 
@@ -67,13 +67,17 @@ def process_base_dir(base_dir, default_val="-", short_len=25):
 
     """
 
+    if not os.path.isabs(directory):
+        directory = os.path.join(base_dir, directory)
+
     config_keys = set()
     result_keys = set()
     exps = []
 
     ### Load Experiments with keys / different param values
-    for sub_dir in sorted(os.listdir(base_dir)):
-        dir_path = os.path.join(base_dir, sub_dir)
+    non_experiment_dirs = []
+    for sub_dir in sorted(os.listdir(directory)):
+        dir_path = os.path.join(directory, sub_dir)
         if os.path.isdir(dir_path):
             try:
                 exp = ExperimentReader(dir_path)
@@ -83,9 +87,10 @@ def process_base_dir(base_dir, default_val="-", short_len=25):
                 result_keys.update(list(exp.get_results().keys()))
                 exps.append(exp)
             except Exception as e:
-                print("Could not load experiment: ", dir_path)
+                print("Could not load an experiment from: ", dir_path)
                 print(e)
                 print("-" * 20)
+                non_experiment_dirs.append(os.path.relpath(os.path.join(directory, sub_dir), base_dir))
 
     ### Remove unwanted keys
     config_keys -= set(IGNORE_KEYS)
@@ -111,13 +116,13 @@ def process_base_dir(base_dir, default_val="-", short_len=25):
         state = exp.exp_info.get("state", default_val) if "state" in exp.exp_info else exp.config.get("state",
                                                                                                       default_val)
 
-        rows.append((os.path.basename(exp.work_dir),
+        rows.append((os.path.relpath(exp.work_dir, base_dir),
                      str(name),
                      str(time),
                      str(state),
                      config_row, result_row))
 
-    return {"ccols": sorted_c_keys, "rcols": sorted_r_keys, "rows": rows}
+    return {"ccols": sorted_c_keys, "rcols": sorted_r_keys, "rows": rows, "noexp": non_experiment_dirs}
 
 
 def group_images(images):
@@ -216,6 +221,19 @@ def overview():
     try:
         base_info = process_base_dir(base_dir)
         base_info["title"] = base_dir
+        return render_template("overview.html", **base_info)
+    except Exception as e:
+        print(e.__repr__())
+        raise e
+        abort(500)
+
+
+@app.route("/overview", methods=["GET"])
+def overview_():
+    dir_ = request.args.get("dir")
+    try:
+        base_info = process_base_dir(dir_)
+        base_info["title"] = dir_
         return render_template("overview.html", **base_info)
     except Exception as e:
         print(e.__repr__())
