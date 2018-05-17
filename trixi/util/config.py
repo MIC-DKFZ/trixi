@@ -416,9 +416,21 @@ def update_from_sys_argv(config):
             warnings.warn("Called with unknown arguments: {}".format(unknown), RuntimeWarning)
 
         # convert type args
+        ignore_ = []
         for key, val in param.items():
             if type(config_flat[key]) == type:
                 param[key] = decoder.decode(val)
+            try:
+                key_split = key.split(".")
+                list_object, _ = ".".join(key_split[:-1]), int(key_split[-1])
+                if "--" + list_object in sys.argv:
+                    ignore_.append(key)
+            except ValueError as ve:
+                pass
+        for i in ignore_:
+            del param[i]
+
+        print(param)
 
         # update dict
         config.update(param)

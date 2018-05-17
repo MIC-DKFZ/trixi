@@ -315,6 +315,7 @@ class PytorchExperiment(Experiment):
         base_dir = ""
 
         if self.resume_path is not None:
+
             if isinstance(self.resume_path, str):
                 if self.resume_path.endswith(".pth.tar"):
                     checkpoint_file = self.resume_path
