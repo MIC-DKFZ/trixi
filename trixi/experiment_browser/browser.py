@@ -37,6 +37,8 @@ parser.add_argument("base_directory",
                     type=str)
 parser.add_argument("-d", "--debug", action="store_true",
                     help="Turn debug mode on, eg. for live reloading.")
+parser.add_argument("-x", "--expose", action="store_true",
+                    help="Make server externally visible")
 args = parser.parse_args()
 base_dir = args.base_directory
 if base_dir[-1] == os.sep:
@@ -346,7 +348,6 @@ def experiment_plots():
     return json.dumps({"graphs": graphs, "traces": traces})
 
 
-
-
 if __name__ == "__main__":
-    app.run(debug=args.debug)
+    host = "0.0.0.0" if args.expose else "localhost"
+    app.run(debug=args.debug, host=host)
