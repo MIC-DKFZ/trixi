@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import copy
 import json
 
 from trixi.util.util import ModuleMultiTypeDecoder, ModuleMultiTypeEncoder
@@ -8,7 +9,7 @@ from trixi.util.util import ModuleMultiTypeDecoder, ModuleMultiTypeEncoder
 
 class Config(dict):
 
-    def __init__(self, file_=None, config=None, update_from_argv=False, **kwargs):
+    def __init__(self, file_=None, config=None, update_from_argv=False, deep=False, **kwargs):
 
         super(Config, self).__init__()
 
@@ -22,11 +23,39 @@ class Config(dict):
             self.load(file_)
 
         if config is not None:
-            self.update(config)
+            self.update(config, deep)
 
-        self.update(kwargs)
+        self.update(kwargs, deep)
         if update_from_argv:
             update_from_sys_argv(self)
+
+    def update(self, dict_like, deep=False):
+
+        if deep:
+            self.deepupdate(dict_like)
+        else:
+            for key, value in dict_like.items():
+                if key in self and isinstance(value, dict):
+                    self[key].update(value)
+                else:
+                    self[key] = value
+
+    def deepupdate(self, dict_like):
+
+        def make_mutable(obj, attr, val):
+            if isinstance(val, dict):
+                obj[attr] = Config()
+                for k, v in val.items():
+                    make_mutable(obj[attr], k, v)
+            elif isinstance(val, list):
+                obj[attr] = [None, ] * len(val)
+                for i, item in enumerate(val):
+                    make_mutable(obj[attr], i, item)
+            else:
+                obj[attr] = val
+
+        for key, val in dict_like.items():
+            make_mutable(self, key, val)
 
     def __setattr__(self, key, value):
 
@@ -110,15 +139,6 @@ class Config(dict):
 
         key, value = str_.split("=")
         self.set_with_decode(key, value, stringify_value)
-
-    def update(self, dict_like):
-
-        for key, value in dict_like.items():
-
-            if key in self and isinstance(value, dict):
-                self[key].update(value)
-            else:
-                self[key] = value
 
     def update_missing(self, dict_like):
 
