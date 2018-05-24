@@ -38,7 +38,7 @@ def parse_args():
                         help="Turn debug mode on, eg. for live reloading.")
     parser.add_argument("-x", "--expose", action="store_true",
                         help="Make server externally visible")
-    parser.add_argument("-p", "--port", default=5001, type=int,
+    parser.add_argument("-p", "--port", default=5000, type=int,
                         help="Port to start the server on (5000 by default)")
     args = parser.parse_args()
     base_dir = args.base_directory
@@ -61,7 +61,7 @@ def create_flask_app(base_dir):
 
 def register_url_routes(app, base_dir):
     app.add_url_rule("/", "overview", lambda: overview(base_dir), methods=["GET"])
-    app.add_url_rule("/overview", "overview_", lambda: overview_(), methods=["GET"])
+    app.add_url_rule("/overview", "overview_", lambda: overview_(base_dir), methods=["GET"])
     app.add_url_rule('/experiment', "experiment", lambda: experiment(base_dir), methods=['GET'])
     app.add_url_rule('/experiment_log', "experiment_log", lambda: experiment_log(base_dir), methods=['GET'])
     app.add_url_rule('/experiment_plots', "experiment_plots", lambda: experiment_plots(base_dir), methods=['GET'])
@@ -86,13 +86,12 @@ def overview(base_dir):
         print(e.__repr__())
         raise e
         abort(500)
-        
 
 
-def overview_():
+def overview_(base_dir):
     dir_ = request.args.get("dir")
     try:
-        base_info = process_base_dir(dir_, ignore_keys=IGNORE_KEYS)
+        base_info = process_base_dir(base_dir, dir_, ignore_keys=IGNORE_KEYS)
         base_info["title"] = dir_
         return render_template("overview.html", **base_info)
     except Exception as e:

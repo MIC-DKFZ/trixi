@@ -1,5 +1,6 @@
 import os
 from collections import defaultdict
+import re
 
 import colorlover as cl
 import numpy as np
@@ -27,11 +28,12 @@ IGNORE_KEYS = ("name",
 # Set the color palette for plots
 COLORMAP = cl.scales["8"]["qual"]["Dark2"]
 
-def process_base_dir(base_dir, default_val="-", short_len=25, ignore_keys=IGNORE_KEYS):
+
+def process_base_dir(base_dir, view_dir="", default_val="-", short_len=25, ignore_keys=IGNORE_KEYS):
     """Create an overview table of all experiments in the given directory.
 
     Args:
-        base_dir (str): A directory containing experiment folders.
+        directory (str): A directory containing experiment folders.
         default_val (str): Default value if an entry is missing.
         short_len (int): Cut strings to this length. Full string in alt-text.
 
@@ -42,13 +44,16 @@ def process_base_dir(base_dir, default_val="-", short_len=25, ignore_keys=IGNORE
 
     """
 
+    full_dir = os.path.join(base_dir, view_dir)
+
     config_keys = set()
     result_keys = set()
     exps = []
+    non_exps = []
 
     ### Load Experiments with keys / different param values
-    for sub_dir in sorted(os.listdir(base_dir)):
-        dir_path = os.path.join(base_dir, sub_dir)
+    for sub_dir in sorted(os.listdir(full_dir)):
+        dir_path = os.path.join(full_dir, sub_dir)
         if os.path.isdir(dir_path):
             try:
                 exp = ExperimentReader(dir_path)
@@ -61,6 +66,7 @@ def process_base_dir(base_dir, default_val="-", short_len=25, ignore_keys=IGNORE
                 print("Could not load experiment: ", dir_path)
                 print(e)
                 print("-" * 20)
+                non_exps.append(os.path.join(view_dir, sub_dir))
 
     ### Remove unwanted keys
     config_keys -= set(ignore_keys)
@@ -86,13 +92,13 @@ def process_base_dir(base_dir, default_val="-", short_len=25, ignore_keys=IGNORE
         state = exp.exp_info.get("state", default_val) if "state" in exp.exp_info else exp.config.get("state",
                                                                                                       default_val)
 
-        rows.append((os.path.basename(exp.work_dir),
+        rows.append((os.path.relpath(exp.work_dir, base_dir),
                      str(name),
                      str(time),
                      str(state),
                      config_row, result_row))
 
-    return {"ccols": sorted_c_keys, "rcols": sorted_r_keys, "rows": rows}
+    return {"ccols": sorted_c_keys, "rcols": sorted_r_keys, "rows": rows, "noexp": non_exps}
 
 
 def group_images(images):
@@ -100,9 +106,13 @@ def group_images(images):
     group_dict = defaultdict(list)
 
     for img in images:
-        filename = os.path.basename(img)
+        filename = img.split(os.sep + "img" + os.sep)[1]
         base_name = os.path.splitext(filename)[0]
-        base_name = ''.join(e for e in base_name if e.isalpha())
+        number_groups = re.findall("\d+", base_name)
+        if len(number_groups) == 0:
+            base_name = ''.join(e for e in base_name if e.isalpha())
+        else:
+            base_name = base_name.replace(number_groups[0], "")
 
         group_dict[base_name].append(filename)
 
