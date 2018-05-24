@@ -1,15 +1,12 @@
 import argparse
 import json
 import os
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 
 import colorlover as cl
-import numpy as np
-import plotly.graph_objs as go
-from flask import Blueprint, Flask, Markup, abort, render_template, request
-from plotly.offline import plot
-from scipy.signal import savgol_filter
+from flask import Blueprint, Flask, abort, render_template, request
 
+from trixi.experiment_browser.dataprocessing import group_images, make_graphs, merge_results, process_base_dir
 from trixi.experiment_browser.experimentreader import ExperimentReader
 from trixi.util import Config
 
@@ -30,191 +27,58 @@ IGNORE_KEYS = ("name",
 # Set the color palette for plots
 COLORMAP = cl.scales["8"]["qual"]["Dark2"]
 
-# Read in base directory
-parser = argparse.ArgumentParser()
-parser.add_argument("base_directory",
-                    help="Give the path to the base directory of your project files",
-                    type=str)
-parser.add_argument("-d", "--debug", action="store_true",
-                    help="Turn debug mode on, eg. for live reloading.")
-parser.add_argument("-x", "--expose", action="store_true",
-                    help="Make server externally visible")
-args = parser.parse_args()
-base_dir = args.base_directory
-if base_dir[-1] == os.sep:
-    base_dir = base_dir[:-1]
 
-# The actual flask app lives in the package directory. The blueprint allows us
-# to specify an additional static folder and we use that to give access to the
-# experiment files
-app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), "static"))
-blueprint = Blueprint("data", __name__, static_url_path=base_dir, static_folder=base_dir)
-app.register_blueprint(blueprint)
+def parse_args():
+    # Read in base directory
+    parser = argparse.ArgumentParser()
+    parser.add_argument("base_directory",
+                        help="Give the path to the base directory of your project files",
+                        type=str)
+    parser.add_argument("-d", "--debug", action="store_true",
+                        help="Turn debug mode on, eg. for live reloading.")
+    parser.add_argument("-x", "--expose", action="store_true",
+                        help="Make server externally visible")
+    parser.add_argument("-p", "--port", default=5001, type=int,
+                        help="Port to start the server on (5000 by default)")
+    args = parser.parse_args()
+    base_dir = args.base_directory
+    if base_dir[-1] == os.sep:
+        base_dir = base_dir[:-1]
 
-
-def process_base_dir(base_dir, default_val="-", short_len=25):
-    """Create an overview table of all experiments in the given directory.
-
-    Args:
-        base_dir (str): A directory containing experiment folders.
-        default_val (str): Default value if an entry is missing.
-        short_len (int): Cut strings to this length. Full string in alt-text.
-
-    Returns:
-        dict: {"ccols": Columns for config entries,
-               "rcols": Columns for result entries,
-               "rows": The actual data}
-
-    """
-
-    config_keys = set()
-    result_keys = set()
-    exps = []
-
-    ### Load Experiments with keys / different param values
-    for sub_dir in sorted(os.listdir(base_dir)):
-        dir_path = os.path.join(base_dir, sub_dir)
-        if os.path.isdir(dir_path):
-            try:
-                exp = ExperimentReader(dir_path)
-                if exp.ignore:
-                    continue
-                config_keys.update(list(exp.config.keys()))
-                result_keys.update(list(exp.get_results().keys()))
-                exps.append(exp)
-            except Exception as e:
-                print("Could not load experiment: ", dir_path)
-                print(e)
-                print("-" * 20)
-
-    ### Remove unwanted keys
-    config_keys -= set(IGNORE_KEYS)
-    result_keys -= set(IGNORE_KEYS)
-
-    ### Generate table rows
-    sorted_c_keys = sorted(config_keys, key=lambda x: str(x).lower())
-    sorted_r_keys = sorted(result_keys, key=lambda x: str(x).lower())
-
-    rows = []
-    for exp in exps:
-        config_row = []
-        for key in sorted_c_keys:
-            attr_strng = str(exp.config.get(key, default_val))
-            config_row.append((attr_strng, attr_strng[:short_len]))
-        result_row = []
-        for key in sorted_r_keys:
-            attr_strng = str(exp.get_results().get(key, default_val))
-            result_row.append((attr_strng, attr_strng[:short_len]))
-
-        name = exp.exp_info.get("name", default_val) if "name" in exp.exp_info else exp.config.get("name", default_val)
-        time = exp.exp_info.get("time", default_val) if "time" in exp.exp_info else exp.config.get("time", default_val)
-        state = exp.exp_info.get("state", default_val) if "state" in exp.exp_info else exp.config.get("state",
-                                                                                                      default_val)
-
-        rows.append((os.path.basename(exp.work_dir),
-                     str(name),
-                     str(time),
-                     str(state),
-                     config_row, result_row))
-
-    return {"ccols": sorted_c_keys, "rcols": sorted_r_keys, "rows": rows}
+    return args, base_dir
 
 
-def group_images(images):
-    images.sort()
-    group_dict = defaultdict(list)
+def create_flask_app(base_dir):
+    # The actual flask app lives in the package directory. The blueprint allows us
+    # to specify an additional static folder and we use that to give access to the
+    # experiment files
+    app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), "static"))
+    blueprint = Blueprint("data", __name__, static_url_path=base_dir, static_folder=base_dir)
+    app.register_blueprint(blueprint)
 
-    for img in images:
-        filename = os.path.basename(img)
-        base_name = os.path.splitext(filename)[0]
-        base_name = ''.join(e for e in base_name if e.isalpha())
-
-        group_dict[base_name].append(filename)
-
-    return group_dict
+    return app
 
 
-def make_graphs(results, trace_options=None, layout_options=None):
-    """Create plot markups.
-
-    This converts results into plotly plots in markup form. Results in a common
-    group will be placed in the same plot.
-
-    Args:
-        results (dict): Dictionary
-
-    """
-
-    if trace_options is None:
-        trace_options = {}
-    if layout_options is None:
-        layout_options = {
-            "legend": dict(
-                orientation="v",
-                xanchor="left",
-                x=0,
-                yanchor="top",
-                y=-0.1,
-                font=dict(
-                    size=8,
-                )
-            )
-        }
-
-    graphs = []
-    trace_counters = []
-
-    for group in sorted(results):
-
-        layout = go.Layout(title=group, **layout_options)
-        traces = []
-
-        for r, result in enumerate(sorted(results[group])):
-
-            y = np.array(results[group][result]["data"])
-            x = np.array(results[group][result]["counter"])
-
-            do_filter = len(y) >= 1000
-            opacity = 0.2 if do_filter else 1.
-
-            if do_filter:
-                def filter_(x):
-                    return savgol_filter(x, max(5, 2 * (len(y) // 50) + 1), 3)
-                traces.append(go.Scatter(x=x, y=y, opacity=opacity, name=result, legendgroup=result, showlegend=False,
-                                         line=dict(color=COLORMAP[r % len(COLORMAP)]), **trace_options))
-                traces.append(go.Scatter(x=x, y=filter_(y), name=result, legendgroup=result,
-                                         line=dict(color=COLORMAP[r % len(COLORMAP)]), **trace_options))
-            else:
-                traces.append(go.Scatter(x=x, y=y, opacity=opacity, name=result, legendgroup=result,
-                                         line=dict(color=COLORMAP[r % len(COLORMAP)]), **trace_options))
-
-        trace_counters.append(len(results[group]))
-        graphs.append(Markup(plot({"data": traces, "layout": layout},
-                                  output_type="div",
-                                  include_plotlyjs=False,
-                                  show_link=False)))
-
-    return graphs, trace_counters
+def register_url_routes(app, base_dir):
+    app.add_url_rule("/", "overview", lambda: overview(base_dir))
+    app.add_url_rule('/experiment', "experiment", lambda: experiment(base_dir), methods=['GET'])
+    app.add_url_rule('/experiment_log', "experiment_log", lambda: experiment_log(base_dir), methods=['GET'])
+    app.add_url_rule('/experiment_plots', "experiment_plots", lambda: experiment_plots(base_dir), methods=['GET'])
+    app.add_url_rule('/experiment_remove', "experiment_remove", lambda: experiment_remove(base_dir), methods=['GET'])
 
 
-def merge_results(experiment_names, result_list):
-    merged_results = {}
+def start_browser():
+    args, base_dir = parse_args()
+    app = create_flask_app(base_dir)
+    register_url_routes(app, base_dir)
 
-    for r, result in enumerate(result_list):
-        for label in result.keys():
-            if label not in merged_results:
-                merged_results[label] = {}
-            for key in result[label].keys():
-                new_key = "_".join([experiment_names[r], key])
-                merged_results[label][new_key] = result[label][key]
-
-    return merged_results
+    host = "0.0.0.0" if args.expose else "localhost"
+    app.run(debug=args.debug, host=host, port=args.port)
 
 
-@app.route("/")
-def overview():
+def overview(base_dir):
     try:
-        base_info = process_base_dir(base_dir)
+        base_info = process_base_dir(base_dir, ignore_keys=IGNORE_KEYS)
         base_info["title"] = base_dir
         return render_template("overview.html", **base_info)
     except Exception as e:
@@ -223,8 +87,7 @@ def overview():
         abort(500)
 
 
-@app.route('/experiment', methods=['GET'])
-def experiment():
+def experiment(base_dir):
     experiment_paths = request.args.getlist('exp')
 
     experiments = []
@@ -295,8 +158,7 @@ def experiment():
     return render_template('experiment.html', **content)
 
 
-@app.route('/experiment_log', methods=['GET'])
-def experiment_log():
+def experiment_log(base_dir):
     experiment_path = request.args.get('exp')
     log_name = request.args.get('log')
 
@@ -308,8 +170,7 @@ def experiment_log():
     return content
 
 
-@app.route('/experiment_remove', methods=['GET'])
-def experiment_remove():
+def experiment_remove(base_dir):
     experiment_paths = request.args.getlist('exp')
 
     # Get all Experiments
@@ -320,8 +181,7 @@ def experiment_remove():
     return ""
 
 
-@app.route('/experiment_plots', methods=['GET'])
-def experiment_plots():
+def experiment_plots(base_dir):
     experiment_paths = request.args.getlist('exp')
     experiments = []
 
@@ -342,12 +202,11 @@ def experiment_plots():
         results.append(exp.get_results_log())
     results = merge_results(exp_names, results)
 
-    graphs, traces = make_graphs(results)
+    graphs, traces = make_graphs(results, color_map=COLORMAP)
     graphs = [str(g) for g in graphs]
 
     return json.dumps({"graphs": graphs, "traces": traces})
 
 
 if __name__ == "__main__":
-    host = "0.0.0.0" if args.expose else "localhost"
-    app.run(debug=args.debug, host=host)
+    start_browser()
