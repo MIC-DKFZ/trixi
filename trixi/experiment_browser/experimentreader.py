@@ -64,7 +64,13 @@ class ExperimentReader(object):
             return []
 
     def get_images(self):
-        return ExperimentReader.get_file_contents(self.img_dir)
+        imgs = []
+        imgs += ExperimentReader.get_file_contents(self.img_dir)
+        for f in os.listdir(self.img_dir):
+            f = os.path.join(self.img_dir, f)
+            if os.path.isdir(f):
+                imgs += ExperimentReader.get_file_contents(f)
+        return imgs
 
     def get_plots(self):
         return ExperimentReader.get_file_contents(self.plot_dir)

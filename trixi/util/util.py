@@ -16,6 +16,13 @@ from tempfile import gettempdir
 from types import FunctionType, ModuleType
 
 import portalocker
+try:
+    import torch
+except ImportError as e:
+    print("Could not import Pytorch related modules.")
+    print(e)
+
+    class torch: dtype = None
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -63,6 +70,8 @@ class ModuleMultiTypeEncoder(MultiTypeEncoder):
     def _encode(self, obj, strict=False):
         if type(obj) == type:
             return "__type__({}.{})".format(obj.__module__, obj.__name__)
+        elif type(obj) == torch.dtype:
+            return "__type__({})".format(str(obj))
         elif isinstance(obj, FunctionType):
             return "__function__({}.{})".format(obj.__module__, obj.__name__)
         elif isinstance(obj, ModuleType):
