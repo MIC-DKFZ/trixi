@@ -1,0 +1,134 @@
+<html>
+
+    <head>
+
+        <title>TRIXI - {{ title }}</title>
+
+        <!-- inject:css -->
+        <!-- endinject -->
+
+        <link rel="shortcut icon" type="image/png" href="../images/trixi-icon.png"/>
+
+
+    </head>
+
+    <body>
+        <!-- <div class="container-fluid">
+            <h1>{{ title }}</h1>
+        </div> -->
+        <div class="content">
+
+            <table id="overviewTable" class="table table-bordered" cellspacing="0" width="100%">
+                <thead>
+                <tr>
+                    <th>Directory</th>
+                    <th class="center-elem">Name</th>
+                    <th class="center-elem">Time</th>
+                    <th class="center-elem">State</th>
+                    {% for c in ccols %}
+                    <th style="background-color: #dcedc8" class="center-elem">{{ c }}</th>
+                    {% endfor %}
+                    {% for c in rcols %}
+                    <th style="background-color: #fff3e0" class="center-elem">{{ c }}</th>
+                    {% endfor %}
+                </tr>
+                </thead>
+                <tbody>
+                {% for dir, name, time, desc, config_vals, result_vals in rows %}
+                <tr>
+                    <th><a href="/experiment?exp={{ dir }}">{{ dir }}</a></th>
+                    <td>{{ name }}</td>
+                    <td>{{ time }}</td>
+                    <td>{{ desc }}</td>
+                    {% for el, el_short in config_vals %}
+                    <td title="{{ el }}">{{ el_short }}</td>
+                    {% endfor %}
+                    {% for el, el_short in result_vals %}
+                    <td title="{{ el }}">{{ el_short }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+                </tbody>
+                <tfoot>
+                <tr>
+                    <th>Dir</th>
+                    <th>Name</th>
+                    <th>Time</th>
+                    <th>Description</th>
+                    {% for c in ccols %}
+                    <th>{{ c }}</th>
+                    {% endfor %}
+                    {% for c in rcols %}
+                    <th>{{ c }}</th>
+                    {% endfor %}
+                </tr>
+                </tfoot>
+            </table>
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-auto" style="padding-right: 2px">
+                        <a role="button" class="btn btn-outline-secondary toggle-config">Toggle all</a>
+                    </div>
+                    <div class="col" style="padding-left: 2px">
+                        {% for c in ccols %}
+                        <a role="button" class="btn btn-outline-success toggle-vis" data-column="{{ loop.index + 3 }}"
+                           data-type="config">{{ c }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 5px">
+                    <div class="col-auto" style="padding-right: 2px">
+                        <a role="button" class="btn btn-outline-secondary toggle-result">Toggle all</a>
+                    </div>
+                    <div class="col" style="padding-left: 2px">
+                        {% for c in rcols %}
+                        <a role="button" class="btn btn-outline-warning toggle-vis" data-column="{{ loop.index + ccols|length + 3 }}"
+                           data-type="result">{{ c }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 5px">
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-outline-secondary" data-toggle="modal" data-target="#switchModal">
+                            Switch to...
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="switchModal" tabindex="-1" role="dialog" aria-labelledby="switchModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="switchModalLabel">Switch to another directory</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+                    </div>
+                    <div class="modal-body">
+                        <a href="/">HOME</a>
+                        <hr>
+                        {% for e in noexp %}
+                        <a href="/overview?dir={{ e }}">{{ e }}</a><br>
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center" style="margin: 2em">
+            <img src="../images/trixi-small.png" width="50px"/>
+        </div>
+
+        <!-- inject:js -->
+        <!-- endinject -->
+    </body>
+
+</html>

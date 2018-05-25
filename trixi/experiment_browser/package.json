@@ -1,0 +1,36 @@
+{
+  "name": "trixi-browser",
+  "version": "1.0.0",
+  "description": "This is the browser for trixi",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "trixi"
+  ],
+  "author": "tobias ross",
+  "license": "ISC",
+  "devDependencies": {
+    "autoprefixer": "^8.5.0",
+    "bower": "^1.8.4",
+    "css-mqpacker": "^6.0.2",
+    "cssnano": "^3.10.0",
+    "event-stream": "^3.3.4",
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.1",
+    "gulp-deporder": "^1.1.0",
+    "gulp-htmlclean": "^2.7.22",
+    "gulp-imagemin": "^4.1.0",
+    "gulp-inject": "^4.3.2",
+    "gulp-load-plugins": "^1.5.0",
+    "gulp-newer": "^1.4.0",
+    "gulp-postcss": "^7.0.1",
+    "gulp-sass": "^4.0.1",
+    "gulp-strip-debug": "^3.0.0",
+    "gulp-uglify": "^3.0.0",
+    "main-bower-files": "^2.13.1",
+    "postcss-assets": "^5.0.0"
+  },
+  "dependencies": {}
+}

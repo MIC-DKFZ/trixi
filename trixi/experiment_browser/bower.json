@@ -1,0 +1,63 @@
+{
+  "name": "trixi-browser",
+  "description": "This is the browser for trixi",
+  "main": "index.js",
+  "authors": [
+    "tobias ross"
+  ],
+  "license": "ISC",
+  "keywords": [
+    "trixi"
+  ],
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "^4.1.1",
+    "popper.js": "^1.14.3",
+    "jquery": "^3.3.1",
+    "google-apis": "^2.0.1",
+    "components-font-awesome": "^5.0.6",
+    "bootstrap-css": "^3.3.7",
+    "icon": "https://fonts.googleapis.com/icon?family=Material+Icons",
+    "css": "https://fonts.googleapis.com/css?family=Roboto:300",
+    "google-material-icons": "^2.2.1",
+    "datatables.net": "^1.10.16",
+    "datatables.net-bs4": "^3.2.2",
+    "datatables.net-autofill": "^2.2.2",
+    "datatables.net-autofill-bs4": "^2.2.2",
+    "datatables.net-buttons": "^1.4.2",
+    "datatables.net-buttons-bs4": "^1.4.2",
+    "datatables.net-colreorder": "^1.4.1",
+    "datatables.net-colreorder-bs4": "^1.4.1",
+    "datatables.net-fixedcolumns": "^3.2.3",
+    "datatables.net-fixedcolumns-bs4": "^3.2.3",
+    "datatables.net-select": "^1.2.3",
+    "datatables.net-select-dt": "^1.2.3",
+    "datatables.net-scroller": "^1.4.3",
+    "datatables.net-scroller-dt": "^1.4.3",
+    "datatables.net-keytable": "^2.3.2",
+    "datatables.net-keytable-dt": "^2.3.2",
+    "datatables.net-responsive": "^2.2.0",
+    "datatables.net-responsive-dt": "^2.2.0",
+    "datatables.net-rowgroup": "^1.0.2",
+    "datatables.net-rowgroup-dt": "^1.0.2",
+    "datatables.net-rowreorder": "^1.2.3",
+    "datatables.net-rowreorder-dt": "^1.2.3",
+    "datatables.net-buttons-dt": "^1.4.2",
+    "datatables.net-dt": "^3.2.2",
+    "datatables.net-select-bs4": "^1.2.3",
+    "datatables.net-scroller-bs4": "^1.4.3",
+    "datatables.net-rowreorder-bs4": "^1.2.3",
+    "datatables.net-rowgroup-bs4": "^1.0.2",
+    "datatables.net-responsive-bs4": "^2.2.0",
+    "datatables.net-keytable-bs4": "^2.3.2",
+    "datatables.net-fixedheader": "^3.1.3",
+    "datatables.net-fixedheader-bs4": "^3.1.3"
+  }
+}
