@@ -18,7 +18,10 @@ def create_function(self, sub_methods):
 
                 use_name = False
                 if "name" in kwargs and not ("ignore_name_in_args" in kwargs and kwargs["ignore_name_in_args"] is True):
-                    method_cntr = self.log_methods_name_cntr[sub_method][kwargs["name"]]
+                    name_id = kwargs["name"]
+                    if "tag" in kwargs:
+                        name_id = name_id + kwargs["tag"]
+                    method_cntr = self.log_methods_name_cntr[sub_method][name_id]
                     use_name = True
 
                 if "log_all" in kwargs and kwargs["log_all"] is True:
