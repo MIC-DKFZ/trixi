@@ -29,7 +29,8 @@ class ExperimentLogger(AbstractLogger):
     """A single class for logging your experiments to file.
 
     It creates a experiment folder in your base folder and a folder structure to store your experiment files.
-    The folder structure is :
+    The folder structure is::
+
         base_dir/
             new_experiment_folder/
                 checkpoint/

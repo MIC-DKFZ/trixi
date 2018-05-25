@@ -12,7 +12,7 @@ pip install torchvision
 
 Install trixi:
 ```
-git clone https://phabricator.mitk.org/source/vislogger.git
+git clone https://phabricator.mitk.org/source/trixi.git
 cd trixi
 pip install -e .
 ```
@@ -51,8 +51,8 @@ This follows the Google style docstring guidelines:
 
 
 **IMPORTANT NOTE**: Somehow pytorch and lasagne/theano do not play nicely together. So if you 
-import lasagne/theano and vislogger (which imports pytorch if you have it installed), 
-your program will get stuck. So you can only use vislogger with lasagne/theano if you do not 
+import lasagne/theano and trixi (which imports pytorch if you have it installed), 
+your program will get stuck. So you can only use trixi with lasagne/theano if you do not 
 have pytorch installed. If you need both you can use virtual_envs.
 
 # Use on remote server in same network
@@ -60,7 +60,7 @@ Simple run visdom on remote server and then on your local computer go to `MY_REM
 
 # Use on remote server in different network
 
-If you want to run vislogger on a remote server, but show the results locally
+If you want to run trixi on a remote server, but show the results locally
 you can do:
 
 ```
@@ -69,7 +69,7 @@ ssh -N -f -L localhost:8080:localhost:8080 USERNAME@REMOTE_SERVERNAME
 
 # On remote server:
 python -m visdom.server -port 8080
-python my_random_vislogger_script.py
+python my_random_trixi_script.py
 ```
 
 Now on your local computer you can go to `localhost:8080` and see the visdom dashboard.

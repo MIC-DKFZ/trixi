@@ -14,9 +14,9 @@ Install pytorch: http://pytorch.org/
 	pip install torchvision
 
 
- Install vislogger::
+ Install trixi::
 
-	git clone https://phabricator.mitk.org/source/vislogger.git
+	git clone https://phabricator.mitk.org/source/trixi.git
 	cd trixi
 	pip install -e .
 
