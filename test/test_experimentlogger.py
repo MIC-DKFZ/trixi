@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import trixi
-
+from trixi.logger import PytorchExperimentLogger
 
 test_dir = "test_dir"
 
@@ -19,7 +19,7 @@ class TestExperimentLogger(unittest.TestCase):
 
     def setUp(self):
         remove_if_exists(test_dir)
-        self.experimentLogger = trixi.PytorchExperimentLogger(experiment_name="test",
+        self.experimentLogger = PytorchExperimentLogger(experiment_name="test",
                                                                   base_dir=test_dir,
                                                                   folder_format="{experiment_name}")
 
@@ -27,10 +27,11 @@ class TestExperimentLogger(unittest.TestCase):
         self.assertTrue(os.path.isdir("test_dir"), "test directory not created")
 
     def test_two_experiment_loggers_same_test_dir_no_run_number_throws_error(self):
-        with self.assertRaises(FileExistsError):
-            trixi.PytorchExperimentLogger(experiment_name="test",
+            logger = PytorchExperimentLogger(experiment_name="test",
                                               base_dir=test_dir,
                                               folder_format="{experiment_name}")
+
+            self.assertTrue(os.path.isdir(logger.base_dir), "Experiment directory not created")
 
     def test_net_save_and_load(self):
         net = Net()
