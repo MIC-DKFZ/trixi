@@ -1,3 +1,4 @@
 build/
 scripts_old/
 node_modules/
+static/

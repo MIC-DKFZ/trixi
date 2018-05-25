@@ -17,6 +17,9 @@ var cssnano = require('cssnano')
 var inject = require('gulp-inject');
 var mainBowerFiles = require('main-bower-files');
 var es = require('event-stream')
+var fs = require('fs')
+var exec = require('child_process').exec;
+var runSequence = require('run-sequence');
 
 // development mode?
 var devBuild = (process.env.NODE_ENV !== 'production')
@@ -26,6 +29,28 @@ var folder = {
     src: 'src/',
     build: 'build/'
 }
+
+gulp.task('create-folder-structure', function() {
+	var folders = ["css", "html", "images", "js"]
+	if(!fs.existsSync(folder.build)) {
+			fs.mkdirSync(folder.build)
+		}
+
+	folders.forEach(function(sub_folder) {
+		var new_dir = folder.build + sub_folder
+		if(!fs.existsSync(new_dir)) {
+			fs.mkdirSync(new_dir)
+		}
+	})
+});
+
+gulp.task('bower-install', function (cb) {
+  exec('bower install', function (err, stdout, stderr) {
+    console.log(stdout);
+    console.log(stderr);
+    cb(err);
+  });
+})
 
 // image processing
 gulp.task('images', function() {
@@ -140,6 +165,13 @@ gulp.task('inject-experiment', function() {
 
 gulp.task('inject', ['inject-overview', 'inject-experiment'])
 
+gulp.task('prepeare-structure', function(done) {
+    runSequence('create-folder-structure', 'bower-install', function() {
+        console.log('Preparation done!');
+        done();
+    });
+});
+
 // run all tasks
 gulp.task('run', ['html', 'css', 'inject']);
 
@@ -161,4 +193,4 @@ gulp.task('watch', function() {
 });
 
 // default task
-gulp.task('default', ['run', 'watch']);
+gulp.task('default', ['prepeare-structure', 'run', 'watch']);

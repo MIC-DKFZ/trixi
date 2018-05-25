@@ -30,7 +30,10 @@
     "gulp-strip-debug": "^3.0.0",
     "gulp-uglify": "^3.0.0",
     "main-bower-files": "^2.13.1",
-    "postcss-assets": "^5.0.0"
+    "postcss-assets": "^5.0.0",
+    "run-sequence": "^2.2.1"
   },
-  "dependencies": {}
+  "dependencies": {
+    "gulp-exec": "^3.0.1"
+  }
 }
