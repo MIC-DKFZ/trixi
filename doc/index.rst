@@ -21,7 +21,7 @@ You can jump right into the package by looking into our :ref:`quick-start-label`
    license.rst
    authors.rst
    changes.rst
-   api/trixi.rst
+   api/modules.rst
 
 
 Indices and tables
