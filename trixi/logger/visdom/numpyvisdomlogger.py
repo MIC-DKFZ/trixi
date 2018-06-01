@@ -3,11 +3,7 @@ from __future__ import division, print_function
 import atexit
 from collections import defaultdict
 
-try:
-    import torch.multiprocessing as mp
-    print("Using torch multi processing")
-except:
-    import multiprocessing as mp
+import multiprocessing as mp
 import sys
 import traceback
 
