@@ -18,10 +18,10 @@ You can jump right into the package by looking into our :ref:`quick-start-label`
 
    installation.rst
    quickstart.rst
-   trixi.rst
-   authors.rst
    license.rst
+   authors.rst
    changes.rst
+   api/trixi.rst
 
 
 Indices and tables

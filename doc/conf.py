@@ -172,7 +172,21 @@ texinfo_documents = [
 ]
 
 
-
-
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
+
+
+def run_apidoc(_):
+    from sphinx.apidoc import main
+    parentFolder = os.path.join(os.path.dirname(__file__), '..')
+    cur_dir = os.path.abspath(os.path.dirname(__file__))
+    sys.path.append(parentFolder)
+    # change "backend" to your module name
+    module = os.path.join(parentFolder, 'trixi')
+    output_path = os.path.join(cur_dir, 'api')
+    main(['-e', '-f', '-o', output_path, module])
+
+
+def setup(app):
+    # trigger the run_apidoc
+    app.connect('builder-inited', run_apidoc)
