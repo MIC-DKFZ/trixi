@@ -114,4 +114,4 @@ doc/*
 !doc/authors.rst
 !doc/changes.rst
 !doc/license.rst
-!doc/requirements.readthedocs.txt
+!doc/requirements.txt

@@ -1,0 +1,9 @@
+# sphinx version 1.7.1 seems to have introduced an API change.
+# ReadtheDocs gave the following error
+#
+# sphinx-build: error: argument -d/--maxdepth: invalid int value: '_build/doctrees-readthedocs'
+#
+# We pin sphinx to 1.7.0 and will need to revisit this from time to time.
+# The error is caused by manually calling sphinx-apidoc in conf.py
+
+sphinx==1.7.0
