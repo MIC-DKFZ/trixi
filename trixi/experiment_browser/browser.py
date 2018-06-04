@@ -66,6 +66,8 @@ def register_url_routes(app, base_dir):
     app.add_url_rule('/experiment_log', "experiment_log", lambda: experiment_log(base_dir), methods=['GET'])
     app.add_url_rule('/experiment_plots', "experiment_plots", lambda: experiment_plots(base_dir), methods=['GET'])
     app.add_url_rule('/experiment_remove', "experiment_remove", lambda: experiment_remove(base_dir), methods=['GET'])
+    app.add_url_rule('/experiment_star', "experiment_star", lambda: experiment_star(base_dir), methods=['GET'])
+    app.add_url_rule('/experiment_rename', "experiment_rename", lambda: experiment_rename(base_dir), methods=['GET'])
 
 
 def start_browser():
@@ -107,7 +109,7 @@ def experiment(base_dir):
 
     # Get all Experiments
     for experiment_path in sorted(experiment_paths):
-        exp = ExperimentReader(os.path.join(base_dir, experiment_path), name=experiment_path)
+        exp = ExperimentReader(os.path.join(base_dir, experiment_path))
         experiments.append(exp)
 
     # Assign unique names
@@ -219,6 +221,32 @@ def experiment_plots(base_dir):
     graphs = [str(g) for g in graphs]
 
     return json.dumps({"graphs": graphs, "traces": traces})
+
+
+def experiment_star(base_dir):
+    experiment_path = request.args.get('exp')
+    star_val = request.args.get('star')
+
+    star_val = bool(int(star_val))
+
+    print(experiment_path, star_val)
+
+    exp = ExperimentReader(os.path.join(base_dir, experiment_path), name=experiment_path)
+    exp.update_meta_info(star=star_val)
+
+    return ""
+
+
+def experiment_rename(base_dir):
+    experiment_path = request.args.get('exp')
+    new_name = request.args.get('name')
+
+    print(experiment_path, new_name)
+
+    exp = ExperimentReader(os.path.join(base_dir, experiment_path), name=experiment_path)
+    exp.update_meta_info(name=new_name)
+
+    return ""
 
 
 if __name__ == "__main__":

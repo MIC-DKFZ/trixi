@@ -38,16 +38,25 @@ class ExperimentReader(object):
 
         self.__results_dict = None
 
+        self.meta_name = None
+        self.meta_star = False
+        self.meta_ignore = False
+        self.read_meta_info()
+
         if name is not None:
             self.exp_name = name
+        elif self.meta_name is not None:
+            self.exp_name = self.meta_name
+        elif "name" in self.exp_info:
+            self.exp_name = self.exp_info.name
         elif "exp_name" in self.config:
             self.exp_name = self.config.exp_name
         else:
             self.exp_name = "experiments"
 
-        self.ignore = False
-        if os.path.exists(os.path.join(self.work_dir, "ignore.txt")):
-            self.ignore = True
+        self.ignore = self.meta_ignore
+        self.star = self.meta_star
+
 
     @staticmethod
     def get_file_contents(folder):
@@ -180,7 +189,46 @@ class ExperimentReader(object):
 
     def ignore_experiment(self):
         """Create a flag file, so the browser ignores this experiment."""
+        self.update_meta_info(ignore=True)
 
-        ignore_flag_file = os.path.join(self.work_dir, "ignore.txt")
-        with open(ignore_flag_file, "w+") as f:
-            f.write("ignore")
+    def read_meta_info(self):
+        """Reads the meta info of the experiment i.e. new name, stared or ignored"""
+        meta_dict = {}
+        meta_file = os.path.join(self.work_dir, ".exp_info")
+        if os.path.exists(meta_file):
+            with open(meta_file, "r") as mf:
+                meta_dict = json.load(mf)
+            self.meta_name = meta_dict.get("name")
+            self.meta_star = meta_dict.get("star", False)
+            self.meta_ignore = meta_dict.get("ignore", False)
+
+    def update_meta_info(self, name=None, star=None, ignore=None):
+        """
+        Updates the meta info i.e. new name, stared or ignored and saves it in the experiment folder
+
+        Args:
+            name (str): New name of the experiment
+            star (bool): Flag, if experiment is starred/ favorited
+            ignore (boll): Flag, if experiment should be ignored
+        """
+
+        if name is not None:
+            self.meta_name = name
+        if star is not None:
+            self.meta_star = star
+        if ignore is not None:
+            self.meta_ignore = ignore
+
+        meta_dict = {
+            "name": self.meta_name,
+            "star": self.meta_star,
+            "ignore": self.meta_ignore
+        }
+        meta_file = os.path.join(self.work_dir, ".exp_info")
+        with open(meta_file, "w") as mf:
+            json.dump(meta_dict, mf)
+
+
+
+
+

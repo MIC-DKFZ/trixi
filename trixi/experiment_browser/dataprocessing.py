@@ -87,12 +87,13 @@ def process_base_dir(base_dir, view_dir="", default_val="-", short_len=25, ignor
             attr_strng = str(exp.get_results().get(key, default_val))
             result_row.append((attr_strng, attr_strng[:short_len]))
 
-        name = exp.exp_info.get("name", default_val) if "name" in exp.exp_info else exp.config.get("name", default_val)
+        name = exp.exp_name
         time = exp.exp_info.get("time", default_val) if "time" in exp.exp_info else exp.config.get("time", default_val)
         state = exp.exp_info.get("state", default_val) if "state" in exp.exp_info else exp.config.get("state",
                                                                                                       default_val)
 
         rows.append((os.path.relpath(exp.work_dir, base_dir),
+                     exp.star,
                      str(name),
                      str(time),
                      str(state),
@@ -101,22 +102,35 @@ def process_base_dir(base_dir, view_dir="", default_val="-", short_len=25, ignor
     return {"ccols": sorted_c_keys, "rcols": sorted_r_keys, "rows": rows, "noexp": non_exps}
 
 
+# def group_images(images):
+#     images.sort()
+#     group_dict = defaultdict(list)
+#
+#     for img in images:
+#         filename = img.split(os.sep + "img" + os.sep)[1]
+#         base_name = os.path.splitext(filename)[0]
+#         number_groups = re.findall("\d+", base_name)
+#         if len(number_groups) == 0:
+#             base_name = ''.join(e for e in base_name if e.isalpha())
+#         else:
+#             base_name = base_name.replace(number_groups[0], "")
+#
+#         group_dict[base_name].append(filename)
+#
+#     return group_dict
 def group_images(images):
     images.sort()
     group_dict = defaultdict(list)
 
     for img in images:
-        filename = img.split(os.sep + "img" + os.sep)[1]
+        filename = os.path.basename(img)
         base_name = os.path.splitext(filename)[0]
-        number_groups = re.findall("\d+", base_name)
-        if len(number_groups) == 0:
-            base_name = ''.join(e for e in base_name if e.isalpha())
-        else:
-            base_name = base_name.replace(number_groups[0], "")
+        base_name = ''.join(e for e in base_name if e.isalpha())
 
         group_dict[base_name].append(filename)
 
     return group_dict
+
 
 
 def make_graphs(results, trace_options=None, layout_options=None, color_map=COLORMAP):
