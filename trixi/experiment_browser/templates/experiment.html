@@ -109,7 +109,19 @@
 
                             {% for exp in exps %}
                             <th class="ctable">
-                                <h4>{{exp}}</h4>
+                                <h4 style="white-space: nowrap; display: inline;">{{exp.exp_name}}</h4>
+                                {% if exp.star %}
+                                <a class="star_element" href="" style="color:black; float:right;"
+                                   dir_name="{{ exp.exp_dir }}">
+                                    <i class="material-icons">star</i>
+                                </a>
+                                {% else %}
+                                <a class="star_element" href="" style="color:black; float:right;"
+                                   dir_name="{{ exp.exp_dir }}">
+                                    <i class="material-icons">star_border</i>
+                                </a>
+                                {% endif %}
+
                             </th>
                             {% endfor %}
 
@@ -182,7 +194,7 @@
                                 {% for img in img_group %}
                                 <div class="mySlides">
                                     <div class="numbertext">{{ loop.index }} / {{ loop.length }}</div>
-                                    <a href="{{img_path}}/{{ img }}" target="_blank">
+                                    <a href="{{img_path}}/{{ img }}" target="_blank" class="image_link">
                                         <img class="lazyimg" src="" lazysrc="{{img_path}}/{{ img }}" style="width:100%"
                                              alt="{{ img }}"
                                              title="{{ img }}">
@@ -404,6 +416,53 @@
 
             $(".nav").find(".log-file-link-" + expname).removeClass("active");
 
+        });
+
+        $('a.star_element').on('click', function (e) {
+            e.preventDefault();
+
+            console.log("xD");
+
+            var dir_name = $(this)[0].getAttribute("dir_name");
+            var url_exp_star = "experiment_star?" + "exp=" + dir_name;
+            var text = $.trim($(this)[0].text);
+            var th = $(this);
+
+            console.log(text);
+            console.log(th);
+
+            if (text === "star_border") {
+                url_exp_star = url_exp_star + "&star=" + 1;
+                $.get(
+                    url_exp_star,
+                    {},
+                    function () {
+
+                        th[0].innerHTML = '<i class="material-icons">star</i>';
+                    }
+                );
+            }
+            else if (text === "star") {
+                url_exp_star = url_exp_star + "&star=" + 0;
+                $.get(
+                    url_exp_star,
+                    {},
+                    function () {
+                        th[0].innerHTML = '<i class="material-icons">star_border</i>';
+                    }
+                );
+            }
+
+        });
+
+        $('a.image_link').on('click', function (e) {
+            e.preventDefault();
+            console.log("Image clicked");
+        });
+
+        $('a.image_link').on('dblclick', function (e) {
+            e.preventDefault();
+            window.open($(this)[0].href, '_blank')
         });
 
         function findGetParameter(parameterName) {

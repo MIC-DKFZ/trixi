@@ -109,7 +109,7 @@ def experiment(base_dir):
 
     # Get all Experiments
     for experiment_path in sorted(experiment_paths):
-        exp = ExperimentReader(os.path.join(base_dir, experiment_path))
+        exp = ExperimentReader(base_dir, experiment_path)
         experiments.append(exp)
 
     # Assign unique names
@@ -166,7 +166,7 @@ def experiment(base_dir):
 
     content["title"] = experiments
     content["images"] = {"img_path": image_path, "imgs": images, "img_keys": image_keys}
-    content["config"] = {"exps": exp_names, "configs": combi_config, "keys": config_keys, "diff_keys": diff_config_keys}
+    content["config"] = {"exps": experiments, "configs": combi_config, "keys": config_keys, "diff_keys": diff_config_keys}
     content["results"] = {"exps": exp_names, "results": combi_results, "keys": result_keys}
     content["logs"] = {"logs_dict": logs_dict}
 
@@ -177,7 +177,7 @@ def experiment_log(base_dir):
     experiment_path = request.args.get('exp')
     log_name = request.args.get('log')
 
-    exp = ExperimentReader(os.path.join(base_dir, experiment_path), name=experiment_path)
+    exp = ExperimentReader(base_dir, experiment_path)
     content = exp.get_log_file_content(log_name)
 
     print(experiment_path, log_name)
@@ -190,7 +190,7 @@ def experiment_remove(base_dir):
 
     # Get all Experiments
     for experiment_path in sorted(experiment_paths):
-        exp = ExperimentReader(os.path.join(base_dir, experiment_path), name=experiment_path)
+        exp = ExperimentReader(base_dir, experiment_path)
         exp.ignore_experiment()
 
     return ""
@@ -202,7 +202,7 @@ def experiment_plots(base_dir):
 
     # Get all Experiments
     for experiment_path in sorted(experiment_paths):
-        exp = ExperimentReader(os.path.join(base_dir, experiment_path), name=experiment_path)
+        exp = ExperimentReader(base_dir, experiment_path)
         experiments.append(exp)
 
     # Assign unique names
@@ -231,7 +231,7 @@ def experiment_star(base_dir):
 
     print(experiment_path, star_val)
 
-    exp = ExperimentReader(os.path.join(base_dir, experiment_path), name=experiment_path)
+    exp = ExperimentReader(base_dir, experiment_path)
     exp.update_meta_info(star=star_val)
 
     return ""
@@ -243,7 +243,7 @@ def experiment_rename(base_dir):
 
     print(experiment_path, new_name)
 
-    exp = ExperimentReader(os.path.join(base_dir, experiment_path), name=experiment_path)
+    exp = ExperimentReader(base_dir, experiment_path)
     exp.update_meta_info(name=new_name)
 
     return ""

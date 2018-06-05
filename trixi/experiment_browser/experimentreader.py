@@ -15,11 +15,13 @@ class ExperimentReader(object):
 
     """
 
-    def __init__(self, work_dir, name=None):
+    def __init__(self, base_dir, exp_dir="", name=None):
 
         super(ExperimentReader, self).__init__()
 
-        self.work_dir = os.path.abspath(work_dir)
+        self.base_dir = base_dir
+        self.exp_dir = exp_dir
+        self.work_dir = os.path.abspath(os.path.join(self.base_dir, self.exp_dir))
         self.config_dir = os.path.join(self.work_dir, "config")
         self.log_dir = os.path.join(self.work_dir, "log")
         self.checkpoint_dir = os.path.join(self.work_dir, "checkpoint")
@@ -48,9 +50,9 @@ class ExperimentReader(object):
         elif self.meta_name is not None:
             self.exp_name = self.meta_name
         elif "name" in self.exp_info:
-            self.exp_name = self.exp_info.name
+            self.exp_name = self.exp_info['name']
         elif "exp_name" in self.config:
-            self.exp_name = self.config.exp_name
+            self.exp_name = self.config['exp_name']
         else:
             self.exp_name = "experiments"
 

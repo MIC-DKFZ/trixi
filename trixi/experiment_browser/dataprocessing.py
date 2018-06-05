@@ -56,7 +56,7 @@ def process_base_dir(base_dir, view_dir="", default_val="-", short_len=25, ignor
         dir_path = os.path.join(full_dir, sub_dir)
         if os.path.isdir(dir_path):
             try:
-                exp = ExperimentReader(dir_path)
+                exp = ExperimentReader(full_dir, sub_dir)
                 if exp.ignore:
                     continue
                 config_keys.update(list(exp.config.keys()))

@@ -54,12 +54,12 @@
                 <a class="star_element" href="" style="color:black; margin-right: 0.5em;" dir_name="{{ dir }}"><i
                         class="material-icons"
                         style="vertical-align: middle;">star</i></a><a
-                    href="/experiment?exp={{ dir }}" style="vertical-align: middle">{{ dir }}</a>
+                    href="/experiment?exp={{ dir }}" style="vertical-align: middle" target="_blank">{{ dir }}</a>
                 {% else %}
                 <a class="star_element" href="" style="color:black; margin-right: 0.5em;" dir_name="{{ dir }}"><i
                         class="material-icons"
                         style="vertical-align: middle;">star_border</i></a><a
-                    href="/experiment?exp={{ dir }}" style="vertical-align: middle">{{ dir }}</a>
+                    href="/experiment?exp={{ dir }}" style="vertical-align: middle" target="_blank">{{ dir }}</a>
                 {% endif %}
             </th>
             <td>
@@ -289,6 +289,7 @@
                     new_location = new_location + "exp=" + val + "&";
                 });
                 // window.location.href = new_location;
+                window.open(new_location, '_blank');
             }
         });
 
