@@ -185,7 +185,9 @@ def run_apidoc(_):
     module = os.path.join(parentFolder, 'trixi')
     output_path = os.path.join(cur_dir, 'api')
     main(['-e', '-f', '-o', output_path, module])
-
+    file = open(output_path+"/modules.rst",'a')
+    file.write("   ../class_diagram\n")
+    file.close()
 
 def setup(app):
     # trigger the run_apidoc
