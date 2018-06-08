@@ -1,0 +1,6 @@
+graphviz==0.8.3
+matplotlib==2.2.2
+numpy==1.14.4
+seaborn==0.8.1
+portalocker==1.2.1
+visdom==0.1.8.3

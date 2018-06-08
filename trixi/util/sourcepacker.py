@@ -1,10 +1,9 @@
-import subprocess
-import zipfile
-
 import os.path
 import re
+import subprocess
 import subprocess as subp
 import sys
+import zipfile
 
 
 class SourcePacker(object):
@@ -110,5 +109,5 @@ class SourcePacker(object):
             zf.writestr("python_version.txt", py_str)
             dep_str = "\n".join(dependencies)
             zf.writestr("modules.txt", dep_str)
-            git_str = "Repository: {}\nBranch: {}\nCommit: {}".format(repo, branch,commit)
+            git_str = "Repository: {}\nBranch: {}\nCommit: {}".format(repo, branch, commit)
             zf.writestr("git_info.txt", git_str)
