@@ -13,27 +13,22 @@ Verify Gulp has installed with this:
 > gulp -v
 ```
 
-To be able to start the production mode, first run an initial webpack build
+Run the following command to download all dependecies and build the frontend
 ```
-> npx webpack
-```
-
-Afterwards run
-```
-> python serve_frontend.py
+> gulp install
 ```
 
 ## Develop
 
-To get started, first install all the necessary dependencies.
+Perform the same steps like for production mode. 
+
+Run just gulp to build the frontend and start to watch for file changes
 ```
-> npm install
+> gulp
 ```
 
-Start the development server (changes will now update live in browser)
-```
-> npm start
-```
-To view your project for developing purpose, go to: [http://localhost:3000/](http://localhost:3000/)
+Open any build html file in `build/html` in your browser. Any change in a file will automatically cause a rebuild.
+
+Please make sure you just edit files in the `src/` directory. Any changes done in the `build/` directory will be overwritten.
 
 
