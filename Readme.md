@@ -1,18 +1,17 @@
 # Install
 Install Dependencies
 ```
-pip install numpy seaborn matplotlib
+pip install -r requirements.txt
 ```
 
-If you want to use any of the PyTorch loggers or the Experiment class:
+If you want to use the full functionallity e.g. any of the PyTorch loggers or the Experiment class:
 ```
-#install pytorch: http://pytorch.org/
-pip install torchvision
+pip install -r requirements_full.txt
 ```
 
 Install trixi:
 ```
-git clone https://phabricator.mitk.org/source/trixi.git
+git clone https://github.com/MIC-DKFZ/trixi.git
 cd trixi
 pip install -e .
 ```

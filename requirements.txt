@@ -1,6 +1,11 @@
+colorlover==0.2.1
+Flask==0.12.2
 graphviz==0.8.3
 matplotlib==2.2.2
 numpy==1.14.4
 seaborn==0.8.1
+scipy==0.19.1
 portalocker==1.2.1
+plotly==2.5.1
+Pillow==5.1.0
 visdom==0.1.8.3
