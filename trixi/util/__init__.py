@@ -19,9 +19,3 @@ from trixi.util.util import (
 from trixi.util.config import Config
 from trixi.util.extravisdom import ExtraVisdom
 from trixi.util.sourcepacker import SourcePacker
-
-try:
-    from trixi.util.gpu_monitor import GpuMonitor
-except ImportError as e:
-    print("Could not import pynvml related modules.")
-    print(e)
