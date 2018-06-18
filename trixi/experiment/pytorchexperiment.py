@@ -198,7 +198,10 @@ class PytorchExperiment(Experiment):
         self._ignore_resume_config = ignore_resume_config
         if resume is not None:
             if isinstance(resume, str):
-                self._resume_path = resume
+                if resume == "last":
+                    self._resume_path = os.path.join(base_dir, sorted(os.listdir(base_dir))[-1])
+                else:
+                    self._resume_path = resume
             elif isinstance(resume, PytorchExperiment):
                 self._resume_path = resume.elog.base_dir
 
