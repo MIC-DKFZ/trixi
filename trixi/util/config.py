@@ -60,7 +60,9 @@ class Config(dict):
     def __setattr__(self, key, value):
 
         if type(value) == dict:
-            super(Config, self).__setattr__(key, Config(**value))
+            new_config = Config()
+            new_config.update(value)
+            super(Config, self).__setattr__(key, new_config)
         else:
             super(Config, self).__setattr__(key, value)
 
