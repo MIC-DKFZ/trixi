@@ -53,7 +53,7 @@ class MultiTypeEncoder(CustomJSONEncoder):
     def _encode_key(self, obj):
         if isinstance(obj, int):
             return "__int__({})".format(obj)
-        if isinstance(obj, float):
+        elif isinstance(obj, float):
             return "__float__({})".format(obj)
         else:
             return self._encode(obj)
@@ -61,6 +61,12 @@ class MultiTypeEncoder(CustomJSONEncoder):
     def _encode(self, obj):
         if isinstance(obj, tuple):
             return "__tuple__({})".format(obj)
+        elif isinstance(obj, np.integer):
+            return "__int__({})".format(obj)
+        elif isinstance(obj, np.floating):
+            return "__float__({})".format(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
         else:
             return obj
 
