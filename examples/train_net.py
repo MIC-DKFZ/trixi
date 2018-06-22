@@ -3,6 +3,7 @@ import torchvision
 from torch.autograd import Variable
 
 import trixi
+import trixi.logger as logger
 
 ###############################################
 #
@@ -20,9 +21,9 @@ param = dict(
 )
 
 ### Init stuff
-vizLog = trixi.PytorchVisdomLogger(name=param["name"], port=8080)
-expLog = trixi.PytorchExperimentLogger(experiment_name=param["name"], base_dir=param["output_folder"])
-combiLog = trixi.CombinedLogger((vizLog, 1), (expLog, 10))
+vizLog = logger.PytorchVisdomLogger(name=param["name"], port=8080)
+expLog = logger.PytorchExperimentLogger(experiment_name=param["name"], base_dir=param["output_folder"])
+combiLog = logger.CombinedLogger((vizLog, 1), (expLog, 10))
 
 expLog.print(expLog.base_dir)
 expLog.text_logger.log_to(param, "config")
@@ -77,11 +78,10 @@ for epoch in range(param["n_epoch"]):
 
         #######################
         #      Log results    #
-
         #######################
-        combiLog.show_value(value=err.data[0], name='err')
+        combiLog.show_value(value=err.item(), name='err')
 
-        log_text = '[%d/%d][%d/%d] Loss: %.4f ' % (epoch, param["n_epoch"], batch_idx, len(dataset), err.data[0])
+        log_text = '[%d/%d][%d/%d] Loss: %.4f ' % (epoch, param["n_epoch"], batch_idx, len(dataset), err.item())
 
         expLog.print(log_text)
 
