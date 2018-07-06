@@ -153,7 +153,7 @@ class PytorchExperiment(Experiment):
             self.exp_name = self._config_raw["name"]
         if append_rnd_to_name:
             rnd_str = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(5))
-            self.exp_name += "-" + rnd_str
+            self.exp_name += "_" + rnd_str
 
         if 'base_dir' in self._config_raw:
             base_dir = self._config_raw["base_dir"]
@@ -354,6 +354,10 @@ class PytorchExperiment(Experiment):
 
         """
         Loads a checkpoint and restores the experiment.
+
+        Make sure you have your torch stuff already on the right devices beforehand, otherwise this could lead to
+        errors e.g. when making a optimizer step (and for some reason the adam states are not already on the gpu:
+         https://discuss.pytorch.org/t/loading-a-saved-model-for-continue-training/17244/3 )
 
         Args:
             name: The name of the checkpoint file
