@@ -369,7 +369,7 @@ class Config(dict):
         def flat_(obj):
             def items():
                 for key, val in obj.items():
-                    if isinstance(val, dict):
+                    if isinstance(val, dict) and type(key) == str:
                         intermediate_dict = {}
                         for subkey, subval in flat_(val).items():
                             if type(subkey) == str:
@@ -379,7 +379,7 @@ class Config(dict):
                         if len(intermediate_dict) > 0:
                             yield key, intermediate_dict
                     elif isinstance(val, list):
-                        if keep_lists:
+                        if keep_lists or type(key) != str:
                             yield key, val
                         for i, subval in enumerate(val):
                             yield key + "." + str(i), subval
