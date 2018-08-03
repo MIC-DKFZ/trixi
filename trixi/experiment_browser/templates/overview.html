@@ -38,6 +38,7 @@
             <th class="center-elem">Name</th>
             <th class="center-elem">Time</th>
             <th class="center-elem">State</th>
+            <th class="center-elem">Epochs</th>
             {% for c in ccols %}
             <th style="background-color: #dcedc8" class="center-elem">{{ c }}</th>
             {% endfor %}
@@ -47,7 +48,7 @@
         </tr>
         </thead>
         <tbody>
-        {% for dir, star ,name, time, desc, config_vals, result_vals in rows %}
+        {% for dir, star ,name, time, desc, epochs, config_vals, result_vals in rows %}
         <tr dir_name="{{ dir }}">
             <th>
                 {% if star %}
@@ -71,6 +72,7 @@
             </td>
             <td>{{ time }}</td>
             <td>{{ desc }}</td>
+            <td>{{ epochs }}</td>
             {% for el, el_short in config_vals %}
             <td title="{{ el }}">{{ el_short }}</td>
             {% endfor %}
@@ -85,7 +87,8 @@
             <th>Dir</th>
             <th>Name</th>
             <th>Time</th>
-            <th>Description</th>
+            <th>State</th>
+            <th>Epochs</th>
             {% for c in ccols %}
             <th>{{ c }}</th>
             {% endfor %}
@@ -270,7 +273,7 @@
                            <a role="button" class="remove-experiments btn btn-danger" style="float: left; margin-left: 2px;">Remove</a>');
             },
             columnDefs: [
-                {targets: [0, 1, 2, 3], visible: true},
+                {targets: [0, 1, 2, 3, 4], visible: true},
                 {targets: "_all", visible: false}
             ]
         });

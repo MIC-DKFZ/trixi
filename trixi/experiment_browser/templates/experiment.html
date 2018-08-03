@@ -327,12 +327,13 @@
                         <div class="card-header">
                             <ul class="nav nav-tabs card-header-tabs">
 
-                                {% for log_file in logs["logs_dict"][exp] %}
+                                {% for log_file, exp_dir in logs["logs_dict"][exp] %}
                                 <!--<p>{{ log_file }}</p>-->
 
                                 <li class="nav-item">
                                     <a class="nav-link log-file-link log-file-link-{{exp}}" href="#"
                                        expname="{{ exp }}"
+                                       expdir="{{ exp_dir }}"
                                        logfile="{{ log_file }}">
                                         {{log_file}}</a>
                                 </li>
@@ -378,6 +379,7 @@
             var th = $(this);
 
             var expname = $(this)[0].attributes.expname.value;
+            var expdir= $(this)[0].attributes.expdir.value;
             var logfile = $(this)[0].attributes.logfile.value;
 
             $(".nav").find(".log-file-link-" + expname).removeClass("active");
@@ -394,7 +396,7 @@
             else {
                 $.get(
                     "experiment_log",
-                    {exp: expname, log: logfile},
+                    {exp: expdir, log: logfile},
                     function (data) {
                         console.log("request");
                         log_dict[dict_key] = [data];

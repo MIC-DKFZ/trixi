@@ -91,12 +91,15 @@ def process_base_dir(base_dir, view_dir="", default_val="-", short_len=25, ignor
         time = exp.exp_info.get("time", default_val) if "time" in exp.exp_info else exp.config.get("time", default_val)
         state = exp.exp_info.get("state", default_val) if "state" in exp.exp_info else exp.config.get("state",
                                                                                                       default_val)
+        epoch = exp.exp_info.get("epoch", default_val) if "epoch" in exp.exp_info else exp.config.get("epoch",
+                                                                                                      default_val)
 
         rows.append((os.path.relpath(exp.work_dir, base_dir),
                      exp.star,
                      str(name),
                      str(time),
                      str(state),
+                     str(epoch),
                      config_row, result_row))
 
     return {"ccols": sorted_c_keys, "rcols": sorted_r_keys, "rows": rows, "noexp": non_exps}

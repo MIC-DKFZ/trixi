@@ -492,6 +492,14 @@ class PytorchExperiment(Experiment):
     def _end_epoch_internal(self, epoch):
         self.save_results()
         self.save_temp_checkpoint()
+        cur_time = time.strftime("%y-%m-%d_%H:%M:%S", time.localtime(time.time()))
+        self.elog.save_config(Config(**{'name': self.exp_name,
+                                        'time': self._time_start,
+                                        'state': self._exp_state,
+                                        'current_time': cur_time,
+                                        'epoch': epoch
+                                        }),
+                              "exp")
 
     def save_temp_checkpoint(self):
         """Saves the current checkpoint as checkpoint_current"""

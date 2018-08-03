@@ -161,7 +161,7 @@ def experiment(base_dir):
     # Get logs
     logs_dict = OrderedDict({})
     for exp in experiments:
-        exp_logs = [os.path.basename(l) for l in exp.get_logs()]
+        exp_logs = [(os.path.basename(l), exp.exp_dir) for l in exp.get_logs()]
         logs_dict[exp.exp_name] = exp_logs
 
     content["title"] = experiments
@@ -174,8 +174,14 @@ def experiment(base_dir):
 
 
 def experiment_log(base_dir):
+    print("xD")
+
     experiment_path = request.args.get('exp')
+    print("xD")
+
     log_name = request.args.get('log')
+
+    print("xD")
 
     exp = ExperimentReader(base_dir, experiment_path)
     content = exp.get_log_file_content(log_name)
