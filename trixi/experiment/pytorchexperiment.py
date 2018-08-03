@@ -229,6 +229,9 @@ class PytorchExperiment(Experiment):
 
         """
         for key, val in var_dict.items():
+            if key == "results":
+                self.results.load(val)
+                continue
             if key in ignore:
                 continue
             if hasattr(self, key):

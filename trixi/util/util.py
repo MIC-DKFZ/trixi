@@ -319,6 +319,19 @@ class ResultLogDict(LogDict):
     def print_to_file(self, text):
         self.logger.info(text)
 
+    def load(self, reload_dict):
+        for key, item in reload_dict.items():
+            print(key)
+            if isinstance(item, dict) and "data" in item and "label" in item and "epoch" in item:
+                data = item["data"]
+                if "counter" in item and item["counter"] is not None:
+                    self.cntr_dict[key] = item["counter"]
+            else:
+                data = item
+            self.cntr_dict[key] += 1
+
+        super(ResultLogDict, self).__setitem__(key, data)
+
 
 class ResultElement(dict):
     def __init__(self, data=None, label=None, epoch=None, counter=None):
