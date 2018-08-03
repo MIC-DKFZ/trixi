@@ -2,6 +2,7 @@ import json
 import os
 
 from trixi.util import Config
+from trixi.util.util import StringMultiTypeDecoder
 
 
 class ExperimentReader(object):
@@ -31,7 +32,7 @@ class ExperimentReader(object):
         self.result_dir = os.path.join(self.work_dir, "result")
 
         self.config = Config()
-        self.config.load(os.path.join(self.config_dir, "config.json"))
+        self.config.load(os.path.join(self.config_dir, "config.json"), decoder_cls_=StringMultiTypeDecoder)
 
         self.exp_info = Config()
         exp_info_file = os.path.join(self.config_dir, "exp.json")

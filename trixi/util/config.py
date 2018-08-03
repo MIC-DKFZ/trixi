@@ -174,14 +174,14 @@ class Config(dict):
                           separators=separators,
                           **kwargs)
 
-    def load(self, file_, raise_=True, **kwargs):
+    def load(self, file_, raise_=True, decoder_cls_=ModuleMultiTypeDecoder, **kwargs):
 
         try:
             if hasattr(file_, "read"):
-                new_dict = json.load(file_, cls=ModuleMultiTypeDecoder, **kwargs)
+                new_dict = json.load(file_, cls=decoder_cls_, **kwargs)
             else:
                 with open(file_, "r") as file_object:
-                    new_dict = json.load(file_object, cls=ModuleMultiTypeDecoder, **kwargs)
+                    new_dict = json.load(file_object, cls=decoder_cls_, **kwargs)
         except Exception as e:
             if raise_:
                 raise e
@@ -385,6 +385,7 @@ class Config(dict):
                             yield key + "." + str(i), subval
                     else:
                         yield key, val
+
             return dict(items())
 
         return flat_(self)

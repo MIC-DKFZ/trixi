@@ -166,6 +166,25 @@ class ModuleMultiTypeDecoder(MultiTypeDecoder):
         return super(ModuleMultiTypeDecoder, self)._decode(obj)
 
 
+class StringMultiTypeDecoder(CustomJSONDecoder):
+
+    def _decode(self, obj):
+        if isinstance(obj, str):
+            if obj.startswith("__int__"):
+                return obj[8:-1]
+            elif obj.startswith("__float__"):
+                return obj[10:-1]
+            elif obj.startswith("__tuple__"):
+                return obj[10:-1]
+            elif obj.startswith("__type__"):
+                return obj[9:-1]
+            elif obj.startswith("__function__"):
+                return obj[13:-1]
+            elif obj.startswith("__module__"):
+                return obj[11:-1]
+        return obj
+
+
 class Singleton:
     """
     A non-thread-safe helper class to ease implementing singletons.
