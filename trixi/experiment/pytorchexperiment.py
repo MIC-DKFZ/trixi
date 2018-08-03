@@ -497,7 +497,7 @@ class PytorchExperiment(Experiment):
                                         'time': self._time_start,
                                         'state': self._exp_state,
                                         'current_time': cur_time,
-                                        'epoch': epoch+1
+                                        'epoch': epoch + 1
                                         }),
                               "exp")
 

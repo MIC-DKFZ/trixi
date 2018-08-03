@@ -332,24 +332,25 @@ class ResultLogDict(LogDict):
         super(ResultLogDict, self).__init__(file_name=file_name, base_dir=base_dir)
 
         self.is_init = False
-        self.cntr_dict = defaultdict(float)
+        self.__cntr_dict = defaultdict(float)
         self.is_init = True
 
     def __setitem__(self, key, item):
 
-        if key == "cntr_dict":
-            raise ValueError("In ResultLogDict you can not add an item with key 'cntr_dict'")
+        if key == "__cntr_dict":
+            raise ValueError("In ResultLogDict you can not add an item with key '__cntr_dict'")
 
         data = item
         if isinstance(item, dict) and "data" in item and "label" in item and "epoch" in item:
+
             data = item["data"]
             if "counter" in item and item["counter"] is not None:
-                self.cntr_dict[key] = item["counter"]
+                self.__cntr_dict[key] = item["counter"]
             json_dict = {key: ResultElement(data=data, label=item["label"], epoch=item["epoch"],
-                                            counter=self.cntr_dict[key])}
+                                            counter=self.__cntr_dict[key])}
         else:
-            json_dict = {key: ResultElement(data=data, counter=self.cntr_dict[key])}
-        self.cntr_dict[key] += 1
+            json_dict = {key: ResultElement(data=data, counter=self.__cntr_dict[key])}
+        self.__cntr_dict[key] += 1
         self.logger.info(json.dumps(json_dict) + ",")
 
         super(ResultLogDict, self).__setitem__(key, data)
@@ -363,10 +364,10 @@ class ResultLogDict(LogDict):
             if isinstance(item, dict) and "data" in item and "label" in item and "epoch" in item:
                 data = item["data"]
                 if "counter" in item and item["counter"] is not None:
-                    self.cntr_dict[key] = item["counter"]
+                    self.__cntr_dict[key] = item["counter"]
             else:
                 data = item
-            self.cntr_dict[key] += 1
+            self.__cntr_dict[key] += 1
 
         super(ResultLogDict, self).__setitem__(key, data)
 
