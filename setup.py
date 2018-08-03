@@ -1,5 +1,6 @@
-from setuptools import setup
 import os
+
+from setuptools import setup
 
 with open(os.path.join(os.path.dirname(__file__), "Readme.md")) as f:
     readme = f.read()
@@ -20,4 +21,8 @@ setup(name='trixi',
       license=license,
       packages=['trixi'],
       install_requires=required,
-      zip_safe=True)
+      zip_safe=True,
+      entry_points={
+          'console_scripts': ['trixi-browser=trixi.experiment_browser.browser:start_browser'],
+      }
+      )
