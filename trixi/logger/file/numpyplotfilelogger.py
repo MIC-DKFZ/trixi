@@ -52,8 +52,8 @@ class NumpyPlotFileLogger(NumpySeabornPlotLogger):
 
         Args:
             value: Value (y-axis value) you want to display/ plot/ store
-            name: Name of the value (will also be the filename)
-            counter: counter, which tells the number of the sample (with the same name) (x-axis value)
+            name: Name of the value (will also be the filename if no tag is given)
+            counter: counter, which tells the number of the sample (with the same name --> filename) (x-axis value)
             tag: Tag, grouping similar values. Values with the same tag will be plotted in the same plot
             file_format: output-image file format
 
@@ -61,7 +61,10 @@ class NumpyPlotFileLogger(NumpySeabornPlotLogger):
 
         """
         figure = NumpySeabornPlotLogger.show_value(self, value, name, counter, tag, show=False)
-        outname = os.path.join(self.plot_dir, name) + file_format
+        if tag is None:
+            outname = os.path.join(self.plot_dir, name) + file_format
+        else:
+            outname = os.path.join(self.plot_dir, tag) + file_format
         os.makedirs(os.path.dirname(outname), exist_ok=True)
         threaded(savefig_and_close)(figure, outname)
 

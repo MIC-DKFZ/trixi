@@ -238,25 +238,25 @@ class NumpyVisdomLogger(AbstractLogger):
             opts["showlegend"] = True
 
         up_str = None
-        if name is not None and name in self._value_counter:
+        if tag is not None and tag in self._value_counter:
             up_str = "append"
 
-        if name is not None and name in self._value_counter and tag in self._value_counter[name]:
+        if tag is not None and tag in self._value_counter and name in self._value_counter[tag]:
             if counter is None:
-                self._value_counter[name][tag] += 1
+                self._value_counter[tag][name] += 1
             else:
-                self._value_counter[name][tag] += counter - self._value_counter[name][tag]
+                self._value_counter[tag][name] += counter - self._value_counter[tag][name]
         else:
             if counter is None:
                 counter = 0
             if value_dim == 1:
-                self._value_counter[name][tag] = np.array([counter])
+                self._value_counter[tag][name] = np.array([counter])
             else:
-                self._value_counter[name][tag] = np.array([[counter] * value_dim])
+                self._value_counter[tag][name] = np.array([[counter] * value_dim])
 
         opts = opts.copy()
         opts.update(dict(
-            title=name,
+            title=tag,
         ))
 
         display_name = tag
@@ -265,9 +265,9 @@ class NumpyVisdomLogger(AbstractLogger):
 
         win = self.vis.line(
             Y=value,
-            X=self._value_counter[name][tag],
-            win=name,
-            name=display_name,
+            X=self._value_counter[tag][name],
+            win=tag,
+            name=name,
             update=up_str,
             env=self.name + env_appendix,
             opts=opts

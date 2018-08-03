@@ -62,7 +62,7 @@ class NumpySeabornPlotLogger(AbstractLogger):
             A matplotlib figure
 
                """
-        figure = self.get_figure(name)
+        figure = self.get_figure(tag)
         plt.clf()
 
         seaborn.set_style("whitegrid")
@@ -71,16 +71,16 @@ class NumpySeabornPlotLogger(AbstractLogger):
             tag = name
 
         if counter is None:
-            counter = len(self.values[name][tag]) + 1
+            counter = len(self.values[tag][name]) + 1
 
-        max_val = max(self.max_values[name], counter)
-        self.max_values[name] = max_val
-        self.values[name][tag].append((value, max_val))
+        max_val = max(self.max_values[tag], counter)
+        self.max_values[tag] = max_val
+        self.values[tag][name].append((value, max_val))
 
-        for y_name in self.values[name]:
+        for y_tag in self.values[tag]:
 
-            y, x = zip(*self.values[name][y_name])
-            plt.plot(x, y, label=y_name)
+            y, x = zip(*self.values[tag][y_tag])
+            plt.plot(x, y, label=y_tag)
 
         if show:
             plt.show(block=False)

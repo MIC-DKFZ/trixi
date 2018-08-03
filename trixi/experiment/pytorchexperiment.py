@@ -501,7 +501,7 @@ class PytorchExperiment(Experiment):
         """Saves the current checkpoint as checkpoint_last"""
         self.save_checkpoint(name="checkpoint_last")
 
-    def add_result(self, value, name, counter=None, label=None, plot_result=True):
+    def add_result(self, value, name, counter=None, tag=None, label=None, plot_result=True):
         """
         Saves a results and add it to the result dict, this is similar to results[key] = val, but in addition also
         logs the value to the combined logger (it also stores in the results-logs file).
@@ -512,29 +512,32 @@ class PytorchExperiment(Experiment):
             value: The value of your variable
             name: The name/ key of your variable
             counter: A counter which can be seen a the x-axis of your value
-            label: A label/ tag which can group similar values and will plot values with the same label in the same plot
+            tag: A label/ tag which can group similar values and will plot values with the same label in the same plot
+            label: deprecated label
             plot_result: By default True, will also log all your values to the combined logger (with show value)
 
         """
 
-        label_name = label
-        if label_name is None:
-            label_name = name
+        if label is not None:
+            warnings.warn("label in add_result is deprecated, please use tag instead")
 
-        r_elem = ResultElement(data=value, label=label_name, epoch=self._epoch_idx, counter=counter)
+            if tag is None:
+                tag = label
+
+        tag_name = tag
+        if tag_name is None:
+            tag_name = name
+
+        r_elem = ResultElement(data=value, label=tag_name, epoch=self._epoch_idx, counter=counter)
 
         self.results[name] = r_elem
 
         if plot_result:
-            if label is None:
-                plt_name = name
-                tag = None
+            if tag is None:
                 legend = False
             else:
-                plt_name = label
-                tag = name
                 legend = True
-            self.clog.show_value(value=value, name=plt_name, tag=tag, counter=counter, show_legend=legend)
+            self.clog.show_value(value=value, name=name, tag=tag, counter=counter, show_legend=legend)
 
     def get_result(self, name):
         """
