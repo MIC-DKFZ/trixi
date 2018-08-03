@@ -16,13 +16,16 @@ from tempfile import gettempdir
 from types import FunctionType, ModuleType
 
 import portalocker
+
 try:
     import torch
 except ImportError as e:
     print("Could not import Pytorch related modules.")
     print(e)
 
-    class torch: dtype = None
+
+    class torch:
+        dtype = None
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -136,14 +139,30 @@ class ModuleMultiTypeDecoder(MultiTypeDecoder):
                 str_ = obj[9:-1]
                 module_ = ".".join(str_.split(".")[:-1])
                 name_ = str_.split(".")[-1]
-                return getattr(importlib.import_module(module_), name_)
+                type_ = str_
+                try:
+                    type_ = getattr(importlib.import_module(module_), name_)
+                except:
+                    warnings.warn("Could not load {}".format(str_))
+                return type_
             elif obj.startswith("__function__"):
                 str_ = obj[13:-1]
                 module_ = ".".join(str_.split(".")[:-1])
                 name_ = str_.split(".")[-1]
-                return getattr(importlib.import_module(module_), name_)
+                type_ = str_
+                try:
+                    type_ = getattr(importlib.import_module(module_), name_)
+                except:
+                    warnings.warn("Could not load {}".format(str_))
+                return type_
             elif obj.startswith("__module__"):
-                return importlib.import_module(obj[11:-1])
+                str_ = obj[11:-1]
+                type_ = str_
+                try:
+                    type_ = importlib.import_module(str_)
+                except:
+                    warnings.warn("Could not load {}".format(str_))
+                return type_
         return super(ModuleMultiTypeDecoder, self)._decode(obj)
 
 
