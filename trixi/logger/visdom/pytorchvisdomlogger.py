@@ -73,7 +73,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
                 means.append(param_mean)
                 stds.append(param_std)
-                maxmin.append(torch.max(torch.abs(m_param)).data[0])
+                maxmin.append(torch.max(torch.abs(m_param)).item())
                 legendary.append("%s-%s" % (model_name, m_param_name))
 
         self.show_barplot(name=win_name, array=np.asarray([means, stds, maxmin]), legend=legendary,
@@ -257,8 +257,10 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         assert torch.is_tensor(tensor), "tensor has to be a pytorch tensor or variable"
         assert tensor.dim() == 4, "tensor has to have 4 dimensions"
-        assert tensor.size(1) == 1 or tensor.size(
-            1) == 3, "The 1. dimension (channel) has to be either 1 (gray) or 3 (rgb)"
+        if not (tensor.size(1) == 1 or tensor.size(1) == 3):
+            warnings.warn("The 1. dimension (channel) has to be either 1 (gray) or 3 (rgb), taking the first "
+                          "dimension now !!!")
+            tensor = tensor[:, 0:1, ]
 
         grid = make_grid(tensor, **image_args)
         image = grid.mul(255).clamp(0, 255).byte().numpy()
@@ -352,7 +354,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         p.start()
 
     @convert_params
-    def show_roc_curve(self, tensor, labels, name):
+    def show_roc_curve(self, tensor, labels, name, reduce_to_n_samples=None):
         """
         Displays a roc curve given a tensor with scores and the coresponding labels
 
@@ -364,21 +366,31 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         """
         from sklearn import metrics
 
-        def __show_roc_curve(self, tensor, labels, name):
-            fpr, tpr, thresholds = metrics.roc_curve(labels.flatten(), tensor.flatten())
-            self.show_lineplot(tpr, fpr, name=name, opts={"fillarea": True})
+        def __show_roc_curve(self, tensor, labels, name, reduce_to_n_samples=None):
+
+            if not isinstance(labels, list):
+                labels = labels.flatten()
+            if not isinstance(tensor, list):
+                tensor = tensor.flatten()
+
+            fpr, tpr, thresholds = metrics.roc_curve(labels, tensor)
+            if reduce_to_n_samples is not None:
+                fpr = [np.mean(x) for x in np.array_split(fpr, reduce_to_n_samples)]
+                tpr = [np.mean(x) for x in np.array_split(tpr, reduce_to_n_samples)]
+            self.show_lineplot(tpr, fpr, name=name, opts={"fillarea": True, "webgl": True})
             # self.add_to_graph(x_vals=np.arange(0, 1.1, 0.1), y_vals=np.arange(0, 1.1, 0.1), name=name, append=True)
 
         p = Process(target=__show_roc_curve, kwargs=dict(self=self,
                                                          tensor=tensor,
                                                          labels=labels,
-                                                         name=name
+                                                         name=name,
+                                                         reduce_to_n_samples=reduce_to_n_samples
                                                          ))
         atexit.register(p.terminate)
         p.start()
 
     @convert_params
-    def show_pr_curve(self, tensor, labels, name):
+    def show_pr_curve(self, tensor, labels, name, reduce_to_n_samples=None):
         """
         Displays a precision recall curve given a tensor with scores and the coresponding labels
 
@@ -390,21 +402,32 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         """
         from sklearn import metrics
 
-        def __show_roc_curve(self, tensor, labels, name):
-            precision, recall, thresholds = metrics.precision_recall_curve(labels.flatten(), tensor.flatten())
-            self.show_lineplot(precision, recall, name=name, opts={"fillarea": True})
+        def __show_pr_curve(self, tensor, labels, name, reduce_to_n_samples=None):
+
+            if not isinstance(labels, list):
+                labels = labels.flatten()
+            if not isinstance(tensor, list):
+                tensor = tensor.flatten()
+
+            precision, recall, thresholds = metrics.precision_recall_curve(labels, tensor)
+            if reduce_to_n_samples is not None:
+                precision = [np.mean(x) for x in np.array_split(precision, reduce_to_n_samples)]
+                recall = [np.mean(x) for x in np.array_split(recall, reduce_to_n_samples)]
+            self.show_lineplot(precision, recall, name=name, opts={"fillarea": True, "webgl": True})
             # self.add_to_graph(x_vals=np.arange(0, 1.1, 0.1), y_vals=np.arange(0, 1.1, 0.1), name=name, append=True)
 
-        p = Process(target=__show_roc_curve, kwargs=dict(self=self,
-                                                         tensor=tensor,
-                                                         labels=labels,
-                                                         name=name
-                                                         ))
+        p = Process(target=__show_pr_curve, kwargs=dict(self=self,
+                                                        tensor=tensor,
+                                                        labels=labels,
+                                                        name=name,
+                                                        reduce_to_n_samples=reduce_to_n_samples
+                                                        ))
         atexit.register(p.terminate)
         p.start()
 
     @convert_params
-    def show_classification_metrics(self, tensor, labels, name, metric=("roc-auc", "pr-auc", "pr-score")):
+    def show_classification_metrics(self, tensor, labels, name, metric=("roc-auc", "pr-score"),
+                                    add_res_fn=None):
         """
         Displays some classification metrics as line plots in a graph (similar to show value (also uses show value
         for the caluclated values))
@@ -421,34 +444,51 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         from sklearn import metrics
 
-        def __show_roc_curve(self, tensor, labels, name, metric=("roc-auc", "pr-auc", "pr-score")):
+        def __show_roc_curve(self, tensor, labels, name, metric=("roc-auc", "pr-score"),
+                             add_res_fn=None):
 
             vals = []
+            tags = []
+
+            if not isinstance(labels, list):
+                labels = labels.flatten()
+            if not isinstance(tensor, list):
+                tensor = tensor.flatten()
 
             if "roc-auc" in metric:
-                roc_auc = metrics.roc_auc_score(labels.flatten(), tensor.flatten())
+                roc_auc = metrics.roc_auc_score(labels, tensor)
                 vals.append(roc_auc)
+                tags.append("roc-auc")
             if "pr-auc" in metric:
-                precision, recall, thresholds = metrics.precision_recall_curve(labels.flatten(), tensor.flatten())
+                precision, recall, thresholds = metrics.precision_recall_curve(labels, tensor)
                 pr_auc = metrics.auc(recall, precision)
                 vals.append(pr_auc)
+                tags.append("pr-auc")
             if "pr-score" in metric:
-                pr_score = metrics.average_precision_score(labels.flatten(), tensor.flatten())
+                pr_score = metrics.average_precision_score(labels, tensor)
                 vals.append(pr_score)
+                tags.append("pr-score")
             if "mcc" in metric:
-                mcc_score = metrics.matthews_corrcoef(labels.flatten(), tensor.flatten())
+                mcc_score = metrics.matthews_corrcoef(labels, tensor)
                 vals.append(mcc_score)
+                tags.append("mcc")
             if "f1" in metric:
-                f1_score = metrics.f1_score(labels.flatten(), tensor.flatten())
+                f1_score = metrics.f1_score(labels, tensor)
                 vals.append(f1_score)
+                tags.append("f1")
 
-            self.show_value(vals, name=name)
+            for val, tag in zip(vals, tags):
+                if add_res_fn is not None:
+                    add_res_fn(val, name=tag + "-" + name, label=name, plot_result=True)
+                else:
+                    self.show_value(val, name=name, tag=tag)
 
         p = Process(target=__show_roc_curve, kwargs=dict(self=self,
                                                          tensor=tensor,
                                                          labels=labels,
                                                          name=name,
-                                                         metric=metric
+                                                         metric=metric,
+                                                         add_res_fn=add_res_fn
                                                          ))
         atexit.register(p.terminate)
         p.start()

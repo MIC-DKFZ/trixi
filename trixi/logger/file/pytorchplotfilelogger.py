@@ -152,6 +152,11 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
 
         """
 
+        if not (tensor.size(1) == 1 or tensor.size(1) == 3):
+            warnings.warn("The 1. dimension (channel) has to be either 1 (gray) or 3 (rgb), taking the first "
+                          "dimension now !!!")
+            tensor = tensor[:, 0:1, ]
+
         if n_iter is not None:
             name = name_and_iter_to_filename(name=name, n_iter=n_iter, ending=".png", iter_format=iter_format,
                                              prefix=prefix)
