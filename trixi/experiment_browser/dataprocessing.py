@@ -112,7 +112,7 @@ def group_images(images):
     for img in images:
         filename = img.split(os.sep + "img" + os.sep)[1]
         base_name = os.path.splitext(filename)[0]
-        number_groups = re.findall("\d+", base_name)
+        number_groups = re.findall("\d+\.\d+", base_name)
         if len(number_groups) == 0:
             base_name = ''.join(e for e in base_name if e.isalpha())
         else:
