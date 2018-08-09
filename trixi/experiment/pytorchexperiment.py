@@ -417,15 +417,13 @@ class PytorchExperiment(Experiment):
             self.results.print_to_file("]")
         self.save_results()
         self.save_end_checkpoint()
-        self.elog.save_config(Config(**{'name': self.exp_name, 'time': self._time_start, 'state': self._exp_state}),
-                              "exp")
+        self._save_exp_config()
         self.elog.print("Experiment ended. Checkpoints stored =)")
 
     def end_test(self):
         """Ends the experiment and stores the final results and config"""
         self.save_results()
-        self.elog.save_config(Config(**{'name': self.exp_name, 'time': self._time_start, 'state': self._exp_state}),
-                              "exp")
+        self._save_exp_config()
         self.elog.print("Testing ended. Results stored =)")
 
     def at_exit_func(self):
@@ -436,20 +434,17 @@ class PytorchExperiment(Experiment):
                 self.results.print_to_file("]")
             self.save_checkpoint(name="checkpoint_exit-" + self._exp_state)
             self.save_results()
-            self.elog.save_config(Config(**{'name': self.exp_name, 'time': self._time_start, 'state': self._exp_state}),
-                                  "exp")
+            self._save_exp_config()
             self.elog.print("Experiment exited. Checkpoints stored =)")
         time.sleep(10)  # allow checkpoint saving to finish
 
     def _setup_internal(self):
         self.prepare_resume()
         self.elog.save_config(self._config_raw, "config")
-        self.elog.save_config(Config(**{'name': self.exp_name, 'time': self._time_start, 'state': self._exp_state}),
-                              "exp")
+        self._save_exp_config()
 
     def _start_internal(self):
-        self.elog.save_config(Config(**{'name': self.exp_name, 'time': self._time_start, 'state': self._exp_state}),
-                              "exp")
+        self._save_exp_config()
 
     def prepare_resume(self):
         """Tries to resume the experiment by using the defined resume path or resume PytorchExperiment"""
@@ -492,14 +487,20 @@ class PytorchExperiment(Experiment):
     def _end_epoch_internal(self, epoch):
         self.save_results()
         self.save_temp_checkpoint()
-        cur_time = time.strftime("%y-%m-%d_%H:%M:%S", time.localtime(time.time()))
-        self.elog.save_config(Config(**{'name': self.exp_name,
-                                        'time': self._time_start,
-                                        'state': self._exp_state,
-                                        'current_time': cur_time,
-                                        'epoch': epoch + 1
-                                        }),
-                              "exp")
+        self._save_exp_config()
+
+
+    def _save_exp_config(self):
+
+        if self.elog is not None:
+            cur_time = time.strftime("%y-%m-%d_%H:%M:%S", time.localtime(time.time()))
+            self.elog.save_config(Config(**{'name': self.exp_name,
+                                            'time': self._time_start,
+                                            'state': self._exp_state,
+                                            'current_time': cur_time,
+                                            'epoch': self._epoch_idx + 1
+                                            }),
+                                  "exp")
 
     def save_temp_checkpoint(self):
         """Saves the current checkpoint as checkpoint_current"""
