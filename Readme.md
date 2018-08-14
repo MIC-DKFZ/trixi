@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/134823632.svg)](https://zenodo.org/badge/latestdoi/134823632)
+
 # Install
 Install Dependencies
 ```
@@ -24,7 +26,7 @@ Install Sphinx:
 `pip install sphinx`
 
 Generate Api-docs:
-`path/to/PROJECT/doc$ sphinx-apidoc -f -o . ..` 
+`path/to/PROJECT/doc$ sphinx-apidoc -f -o . ..`
 
 Open index.html:
 `firefox path/to/PROJECT/doc/_build/html/index.html`
@@ -49,9 +51,9 @@ This follows the Google style docstring guidelines:
         """
 
 
-**IMPORTANT NOTE**: Somehow pytorch and lasagne/theano do not play nicely together. So if you 
-import lasagne/theano and trixi (which imports pytorch if you have it installed), 
-your program will get stuck. So you can only use trixi with lasagne/theano if you do not 
+**IMPORTANT NOTE**: Somehow pytorch and lasagne/theano do not play nicely together. So if you
+import lasagne/theano and trixi (which imports pytorch if you have it installed),
+your program will get stuck. So you can only use trixi with lasagne/theano if you do not
 have pytorch installed. If you need both you can use virtual_envs.
 
 # Use on remote server in same network
