@@ -2,6 +2,8 @@ import atexit
 import fnmatch
 import json
 import os
+import sys
+import re
 import random
 import shutil
 import string
@@ -204,6 +206,10 @@ class PytorchExperiment(Experiment):
                     self._resume_path = resume
             elif isinstance(resume, PytorchExperiment):
                 self._resume_path = resume.elog.base_dir
+
+        if self._resume_path is not None and not self._ignore_resume_config:
+            self._config_raw.update(Config(file_=os.path.join(self._resume_path, "config", "config.json")),
+                                    ignore=list(map(lambda x: re.sub("^-+", "", x), sys.argv)))
 
         # self.elog.save_config(self.config, "config_pre")
         if globs is not None:
@@ -436,7 +442,7 @@ class PytorchExperiment(Experiment):
             self.save_results()
             self._save_exp_config()
             self.elog.print("Experiment exited. Checkpoints stored =)")
-        time.sleep(10)  # allow checkpoint saving to finish
+        time.sleep(10)  # allow checkpoint saving to finish. We need a better solution for this :D
 
     def _setup_internal(self):
         self.prepare_resume()
@@ -488,7 +494,6 @@ class PytorchExperiment(Experiment):
         self.save_results()
         self.save_temp_checkpoint()
         self._save_exp_config()
-
 
     def _save_exp_config(self):
 

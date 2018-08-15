@@ -29,18 +29,23 @@ class Config(dict):
         if update_from_argv:
             update_from_sys_argv(self)
 
-    def update(self, dict_like, deep=False):
+    def update(self, dict_like, deep=False, ignore=None):
+
+        if ignore is None:
+            ignore = ()
 
         if deep:
-            self.deepupdate(dict_like)
+            self.deepupdate(dict_like, ignore)
         else:
             for key, value in dict_like.items():
+                if key in ignore:
+                    continue
                 if key in self and isinstance(value, dict):
                     self[key].update(value)
                 else:
                     self[key] = value
 
-    def deepupdate(self, dict_like):
+    def deepupdate(self, dict_like, ignore=None):
 
         def make_mutable(obj, attr, val):
             if isinstance(val, dict):
@@ -55,6 +60,8 @@ class Config(dict):
                 obj[attr] = val
 
         for key, val in dict_like.items():
+            if key in ignore:
+                continue
             make_mutable(self, key, val)
 
     def __setattr__(self, key, value):
@@ -441,6 +448,8 @@ def update_from_sys_argv(config):
         # convert type args
         ignore_ = []
         for key, val in param.items():
+            if val in ("none", "None"):
+                param[key] = None
             if type(config_flat[key]) == type:
                 param[key] = decoder.decode(val)
             try:
