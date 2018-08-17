@@ -6,6 +6,11 @@ Manage your machine learning experiments.
 ![icon](https://github.com/MIC-DKFZ/trixi/blob/master/trixi/experiment_browser/static/assets/trixi-icon.png) 
 trixi is a tool to help you configure, visualize and log your experiments in a reproducible fashion.    
 
+* [Features](#features)
+* [Installation](#installation)
+* [Sphinx Setup](#sphinx-setup)
+* [Remote Usage](#remote-usage)
+
 ## Features
 ### Visdom
 ![icon](https://github.com/MIC-DKFZ/trixi/blob/master/trixi/experiment_browser/static/assets/trixi-icon.png)
@@ -18,8 +23,8 @@ trixi's experimt browser offers a complete overview of experiments along with al
 comparison highlighting differences in the configs and a detailed view of all images, plots, results and logs of each experiment.
 ![trixi browser](https://github.com/MIC-DKFZ/trixi/blob/master/doc/trixi_browser.gif)
 
-## Install
-Install Dependencies
+## Installation
+Install dependencies:
 ```
 pip install -r requirements.txt
 ```
@@ -74,10 +79,12 @@ import lasagne/theano and trixi (which imports pytorch if you have it installed)
 your program will get stuck. So you can only use trixi with lasagne/theano if you do not
 have pytorch installed. If you need both you can use virtual_envs.
 
-## Use on remote server in same network
+## Remote Usage
+
+### Use on remote server in same network
 Simple run visdom on remote server and then on your local computer go to `MY_REMOTE_SERVER_NAME:8080`.
 
-## Use on remote server in different network
+### Use on remote server in different network
 
 If you want to run trixi on a remote server, but show the results locally
 you can do:
@@ -92,3 +99,6 @@ python my_random_trixi_script.py
 ```
 
 Now on your local computer you can go to `localhost:8080` and see the visdom dashboard.
+* [API](#api)
+* [To Do](#to-do)
+* [Contributing](#contributing)
