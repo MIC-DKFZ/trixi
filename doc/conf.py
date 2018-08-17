@@ -182,6 +182,8 @@ intersphinx_mapping = {'https://docs.python.org/': None}
 # kill the process because of "excessive memory consumption"...)
 with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'requirements_full.txt')) as f:
     autodoc_mock_imports = list(map(lambda x: x.split("==")[0], f.read().splitlines()))
+autodoc_mock_imports.append("flask")
+autodoc_mock_imports.append("telegram")
 
 
 def run_apidoc(_):
