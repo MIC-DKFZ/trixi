@@ -115,3 +115,4 @@ doc/*
 !doc/changes.rst
 !doc/license.rst
 !doc/requirements.txt
+!doc/trixi_browser.gif
