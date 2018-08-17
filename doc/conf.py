@@ -176,21 +176,12 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
 
-autodoc_mock_imports = [
-    "matplotlib",
-    "numpy",
-    "scipy",
-    "portalocker",
-    "torch",
-    "torchvision",
-    "seaborn",
-    "visdom",
-    "colorlover",
-    "telegram",
-    "graphviz",
-    "flask",
-    "plotly"
-]
+
+# Mock all the things!
+# (If we actually try to install from our requirements file, ReadTheDocs will
+# kill the process because of "excessive memory consumption"...)
+with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'requirements_full.txt')) as f:
+    autodoc_mock_imports = list(map(lambda x: x.split("==")[0], f.read().splitlines()))
 
 
 def run_apidoc(_):
