@@ -1,5 +1,15 @@
 [![DOI](https://zenodo.org/badge/134823632.svg)](https://zenodo.org/badge/latestdoi/134823632)
 
+# trixi ![logo_small](https://github.com/MIC-DKFZ/trixi/blob/master/trixi/experiment_browser/static/assets/trixi-small.png)
+
+Manage your machine learning experiments.  
+![icon](https://github.com/MIC-DKFZ/trixi/blob/master/trixi/experiment_browser/static/assets/trixi-icon.png) 
+trixi is a tool to help you configure, visualize and log your experiments in a reproducible fashion.    
+
+![visdom](https://lh3.googleusercontent.com/-h3HuvbU2V0SfgqgXGiK3LPghE5vqvS0pzpObS0YgG_LABMFk62JCa3KVu_2NV_4LJKaAa5-tg=s0)
+
+
+
 # Install
 Install Dependencies
 ```
