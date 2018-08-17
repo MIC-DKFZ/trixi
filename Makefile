@@ -16,4 +16,4 @@ install_develop:
 
 
 documentation:
-	sphinx-apidoc -e -f trixi -o doc/
+	sphinx-apidoc -e -f trixi -o doc/api

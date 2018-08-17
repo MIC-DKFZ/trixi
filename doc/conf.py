@@ -184,7 +184,10 @@ autodoc_mock_imports = [
     "torch",
     "torchvision",
     "seaborn",
-    "visdom"
+    "visdom",
+    "colorlover",
+    "telegram",
+    "graphviz"
 ]
 
 
