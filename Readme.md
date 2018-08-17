@@ -7,9 +7,9 @@ Manage your machine learning experiments.
 trixi is a tool to help you configure, visualize and log your experiments in a reproducible fashion.    
 
 <p float="left">
-<img src="https://lh3.googleusercontent.com/-h3HuvbU2V0SfgqgXGiK3LPghE5vqvS0pzpObS0YgG_LABMFk62JCa3KVu_2NV_4LJKaAa5-tg=s0" alt="visdom" width="400px" height="200px"/>
+<img src="https://lh3.googleusercontent.com/-h3HuvbU2V0SfgqgXGiK3LPghE5vqvS0pzpObS0YgG_LABMFk62JCa3KVu_2NV_4LJKaAa5-tg=s0" alt="visdom" width="50%"/>
 
-<img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/trixi_browser.gif" alt="trixi browser" width="400px" height="200px"/>
+<img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/trixi_browser.gif" alt="trixi browser" width="50%"/>
 </p>
 
 # Install
