@@ -6,4 +6,5 @@
 # We pin sphinx to 1.7.0 and will need to revisit this from time to time.
 # The error is caused by manually calling sphinx-apidoc in conf.py
 
+../requirements_full.txt
 sphinx==1.7.0

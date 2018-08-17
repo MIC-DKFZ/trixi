@@ -187,7 +187,9 @@ autodoc_mock_imports = [
     "visdom",
     "colorlover",
     "telegram",
-    "graphviz"
+    "graphviz",
+    "flask",
+    "plotly"
 ]
 
 
