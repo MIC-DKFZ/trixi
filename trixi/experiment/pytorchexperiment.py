@@ -360,13 +360,12 @@ class PytorchExperiment(Experiment):
 
     def load_checkpoint(self, name="checkpoint", save_types=("model", "optimizer", "simple", "th_vars", "results"),
                         n_iter=None, iter_format="{:05d}", prefix=False, path=None):
-
         """
         Loads a checkpoint and restores the experiment.
 
         Make sure you have your torch stuff already on the right devices beforehand, otherwise this could lead to
         errors e.g. when making a optimizer step (and for some reason the adam states are not already on the gpu:
-         https://discuss.pytorch.org/t/loading-a-saved-model-for-continue-training/17244/3 )
+        https://discuss.pytorch.org/t/loading-a-saved-model-for-continue-training/17244/3 )
 
         Args:
             name: The name of the checkpoint file

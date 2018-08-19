@@ -3,7 +3,7 @@
 # ![logo_small](https://github.com/MIC-DKFZ/trixi/blob/master/trixi/experiment_browser/static/assets/trixi-small.png)
 
 Manage your machine learning experiments.  
-![icon](https://github.com/MIC-DKFZ/trixi/blob/master/trixi/experiment_browser/static/assets/trixi-icon.png) 
+![icon](https://github.com/MIC-DKFZ/trixi/blob/master/trixi/experiment_browser/static/assets/trixi-icon.png)
 trixi is a tool to help you configure, visualize and log your experiments in a reproducible fashion.    
 
 * [Features](#features)
@@ -18,10 +18,10 @@ trixi integrates with [Visdom](https://github.com/facebookresearch/visdom) and o
 ![visdom](https://lh3.googleusercontent.com/-h3HuvbU2V0SfgqgXGiK3LPghE5vqvS0pzpObS0YgG_LABMFk62JCa3KVu_2NV_4LJKaAa5-tg=s0)
 
 ### trixi Experiment Browser
-![icon](https://github.com/MIC-DKFZ/trixi/blob/master/trixi/experiment_browser/static/assets/trixi-icon.png) 
-trixi's experimt browser offers a complete overview of experiments along with all config parameters, an interactive 
+![icon](https://github.com/MIC-DKFZ/trixi/blob/master/trixi/experiment_browser/static/assets/trixi-icon.png)
+trixi's experimt browser offers a complete overview of experiments along with all config parameters, an interactive
 comparison highlighting differences in the configs and a detailed view of all images, plots, results and logs of each experiment.
-![trixi browser](https://github.com/MIC-DKFZ/trixi/blob/master/doc/trixi_browser.gif)
+![trixi browser](https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_browser.gif)
 
 ## Installation
 Install dependencies:

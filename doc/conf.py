@@ -197,8 +197,8 @@ def run_apidoc(_):
     # change "backend" to your module name
     module = os.path.join(parentFolder, 'trixi')
     output_path = os.path.join(cur_dir, 'api')
-    main(['-e', '-f', '-o', output_path, module])
-    file = open(output_path+"/modules.rst", 'a')
+    main(['-e', '-f', '-o', output_path, module, "-d", "1"])
+    file = open(os.path.join(output_path, "modules.rst"), 'a')
     file.write("   ../class_diagram\n")
     file.close()
 

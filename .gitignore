@@ -105,14 +105,5 @@ ENV/
 
 ### Except build folder in docs:
 
-doc/*
-!doc/conf.py
-!doc/index.rst
-!doc/Makefile
-!doc/installation.rst
-!doc/quickstart.rst
-!doc/authors.rst
-!doc/changes.rst
-!doc/license.rst
-!doc/requirements.txt
-!doc/trixi_browser.gif
+doc/api
+doc/_build

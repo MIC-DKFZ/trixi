@@ -1,4 +1,4 @@
-class diagram
+Class Diagram
 =================
 
 Logger

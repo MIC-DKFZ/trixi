@@ -13,15 +13,15 @@ This is the documentation of **trixi** (Training & Retrospective Insights eXperi
 You can jump right into the package by looking into our :ref:`quick-start-label`.
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 1
    :caption: Contents
 
-   installation.rst
-   quickstart.rst
-   license.rst
-   authors.rst
-   changes.rst
-   api/modules.rst
+   installation
+   quickstart
+   license
+   authors
+   changes
+   api/modules
 
 
 Indices and tables
