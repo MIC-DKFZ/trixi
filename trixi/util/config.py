@@ -439,7 +439,7 @@ def update_from_sys_argv(config):
                         parser.add_argument(name, nargs='+', default=val)
                 else:
                     if type(val) == type:
-                        val = encoder.encode(val)
+                        val = encoder._encode(val)
                     parser.add_argument(name, type=type(val), default=val)
 
         # parse args
@@ -455,7 +455,11 @@ def update_from_sys_argv(config):
             if val in ("none", "None"):
                 param[key] = None
             if type(config_flat[key]) == type:
-                param[key] = decoder.decode(val)
+                if isinstance(val, str):
+                    val = val.replace("\'", "")
+                    val = val.replace("\"", "")
+                    print(val)
+                param[key] = decoder._decode(val)
             try:
                 key_split = key.split(".")
                 list_object, _ = ".".join(key_split[:-1]), int(key_split[-1])

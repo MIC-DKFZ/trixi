@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 
-@lru_cache(maxsize=32)
+#@lru_cache(maxsize=32)
 def get_vanilla_image_gradient(model, inpt, err_fn, abs=False):
     if isinstance(model, torch.nn.Module):
         model.zero_grad()
@@ -25,10 +25,10 @@ def get_vanilla_image_gradient(model, inpt, err_fn, abs=False):
 
     if abs:
         grad = torch.abs(grad)
-    return grad
+    return grad.detach()
 
 
-@lru_cache(maxsize=32)
+#@lru_cache(maxsize=32)
 def get_guided_image_gradient(model: torch.nn.Module, inpt, err_fn, abs=False):
     def guided_relu_hook_function(module, grad_in, grad_out):
         if isinstance(module, (torch.nn.ReLU, torch.nn.LeakyReLU)):
@@ -58,10 +58,10 @@ def get_guided_image_gradient(model: torch.nn.Module, inpt, err_fn, abs=False):
 
     if abs:
         grad = torch.abs(grad)
-    return grad
+    return grad.detach()
 
 
-@lru_cache(maxsize=32)
+#@lru_cache(maxsize=32)
 def get_smooth_image_gradient(model, inpt, err_fn, n_runs=20, eps=0.1, grad_type="vanilla"):
     grads = []
     for i in range(n_runs):
@@ -76,7 +76,7 @@ def get_smooth_image_gradient(model, inpt, err_fn, n_runs=20, eps=0.1, grad_type
         grads.append(torch.abs(single_grad))
 
     grad = torch.mean(torch.stack(grads), dim=0)
-    return grad
+    return grad.detach()
 
 
 def update_model(original_model, update_dict, exclude_layers=(), do_warnings=True):
