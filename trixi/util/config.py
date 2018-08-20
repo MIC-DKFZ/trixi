@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import copy
 import json
 
 from trixi.util.util import ModuleMultiTypeDecoder, ModuleMultiTypeEncoder
@@ -335,7 +334,7 @@ class Config(dict):
 
         return difference
 
-    def flat(self, keep_lists=True):
+    def flat(self, keep_lists=True, max_split_size=10):
         """Returns a flattened version of the Config as dict.
 
         Nested Configs and lists will be replaced by concatenated keys like so::
@@ -368,6 +367,7 @@ class Config(dict):
 
         Args:
             keep_lists: Keeps list along with unpacked values
+            max_split_size: List longer than this will not be unpacked
 
         Returns:
             dict: A flattened version of self
@@ -386,10 +386,14 @@ class Config(dict):
                         if len(intermediate_dict) > 0:
                             yield key, intermediate_dict
                     elif isinstance(val, list):
-                        if keep_lists or type(key) != str:
+                        keep_this = keep_lists or type(key) != str
+                        if max_split_size not in (None, False) and len(val) > max_split_size:
+                            keep_this = True
+                        if keep_this:
                             yield key, val
-                        for i, subval in enumerate(val):
-                            yield key + "." + str(i), subval
+                        if max_split_size in (None, False) or len(val) <= max_split_size:
+                            for i, subval in enumerate(val):
+                                yield key + "." + str(i), subval
                     else:
                         yield key, val
 
