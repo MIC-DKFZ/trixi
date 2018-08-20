@@ -33,8 +33,8 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
         """
 
         ### convert args
-        args = (a.cpu().numpy() if torch.is_tensor(a) else a for a in args)
-        args = (a.data.cpu().numpy() if isinstance(a, Variable) else a for a in args)
+        args = (a.detach().cpu().numpy() if torch.is_tensor(a) else a for a in args)
+        #args = (a.data.cpu().numpy() if isinstance(a, Variable) else a for a in args)
 
         ### convert kwargs
         for key, data in kwargs.items():

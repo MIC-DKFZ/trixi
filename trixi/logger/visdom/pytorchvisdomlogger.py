@@ -354,7 +354,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         p.start()
 
     @convert_params
-    def show_roc_curve(self, tensor, labels, name, reduce_to_n_samples=None):
+    def show_roc_curve(self, tensor, labels, name, reduce_to_n_samples=None, use_sub_process=False):
         """
         Displays a roc curve given a tensor with scores and the coresponding labels
 
@@ -380,17 +380,24 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             self.show_lineplot(tpr, fpr, name=name, opts={"fillarea": True, "webgl": True})
             # self.add_to_graph(x_vals=np.arange(0, 1.1, 0.1), y_vals=np.arange(0, 1.1, 0.1), name=name, append=True)
 
-        p = Process(target=__show_roc_curve, kwargs=dict(self=self,
-                                                         tensor=tensor,
-                                                         labels=labels,
-                                                         name=name,
-                                                         reduce_to_n_samples=reduce_to_n_samples
-                                                         ))
-        atexit.register(p.terminate)
-        p.start()
+        if use_sub_process:
+            p = Process(target=__show_roc_curve, kwargs=dict(self=self,
+                                                             tensor=tensor,
+                                                             labels=labels,
+                                                             name=name,
+                                                             reduce_to_n_samples=reduce_to_n_samples
+                                                             ))
+            atexit.register(p.terminate)
+            p.start()
+        else:
+            __show_roc_curve(self=self,
+                             tensor=tensor,
+                             labels=labels,
+                             name=name,
+                             reduce_to_n_samples=reduce_to_n_samples)
 
     @convert_params
-    def show_pr_curve(self, tensor, labels, name, reduce_to_n_samples=None):
+    def show_pr_curve(self, tensor, labels, name, reduce_to_n_samples=None, use_sub_process=False):
         """
         Displays a precision recall curve given a tensor with scores and the coresponding labels
 
@@ -416,18 +423,26 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             self.show_lineplot(precision, recall, name=name, opts={"fillarea": True, "webgl": True})
             # self.add_to_graph(x_vals=np.arange(0, 1.1, 0.1), y_vals=np.arange(0, 1.1, 0.1), name=name, append=True)
 
-        p = Process(target=__show_pr_curve, kwargs=dict(self=self,
-                                                        tensor=tensor,
-                                                        labels=labels,
-                                                        name=name,
-                                                        reduce_to_n_samples=reduce_to_n_samples
-                                                        ))
-        atexit.register(p.terminate)
-        p.start()
+        if use_sub_process:
+            p = Process(target=__show_pr_curve, kwargs=dict(self=self,
+                                                            tensor=tensor,
+                                                            labels=labels,
+                                                            name=name,
+                                                            reduce_to_n_samples=reduce_to_n_samples
+                                                            ))
+            atexit.register(p.terminate)
+            p.start()
+        else:
+            __show_pr_curve(self=self,
+                            tensor=tensor,
+                            labels=labels,
+                            name=name,
+                            reduce_to_n_samples=reduce_to_n_samples
+                            )
 
     @convert_params
     def show_classification_metrics(self, tensor, labels, name, metric=("roc-auc", "pr-score"),
-                                    add_res_fn=None):
+                                    add_res_fn=None, use_sub_process=False):
         """
         Displays some classification metrics as line plots in a graph (similar to show value (also uses show value
         for the caluclated values))
@@ -444,8 +459,8 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         from sklearn import metrics
 
-        def __show_roc_curve(self, tensor, labels, name, metric=("roc-auc", "pr-score"),
-                             add_res_fn=None):
+        def __show_classification_metrics(self, tensor, labels, name, metric=("roc-auc", "pr-score"),
+                                          add_res_fn=None):
 
             vals = []
             tags = []
@@ -479,19 +494,28 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
             for val, tag in zip(vals, tags):
                 if add_res_fn is not None:
-                    add_res_fn(val, name=tag + "-" + name, label=name, plot_result=True)
+                    add_res_fn(val, name=tag + "-" + name, tag=name, plot_result=True)
                 else:
                     self.show_value(val, name=name, tag=tag)
 
-        p = Process(target=__show_roc_curve, kwargs=dict(self=self,
-                                                         tensor=tensor,
-                                                         labels=labels,
-                                                         name=name,
-                                                         metric=metric,
-                                                         add_res_fn=add_res_fn
-                                                         ))
-        atexit.register(p.terminate)
-        p.start()
+        if use_sub_process:
+            p = Process(target=__show_classification_metrics, kwargs=dict(self=self,
+                                                                          tensor=tensor,
+                                                                          labels=labels,
+                                                                          name=name,
+                                                                          metric=metric,
+                                                                          add_res_fn=add_res_fn
+                                                                          ))
+            atexit.register(p.terminate)
+            p.start()
+        else:
+            __show_classification_metrics(self=self,
+                                          tensor=tensor,
+                                          labels=labels,
+                                          name=name,
+                                          metric=metric,
+                                          add_res_fn=add_res_fn
+                                          )
 
     def show_image_gradient(self, model, inpt, err_fn, grad_type="vanilla", n_runs=20, eps=0.1,
                             abs=False, **image_grid_params):
