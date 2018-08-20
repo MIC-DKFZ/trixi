@@ -1,6 +1,6 @@
 [![DOI](https://zenodo.org/badge/134823632.svg)](https://zenodo.org/badge/latestdoi/134823632)
 
-# ![logo_small](https://github.com/MIC-DKFZ/trixi/blob/master/trixi/experiment_browser/static/assets/trixi-small.png)
+# ![logo_small](https://github.com/MIC-DKFZ/trixi/blob/master/trixi/doc/_static/logo/trixi-small.png)
 
 Manage your machine learning experiments.  
 ![icon](https://github.com/MIC-DKFZ/trixi/blob/master/trixi/experiment_browser/static/assets/trixi-icon.png)
