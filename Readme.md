@@ -1,4 +1,5 @@
 [![DOI](https://zenodo.org/badge/134823632.svg)](https://zenodo.org/badge/latestdoi/134823632)
+[![Build Status](https://travis-ci.org/MIC-DKFZ/trixi.svg?branch=master)](https://travis-ci.org/MIC-DKFZ/trixi)
 
 # ![logo_small](https://github.com/MIC-DKFZ/trixi/blob/master/trixi/doc/_static/logo/trixi-small.png)
 
