@@ -1,0 +1,1 @@
+install: pip install -r requirements_full.txt
