@@ -21,7 +21,6 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
 
-
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -31,13 +30,16 @@ sys.path.insert(0, os.path.abspath('../..'))
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc',
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
-    'sphinx.ext.inheritance_diagram']
+    'sphinx.ext.inheritance_diagram'
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -95,7 +97,9 @@ html_theme = 'sphinx_rtd_theme'
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    "collapse_navigation": False
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -176,6 +180,15 @@ texinfo_documents = [
 intersphinx_mapping = {'https://docs.python.org/': None}
 
 
+# Mock all the things!
+# (If we actually try to install from our requirements file, ReadTheDocs will
+# kill the process because of "excessive memory consumption"...)
+with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'requirements_full.txt')) as f:
+    autodoc_mock_imports = list(map(lambda x: x.split("==")[0], f.read().splitlines()))
+autodoc_mock_imports.append("flask")
+autodoc_mock_imports.append("telegram")
+
+
 def run_apidoc(_):
     from sphinx.apidoc import main
     parentFolder = os.path.join(os.path.dirname(__file__), '..')
@@ -184,10 +197,11 @@ def run_apidoc(_):
     # change "backend" to your module name
     module = os.path.join(parentFolder, 'trixi')
     output_path = os.path.join(cur_dir, 'api')
-    main(['-e', '-f', '-o', output_path, module])
-    file = open(output_path+"/modules.rst",'a')
+    main(['-e', '-f', '-o', output_path, module, "-d", "1"])
+    file = open(os.path.join(output_path, "modules.rst"), 'a')
     file.write("   ../class_diagram\n")
     file.close()
+
 
 def setup(app):
     # trigger the run_apidoc

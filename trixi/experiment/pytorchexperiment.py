@@ -2,6 +2,8 @@ import atexit
 import fnmatch
 import json
 import os
+import sys
+import re
 import random
 import shutil
 import string
@@ -205,6 +207,10 @@ class PytorchExperiment(Experiment):
             elif isinstance(resume, PytorchExperiment):
                 self._resume_path = resume.elog.base_dir
 
+        if self._resume_path is not None and not self._ignore_resume_config:
+            self._config_raw.update(Config(file_=os.path.join(self._resume_path, "config", "config.json")),
+                                    ignore=list(map(lambda x: re.sub("^-+", "", x), sys.argv)))
+
         # self.elog.save_config(self.config, "config_pre")
         if globs is not None:
             zip_name = os.path.join(self.elog.save_dir, "sources.zip")
@@ -354,13 +360,12 @@ class PytorchExperiment(Experiment):
 
     def load_checkpoint(self, name="checkpoint", save_types=("model", "optimizer", "simple", "th_vars", "results"),
                         n_iter=None, iter_format="{:05d}", prefix=False, path=None):
-
         """
         Loads a checkpoint and restores the experiment.
 
         Make sure you have your torch stuff already on the right devices beforehand, otherwise this could lead to
         errors e.g. when making a optimizer step (and for some reason the adam states are not already on the gpu:
-         https://discuss.pytorch.org/t/loading-a-saved-model-for-continue-training/17244/3 )
+        https://discuss.pytorch.org/t/loading-a-saved-model-for-continue-training/17244/3 )
 
         Args:
             name: The name of the checkpoint file
@@ -436,7 +441,7 @@ class PytorchExperiment(Experiment):
             self.save_results()
             self._save_exp_config()
             self.elog.print("Experiment exited. Checkpoints stored =)")
-        time.sleep(10)  # allow checkpoint saving to finish
+        time.sleep(10)  # allow checkpoint saving to finish. We need a better solution for this :D
 
     def _setup_internal(self):
         self.prepare_resume()
@@ -488,7 +493,6 @@ class PytorchExperiment(Experiment):
         self.save_results()
         self.save_temp_checkpoint()
         self._save_exp_config()
-
 
     def _save_exp_config(self):
 
