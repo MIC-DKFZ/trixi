@@ -796,6 +796,94 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
+    def show_matplot_plt(self, plt, name=None, title=None, caption=None, env_appendix="", opts=None, **kwargs):
+        """
+        Displays an matplotlib figure in a window/pane at the visdom server
+
+        Args:
+            plt: The matplotlib figure/plot to be displayed
+            name: The name of the image window
+            title: The title of the image window
+            caption: The of the image, displayed in the window
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        """
+
+        if opts is None:
+            opts = {}
+        vis_task = {
+            "type": "matplot_plt",
+            "plt": plt,
+            "name": name,
+            "title": title,
+            "caption": caption,
+            "env_appendix": env_appendix,
+            "opts": opts
+        }
+        self._queue.put_nowait(vis_task)
+
+    def __show_matplot_plt(self, plt, name=None, title=None, caption=None, env_appendix="", opts=None, **kwargs):
+        """
+        Internal show_plt_figure method, called by the internal process.
+        This function does all the magic.
+        """
+
+        if opts is None:
+            opts = {}
+        opts = opts.copy()
+        opts.update(dict(
+            title=title,
+            caption=caption
+        ))
+
+        win = self.vis.matplot(
+            plot=plt,
+            win=name,
+            env=self.name + env_appendix,
+            opts=opts
+        )
+
+        return win
+
+
+    @convert_params
+    def show_plotly_plt(self, figure, name=None, env_appendix="",**kwargs):
+        """
+        Displays an plotly figure in a window/pane at the visdom server
+
+        Args:
+            figure: The plotly figure/plot to be displayed
+            name: The name of the image window
+            title: The title of the image window
+            caption: The of the image, displayed in the window
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        """
+
+        vis_task = {
+            "type": "plotly_plt",
+            "figure": figure,
+            "name": name,
+            "env_appendix": env_appendix,
+        }
+        self._queue.put_nowait(vis_task)
+
+    def __show_plotly_plt(self, figure, name=None, env_appendix="", **kwargs):
+        """
+        Internal show_plt_figure method, called by the internal process.
+        This function does all the magic.
+        """
+
+        win = self.vis.plotlyplot(
+            figure=figure,
+            win=name,
+            env=self.name + env_appendix,
+        )
+
+        return win
+
+
+    @convert_params
     def send_data(self, data, name=None, layout=None, endpoint='events', append=False, **kwargs):
         """
         Sends data to a visdom server.
@@ -866,6 +954,8 @@ class NumpyVisdomLogger(AbstractLogger):
         "svg": __show_svg,
         "add": __add_to_graph,
         "data": __send_data,
+        "matplot_plt": __show_matplot_plt,
+        "plotly_plt": __show_plotly_plt,
     }
 
 
