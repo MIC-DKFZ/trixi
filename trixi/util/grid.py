@@ -1,6 +1,17 @@
+import json
 
 
 class GridSearch(dict):
+
+    def __init__(self, file_=None, **kwargs):
+
+        super(GridSearch, self).__init__(**kwargs)
+
+        if file_ is not None:
+            file_dict = json.load(open(file_, "r"))
+            for key, val in file_dict.items():
+                if key not in self:
+                    self[key] = val
 
     def all_combinations(self):
 
