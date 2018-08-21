@@ -165,12 +165,14 @@ class PytorchExperiment(Experiment):
 
         # Init loggers
         logger_list = []
+        self.vlog = None
         if use_visdomlogger:
             if visdomlogger_kwargs is None:
                 visdomlogger_kwargs = {}
             self.vlog = PytorchVisdomLogger(name=self.exp_name, **visdomlogger_kwargs)
             if visdomlogger_c_freq is not None and visdomlogger_c_freq > 0:
                 logger_list.append((self.vlog, visdomlogger_c_freq))
+        self.elog = None
         if use_explogger:
             if explogger_kwargs is None:
                 explogger_kwargs = {}
@@ -183,6 +185,7 @@ class PytorchExperiment(Experiment):
             # Set results log dict to the right path
             self.results = ResultLogDict("results-log.json", base_dir=self.elog.result_dir)
             self.results.print_to_file("[")
+        self.tlog = None
         if use_telegramlogger:
             if telegramlogger_kwargs is None:
                 telegramlogger_kwargs = {}
@@ -222,7 +225,8 @@ class PytorchExperiment(Experiment):
         atexit.register(self.at_exit_func)
 
     def process_err(self, e):
-        self.elog.text_logger.log_to("\n".join(traceback.format_tb(e.__traceback__)), "err")
+        if self.elog is not None:
+            self.elog.text_logger.log_to("\n".join(traceback.format_tb(e.__traceback__)), "err")
 
     def update_attributes(self, var_dict, ignore=()):
         """
@@ -292,29 +296,40 @@ class PytorchExperiment(Experiment):
             name: The name of the json file, in which the results are written.
 
         """
+        if self.elog is None:
+            return
         with open(os.path.join(self.elog.result_dir, name), "w") as file_:
             json.dump(self.results, file_, indent=4)
 
     def save_pytorch_models(self):
         """Saves all pytorch models as model files in the experiment model folder"""
+        if self.elog is None:
+            return
+
         pyth_modules = self.get_pytorch_modules()
         for key, val in pyth_modules.items():
             self.elog.save_model(val, key)
 
     def load_pytorch_models(self):
         """Loads all pytorch models as models frpom the files in the experiment model folder"""
+        if self.elog is None:
+            return
         pyth_modules = self.get_pytorch_modules()
         for key, val in pyth_modules.items():
             self.elog.load_model(val, key)
 
     def log_simple_vars(self):
         """Logs all simple python member variables as a json file in the log dir"""
+        if self.elog is None:
+            return
         simple_vars = self.get_simple_variables()
         with open(os.path.join(self.elog.log_dir, "simple_vars.json"), "w") as file_:
             json.dump(simple_vars, file_)
 
     def load_simple_vars(self):
         """Restores all simple python member variables from a json file in the log dir"""
+        if self.elog is None:
+            return
         simple_vars = {}
         with open(os.path.join(self.elog.log_dir, "simple_vars.json"), "r") as file_:
             simple_vars = json.load(file_)
@@ -335,6 +350,8 @@ class PytorchExperiment(Experiment):
             prefix: If True, the formated n_iter will be appended as a prefix, otherwise as a suffix
 
         """
+        if self.elog is None:
+            return
 
         model_dict = {}
         optimizer_dict = {}
@@ -379,6 +396,8 @@ class PytorchExperiment(Experiment):
                 simple use the path and the formatted name to define the checkpoint file
 
         """
+        if self.elog is None:
+            return
 
         model_dict = {}
         optimizer_dict = {}
@@ -423,13 +442,13 @@ class PytorchExperiment(Experiment):
         self.save_results()
         self.save_end_checkpoint()
         self._save_exp_config()
-        self.elog.print("Experiment ended. Checkpoints stored =)")
+        self.print("Experiment ended. Checkpoints stored =)")
 
     def end_test(self):
         """Ends the experiment and stores the final results and config"""
         self.save_results()
         self._save_exp_config()
-        self.elog.print("Testing ended. Results stored =)")
+        self.print("Testing ended. Results stored =)")
 
     def at_exit_func(self):
         """Stores the results and checkpoint at the end (if nor already stored). This method is also called if an
@@ -440,12 +459,14 @@ class PytorchExperiment(Experiment):
             self.save_checkpoint(name="checkpoint_exit-" + self._exp_state)
             self.save_results()
             self._save_exp_config()
-            self.elog.print("Experiment exited. Checkpoints stored =)")
+            self.print("Experiment exited. Checkpoints stored =)")
         time.sleep(10)  # allow checkpoint saving to finish. We need a better solution for this :D
 
     def _setup_internal(self):
         self.prepare_resume()
-        self.elog.save_config(self._config_raw, "config")
+
+        if self.elog is not None:
+            self.elog.save_config(self._config_raw, "config")
         self._save_exp_config()
 
     def _start_internal(self):
@@ -470,8 +491,9 @@ class PytorchExperiment(Experiment):
                 else:
                     warnings.warn("You have not selected a valid experiment folder, will search all sub folders",
                                   UserWarning)
-                    self.elog.text_logger.log_to("You have not selected a valid experiment folder, will search all "
-                                                 "sub folders", "warnings")
+                    if self.elog is not None:
+                        self.elog.text_logger.log_to("You have not selected a valid experiment folder, will search all "
+                                                     "sub folders", "warnings")
                     checkpoint_file = get_last_file(self._resume_path)
                     base_dir = os.path.dirname(os.path.dirname(checkpoint_file))
 
@@ -481,13 +503,13 @@ class PytorchExperiment(Experiment):
                 load_config.load(os.path.join(base_dir, "config/config.json"))
                 self._config_raw = load_config
                 self.config = Config.init_objects(self._config_raw)
-                self.elog.print("Loaded existing config from:", base_dir)
+                self.print("Loaded existing config from:", base_dir)
 
         if checkpoint_file:
             self.load_checkpoint(name="", path=checkpoint_file, save_types=self._resume_save_types)
             self._resume_path = checkpoint_file
             shutil.copyfile(checkpoint_file, os.path.join(self.elog.checkpoint_dir, "0_checkpoint.pth.tar"))
-            self.elog.print("Loaded existing checkpoint from:", checkpoint_file)
+            self.print("Loaded existing checkpoint from:", checkpoint_file)
 
     def _end_epoch_internal(self, epoch):
         self.save_results()
@@ -586,6 +608,12 @@ class PytorchExperiment(Experiment):
 
         """
         return self.results.get(name)
+
+    def print(self, *args):
+        if self.elog is None:
+            print(*args)
+        else:
+            self.elog.print(*args)
 
 
 def get_last_file(dir_, name=None):
