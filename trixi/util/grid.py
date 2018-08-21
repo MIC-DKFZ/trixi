@@ -1,3 +1,4 @@
+import json
 
 
 class GridSearch(dict):
@@ -34,3 +35,11 @@ class GridSearch(dict):
 
         self._counter += 1
         return self._all_combinations[self._counter - 1]
+
+    def read(self, fp):
+
+        if not hasattr(fp, "read"):
+            fp = open(fp, "r")
+        self.update(json.load(fp))
+
+        return self

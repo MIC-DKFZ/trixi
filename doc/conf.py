@@ -18,6 +18,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+import re
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
 
@@ -183,10 +184,26 @@ intersphinx_mapping = {'https://docs.python.org/': None}
 # Mock all the things!
 # (If we actually try to install from our requirements file, ReadTheDocs will
 # kill the process because of "excessive memory consumption"...)
-with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'requirements_full.txt')) as f:
-    autodoc_mock_imports = list(map(lambda x: x.split("==")[0], f.read().splitlines()))
-autodoc_mock_imports.append("flask")
-autodoc_mock_imports.append("telegram")
+# Would be preferable to read automatically from requirements, but some packages
+# have different PyPI names so it's cleaner this way
+autodoc_mock_imports = [
+    "colorlover",
+    "flask",
+    "graphviz",
+    "matplotlib",
+    "numpy",
+    "seaborn",
+    "scipy",
+    "sklearn",
+    "telegram",
+    "torch",
+    "torchvision",
+    "portalocker",
+    "plotly",
+    "PIL",
+    "umap",
+    "visdom",
+]
 
 
 def run_apidoc(_):
