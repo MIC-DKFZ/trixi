@@ -3,16 +3,6 @@ import json
 
 class GridSearch(dict):
 
-    def __init__(self, file_=None, **kwargs):
-
-        super(GridSearch, self).__init__(**kwargs)
-
-        if file_ is not None:
-            file_dict = json.load(open(file_, "r"))
-            for key, val in file_dict.items():
-                if key not in self:
-                    self[key] = val
-
     def all_combinations(self):
 
         combinations = []
@@ -45,3 +35,11 @@ class GridSearch(dict):
 
         self._counter += 1
         return self._all_combinations[self._counter - 1]
+
+    def read(self, fp):
+
+        if not hasattr(fp, "read"):
+            fp = open(fp, "r")
+        self.update(json.load(fp))
+
+        return self
