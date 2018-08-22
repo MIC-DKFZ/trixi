@@ -1010,8 +1010,8 @@ def start_visdom(port_list=(8080, 8000)):
             lock.__enter__()
             if is_port_available(port):
                 if _start_visdom(port):
-                    print("Started Visdom on Port:", port)
                     lock.__exit__(0, 0, 0)
+                    print("Started Visdom on Port:", port)
                     return port
             else:
                 i += 1
