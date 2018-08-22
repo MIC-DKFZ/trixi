@@ -174,14 +174,9 @@ def experiment(base_dir):
 
 
 def experiment_log(base_dir):
-    print("xD")
 
     experiment_path = request.args.get('exp')
-    print("xD")
-
     log_name = request.args.get('log')
-
-    print("xD")
 
     exp = ExperimentReader(base_dir, experiment_path)
     content = exp.get_log_file_content(log_name)
