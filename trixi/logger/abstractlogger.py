@@ -1,10 +1,12 @@
 from abc import ABCMeta, abstractmethod
 import _thread
+from functools import wraps
 
 
 def convert_params(f):
     """Decorator to call the process_params method of the class."""
 
+    @wraps(f)
     def wrapper(self, *args, **kwargs):
         return self.process_params(f, *args, **kwargs)
 
