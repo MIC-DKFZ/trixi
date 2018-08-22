@@ -402,7 +402,7 @@ class Config(dict):
         return flat_(self)
 
 
-def update_from_sys_argv(config):
+def update_from_sys_argv(config, warn=False):
     import sys
     import argparse
     import warnings
@@ -446,7 +446,7 @@ def update_from_sys_argv(config):
         param, unknown = parser.parse_known_args()
         param = vars(param)
 
-        if len(unknown) > 0:
+        if len(unknown) > 0 and warn:
             warnings.warn("Called with unknown arguments: {}".format(unknown), RuntimeWarning)
 
         # convert type args
@@ -458,7 +458,6 @@ def update_from_sys_argv(config):
                 if isinstance(val, str):
                     val = val.replace("\'", "")
                     val = val.replace("\"", "")
-                    print(val)
                 param[key] = decoder._decode(val)
             try:
                 key_split = key.split(".")

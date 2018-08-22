@@ -2,14 +2,26 @@ import os
 
 from setuptools import setup
 
+
+def resolve_requirements(file):
+    requirements = []
+    with open(file) as f:
+        req = f.read().splitlines()
+        for r in req:
+            if r.startswith("-r"):
+                requirements += resolve_requirements(os.path.join(os.path.dirname(file), r.split(" ")[1]))
+            else:
+                requirements.append(r)
+    return requirements
+
+
 with open(os.path.join(os.path.dirname(__file__), "Readme.md")) as f:
     readme = f.read()
 
 with open(os.path.join(os.path.dirname(__file__), "LICENSE")) as f:
     license = f.read()
 
-with open(os.path.join(os.path.dirname(__file__), 'requirements.txt')) as f:
-    required = f.read().splitlines()
+required = resolve_requirements(os.path.join(os.path.dirname(__file__), 'requirements.txt'))
 
 setup(name='trixi',
       version='0.1',
