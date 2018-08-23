@@ -108,9 +108,10 @@ class Config(dict):
             if type(self[superkey]) == list:
                 try:
                     subkeys = int(subkeys)
+                    self[superkey][subkeys] = value
                 except ValueError:
                     pass
-            self[superkey][subkeys] = value
+            # self[superkey][subkeys] = value
         elif type(value) == dict:
             super(Config, self).__setitem__(key, Config(config=value))
         else:
@@ -373,6 +374,38 @@ class Config(dict):
             dict: A flattened version of self
         """
 
+        def preprocess_(val, prefix=""):
+            if isinstance(val, dict):
+                intermediate_dict = {}
+                for subkey, subval in val.items():
+                    if isinstance(subkey, str):
+                        if prefix == "":
+                            new_prefix = subkey
+                        else:
+                            new_prefix = prefix + "." + subkey
+                        yield from preprocess_(subval, prefix=new_prefix)
+                    else:
+                        intermediate_dict[subkey] = subval
+                if len(intermediate_dict) > 0:
+                    yield prefix, intermediate_dict
+            elif isinstance(val, list):
+                keep_this = keep_lists
+                if max_split_size not in (None, False) and len(val) > max_split_size:
+                    keep_this = True
+                if keep_this:
+                    yield prefix, val
+                if max_split_size in (None, False) or len(val) <= max_split_size:
+                    for i, subval in enumerate(val):
+                        if prefix == "":
+                            new_prefix = str(i)
+                        else:
+                            new_prefix = prefix + "." + str(i)
+                        yield from preprocess_(subval, prefix=new_prefix)
+            else:
+                yield prefix, val
+        return dict(preprocess_(self))
+
+
         def flat_(obj):
             def items():
                 for key, val in obj.items():
@@ -402,7 +435,7 @@ class Config(dict):
         return flat_(self)
 
 
-def update_from_sys_argv(config, warn=False):
+def update_from_sys_argv(config):
     import sys
     import argparse
     import warnings
@@ -446,7 +479,7 @@ def update_from_sys_argv(config, warn=False):
         param, unknown = parser.parse_known_args()
         param = vars(param)
 
-        if len(unknown) > 0 and warn:
+        if len(unknown) > 0:
             warnings.warn("Called with unknown arguments: {}".format(unknown), RuntimeWarning)
 
         # convert type args
