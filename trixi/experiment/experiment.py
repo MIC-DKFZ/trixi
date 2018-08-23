@@ -70,7 +70,7 @@ class Experiment(object):
             self._start_internal()
             print("Experiment started.")
 
-            for epoch in range(self.n_epochs):
+            for epoch in range(self._epoch_idx, self.n_epochs):
                 self._epoch_idx = epoch
                 self.train(epoch=epoch)
                 self.validate(epoch=epoch)

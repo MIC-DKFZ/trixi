@@ -66,6 +66,7 @@ class PytorchExperiment(Experiment):
                  resume=None,
                  ignore_resume_config=False,
                  resume_save_types=("model", "optimizer", "simple", "th_vars", "results"),
+                 resume_reset_epochs=True,
                  parse_sys_argv=False,
                  parse_config_sys_argv=True,
                  checkpoint_to_cpu=True,
@@ -205,6 +206,7 @@ class PytorchExperiment(Experiment):
         self._resume_path = None
         self._resume_save_types = resume_save_types
         self._ignore_resume_config = ignore_resume_config
+        self._resume_reset_epochs = resume_reset_epochs
         if resume is not None:
             if isinstance(resume, str):
                 if resume == "last":
@@ -514,6 +516,9 @@ class PytorchExperiment(Experiment):
             self._resume_path = checkpoint_file
             shutil.copyfile(checkpoint_file, os.path.join(self.elog.checkpoint_dir, "0_checkpoint.pth.tar"))
             self.print("Loaded existing checkpoint from:", checkpoint_file)
+
+            if self._resume_reset_epochs:
+                self._epoch_idx = 0
 
     def _end_epoch_internal(self, epoch):
         self.save_results()
