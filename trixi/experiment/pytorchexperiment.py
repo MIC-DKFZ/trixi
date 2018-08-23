@@ -69,6 +69,7 @@ class PytorchExperiment(Experiment):
                  parse_sys_argv=False,
                  parse_config_sys_argv=True,
                  checkpoint_to_cpu=True,
+                 safe_checkpoint_every_epoch=1,
                  use_visdomlogger=True,
                  visdomlogger_kwargs=None,
                  visdomlogger_c_freq=1,
@@ -104,6 +105,7 @@ class PytorchExperiment(Experiment):
             parse_sys_argv (bool): Parsing the console arguments (argv) to get a config_path and/or resume_path
             parse_config_sys_argv (bool): Parse argv to update the config (if the keys match)
             checkpoint_to_cpu (bool): When checkpointing transfer all tensors to the cpu beforehand
+            safe_checkpoint_every_epoch (int): Determines after how many epochs a current checkpoint is stored
             use_visdomlogger (bool): Use a pytorch visdom logger. Is accessible via the vlog variable
             visdomlogger_kwargs (dict): Keyword arguments will are passed to the pytorch visdom logger initialization
             visdomlogger_c_freq (int): The frequency x ( == one in x) in which the combined logger will call the visdom
@@ -161,6 +163,8 @@ class PytorchExperiment(Experiment):
             base_dir = self._config_raw["base_dir"]
 
         self._checkpoint_to_cpu = checkpoint_to_cpu
+        self._safe_checkpoint_every_epoch = safe_checkpoint_every_epoch
+
         self.results = dict()
 
         # Init loggers
@@ -513,7 +517,8 @@ class PytorchExperiment(Experiment):
 
     def _end_epoch_internal(self, epoch):
         self.save_results()
-        self.save_temp_checkpoint()
+        if epoch % self._safe_checkpoint_every_epoch == 0:
+            self.save_temp_checkpoint()
         self._save_exp_config()
 
     def _save_exp_config(self):
