@@ -1,9 +1,13 @@
 import json
+from trixi.util import ModuleMultiTypeDecoder
 
 
 class GridSearch(dict):
 
     def all_combinations(self):
+
+        if len(self) == 0:
+            return []
 
         combinations = []
         zero_key = sorted(self.keys())[0]
@@ -36,10 +40,18 @@ class GridSearch(dict):
         self._counter += 1
         return self._all_combinations[self._counter - 1]
 
-    def read(self, fp):
+    def read(self, file_, raise_=True, decoder_cls_=ModuleMultiTypeDecoder, **kwargs):
 
-        if not hasattr(fp, "read"):
-            fp = open(fp, "r")
-        self.update(json.load(fp))
+        try:
+            if hasattr(file_, "read"):
+                new_dict = json.load(file_, cls=decoder_cls_, **kwargs)
+            else:
+                with open(file_, "r") as file_object:
+                    new_dict = json.load(file_object, cls=decoder_cls_, **kwargs)
+        except Exception as e:
+            if raise_:
+                raise e
+
+        self.update(new_dict)
 
         return self
