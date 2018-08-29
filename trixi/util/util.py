@@ -393,9 +393,9 @@ class ResultElement(dict):
         super(ResultElement, self).__init__()
 
         if data is not None:
-            if issubclass(type(data), np.float):
+            if isinstance(data, np.floating):
                 data = float(data)
-            if issubclass(type(data), np.int):
+            if isinstance(data, np.integer):
                 data = int(data)
             self["data"] = data
         if label is not None:
