@@ -297,7 +297,7 @@ class Config(dict):
             Config: Possibly empty
         """
 
-        difference = Config()
+        difference = dict()
 
         all_keys = set()
         for config in configs:
@@ -385,7 +385,7 @@ class Config(dict):
                                 intermediate_dict[subkey] = subval
                         if len(intermediate_dict) > 0:
                             yield key, intermediate_dict
-                    elif isinstance(val, list):
+                    elif isinstance(val, (list, tuple)):
                         keep_this = keep_lists or type(key) != str
                         if max_split_size not in (None, False) and len(val) > max_split_size:
                             keep_this = True
@@ -400,6 +400,21 @@ class Config(dict):
             return dict(items())
 
         return flat_(self)
+
+    def to_cmd_args_str(self):
+        c_flat = self.flat()
+
+        str_list = []
+        for key, val in c_flat.items():
+
+            if isinstance(val, (list, tuple)):
+                vals = [str(v) for v in val]
+                val_str = " ".join(vals)
+            else:
+                val_str = str(val)
+            str_list.append("--{} {}".format(key, val_str))
+
+        return "  ".join(str_list)
 
 
 def update_from_sys_argv(config, warn=False):
