@@ -16,7 +16,7 @@ class ExperimentReader(object):
 
     """
 
-    def __init__(self, base_dir, exp_dir="", name=None):
+    def __init__(self, base_dir, exp_dir="", name=None, decode_config_clean_str=True):
 
         super(ExperimentReader, self).__init__()
 
@@ -32,7 +32,10 @@ class ExperimentReader(object):
         self.result_dir = os.path.join(self.work_dir, "result")
 
         self.config = Config()
-        self.config.load(os.path.join(self.config_dir, "config.json"), decoder_cls_=StringMultiTypeDecoder)
+        if decode_config_clean_str:
+            self.config.load(os.path.join(self.config_dir, "config.json"), decoder_cls_=StringMultiTypeDecoder)
+        else:
+            self.config.load(os.path.join(self.config_dir, "config.json"), decoder_cls_=None)
 
         self.exp_info = Config()
         exp_info_file = os.path.join(self.config_dir, "exp.json")
