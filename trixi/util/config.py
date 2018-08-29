@@ -3,7 +3,7 @@
 
 import json
 
-from trixi.util.util import ModuleMultiTypeDecoder, ModuleMultiTypeEncoder
+from trixi.util.util import ModuleMultiTypeDecoder, ModuleMultiTypeEncoder, StringMultiTypeDecoder
 
 
 class Config(dict):
@@ -317,6 +317,7 @@ class Config(dict):
         """
 
         difference = dict()
+        mmte = ModuleMultiTypeEncoder()
 
         all_keys = set()
         for config in configs:
@@ -335,7 +336,7 @@ class Config(dict):
                     all_configs = False
                     current_values.append(None)
                 else:
-                    current_values.append(config[key])
+                    current_values.append(mmte._encode(config[key]))
 
                 if len(current_values) >= 2:
                     if current_values[-1] != current_values[-2]:
@@ -483,6 +484,9 @@ def update_from_sys_argv(config, warn=False):
         if len(unknown) > 0 and warn:
             warnings.warn("Called with unknown arguments: {}".format(unknown), RuntimeWarning)
 
+        # calc diff between configs
+        diff_keys = list(Config.difference_config_static(param, config_flat).keys())
+
         # convert type args
         ignore_ = []
         for key, val in param.items():
@@ -502,6 +506,12 @@ def update_from_sys_argv(config, warn=False):
                 pass
         for i in ignore_:
             del param[i]
+
+        ### Delete not changed entries
+        param_keys = list(param.keys())
+        for i in param_keys:
+            if i not in diff_keys and i in param:
+                del param[i]
 
         # update dict
         config.update(param)
