@@ -390,11 +390,14 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             atexit.register(p.terminate)
             p.start()
         else:
-            __show_roc_curve(self=self,
-                             tensor=tensor,
-                             labels=labels,
-                             name=name,
-                             reduce_to_n_samples=reduce_to_n_samples)
+            try:
+                __show_roc_curve(self=self,
+                                 tensor=tensor,
+                                 labels=labels,
+                                 name=name,
+                                 reduce_to_n_samples=reduce_to_n_samples)
+            except:
+                warnings.warn("Sth went wrong with calculating the roc curve")
 
     @convert_params
     def show_pr_curve(self, tensor, labels, name, reduce_to_n_samples=None, use_sub_process=False):
@@ -433,12 +436,16 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             atexit.register(p.terminate)
             p.start()
         else:
-            __show_pr_curve(self=self,
-                            tensor=tensor,
-                            labels=labels,
-                            name=name,
-                            reduce_to_n_samples=reduce_to_n_samples
-                            )
+            try:
+                __show_pr_curve(self=self,
+                                tensor=tensor,
+                                labels=labels,
+                                name=name,
+                                reduce_to_n_samples=reduce_to_n_samples
+                                )
+            except:
+                warnings.warn("Sth went wrong with calculating the pr curve")
+
 
     @convert_params
     def show_classification_metrics(self, tensor, labels, name, metric=("roc-auc", "pr-score"),
@@ -509,13 +516,16 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             atexit.register(p.terminate)
             p.start()
         else:
-            __show_classification_metrics(self=self,
-                                          tensor=tensor,
-                                          labels=labels,
-                                          name=name,
-                                          metric=metric,
-                                          add_res_fn=add_res_fn
-                                          )
+            try:
+                __show_classification_metrics(self=self,
+                                              tensor=tensor,
+                                              labels=labels,
+                                              name=name,
+                                              metric=metric,
+                                              add_res_fn=add_res_fn
+                                              )
+            except:
+                warnings.warn("Sth went wrong with calculating the classification metrics")
 
     def show_image_gradient(self, model, inpt, err_fn, grad_type="vanilla", n_runs=20, eps=0.1,
                             abs=False, **image_grid_params):
