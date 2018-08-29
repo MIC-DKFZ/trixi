@@ -59,7 +59,7 @@ def process_base_dir(base_dir, view_dir="", default_val="-", short_len=25, ignor
                 exp = ExperimentReader(full_dir, sub_dir)
                 if exp.ignore:
                     continue
-                config_keys.update(list(exp.config.keys()))
+                config_keys.update(list(exp.config.flat().keys()))
                 result_keys.update(list(exp.get_results().keys()))
                 exps.append(exp)
             except Exception as e:
@@ -80,7 +80,7 @@ def process_base_dir(base_dir, view_dir="", default_val="-", short_len=25, ignor
     for exp in exps:
         config_row = []
         for key in sorted_c_keys:
-            attr_strng = str(exp.config.get(key, default_val))
+            attr_strng = str(exp.config.flat().get(key, default_val))
             config_row.append((attr_strng, attr_strng[:short_len]))
         result_row = []
         for key in sorted_r_keys:
