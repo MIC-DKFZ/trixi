@@ -209,6 +209,25 @@ class Config(dict):
                 return True
         return False
 
+    def contains(self, dict_like):
+        """Check whether all items in a dictionary-like object match the ones in this Config."""
+
+        dict_like_config = Config(config=dict_like)
+
+        for key, val in dict_like_config.items():
+
+            if key not in self:
+                return False
+            else:
+                if isinstance(val, dict):
+                    if not self[key].contains(val):
+                        return False
+                else:
+                    if not self[key] == val:
+                        return False
+
+        return True
+
     @staticmethod
     def init_objects(config):
         """Returns a new Config with types converted to instances.
