@@ -195,12 +195,12 @@ a.toggle-vis, a.toggle-config, a.toggle-result {
 }
 
 .ctable tbody tr:hover {
-    background-color: #ffff99;
+    background-color: #e3f2fd;
     /*font-weight: bold;*/
 }
 
 tr.ctable-diff {
-    background-color: #ffccf5;
+    background-color: #ffccbc;
 }
 
 /* width */
