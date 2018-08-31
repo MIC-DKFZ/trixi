@@ -12,6 +12,8 @@ from scipy.signal import savgol_filter
 from trixi.experiment_browser.experimentreader import ExperimentReader
 
 # These keys will be ignored when in a config file
+from trixi.util import Config
+
 IGNORE_KEYS = ("name",
                "experiment_dir",
                "work_dir",
@@ -68,12 +70,16 @@ def process_base_dir(base_dir, view_dir="", default_val="-", short_len=25, ignor
                 print("-" * 20)
                 non_exps.append(os.path.join(view_dir, sub_dir))
 
+    ### Get not common val keys
+    diff_keys = list(Config.difference_config_static(*[xp.config.flat() for xp in exps]))
+
     ### Remove unwanted keys
     config_keys -= set(ignore_keys)
     result_keys -= set(ignore_keys)
 
     ### Generate table rows
-    sorted_c_keys = sorted(config_keys, key=lambda x: str(x).lower())
+    sorted_c_keys, _ = zip(*sorted(zip(config_keys, [c not in diff_keys for c in config_keys]), key=lambda x: (x[1],
+                                                                                                   str(x[0]).lower())))
     sorted_r_keys = sorted(result_keys, key=lambda x: str(x).lower())
 
     rows = []
