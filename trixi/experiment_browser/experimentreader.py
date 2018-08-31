@@ -153,6 +153,7 @@ class ExperimentReader(object):
                     results = json.loads(results_json)
             except Exception as ee:
                 print("Could not load result log from", self.result_dir)
+                print(ee)
 
         for result in results:
             for key in result.keys():
@@ -233,8 +234,3 @@ class ExperimentReader(object):
         meta_file = os.path.join(self.work_dir, ".exp_info")
         with open(meta_file, "w") as mf:
             json.dump(meta_dict, mf)
-
-
-
-
-

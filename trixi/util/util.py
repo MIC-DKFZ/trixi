@@ -299,7 +299,7 @@ class PyLock(object):
 
 
 class LogDict(dict):
-    def __init__(self, file_name, base_dir=None, to_console=False):
+    def __init__(self, file_name, base_dir=None, to_console=False, mode="a"):
         """Initializes a new Dict which can log to a given target file."""
 
         super(LogDict, self).__init__()
@@ -313,9 +313,9 @@ class LogDict(dict):
         self.logger.setLevel(logging.INFO)
         file_handler_formatter = logging.Formatter('')
 
-        file_handler = logging.FileHandler(self.file_name)
-        file_handler.setFormatter(file_handler_formatter)
-        self.logger.addHandler(file_handler)
+        self.file_handler = logging.FileHandler(self.file_name, mode=mode)
+        self.file_handler.setFormatter(file_handler_formatter)
+        self.logger.addHandler(self.file_handler)
         self.logger.propagate = to_console
 
     def __setitem__(self, key, item):
@@ -327,12 +327,16 @@ class LogDict(dict):
 
 
 class ResultLogDict(LogDict):
-    def __init__(self, file_name, base_dir=None):
+    def __init__(self, file_name, base_dir=None, **kwargs):
         """Initializes a new Dict which directly logs value changes to a given target_file."""
-        super(ResultLogDict, self).__init__(file_name=file_name, base_dir=base_dir)
+        super(ResultLogDict, self).__init__(file_name=file_name, base_dir=base_dir, **kwargs)
 
         self.is_init = False
+
         self.__cntr_dict = defaultdict(float)
+        if self.file_handler.mode == "w" or os.stat(self.file_handler.baseFilename).st_size == 0:
+            self.print_to_file("[")
+
         self.is_init = True
 
     def __setitem__(self, key, item):
@@ -371,15 +375,27 @@ class ResultLogDict(LogDict):
 
         super(ResultLogDict, self).__setitem__(key, data)
 
+    def close(self):
+
+        self.file_handler.close()
+        # this approach (fixed offset) sometimes fails upon errors and the like,
+        # we could alternatively read the whole file,
+        # parse to only keep "clean" rows and rewrite.
+        with open(self.file_handler.baseFilename, "rb+") as handle:
+            handle.seek(-2, os.SEEK_END)
+            handle.truncate()
+        with open(self.file_handler.baseFilename, "a") as handle:
+            handle.write("\n]")
+
 
 class ResultElement(dict):
     def __init__(self, data=None, label=None, epoch=None, counter=None):
         super(ResultElement, self).__init__()
 
         if data is not None:
-            if issubclass(type(data), np.float):
+            if isinstance(data, np.floating):
                 data = float(data)
-            if issubclass(type(data), np.int):
+            if isinstance(data, np.integer):
                 data = int(data)
             self["data"] = data
         if label is not None:

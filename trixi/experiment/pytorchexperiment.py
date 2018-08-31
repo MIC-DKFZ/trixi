@@ -189,7 +189,6 @@ class PytorchExperiment(Experiment):
 
             # Set results log dict to the right path
             self.results = ResultLogDict("results-log.json", base_dir=self.elog.result_dir)
-            self.results.print_to_file("[")
         self.tlog = None
         if use_telegramlogger:
             if telegramlogger_kwargs is None:
@@ -444,7 +443,7 @@ class PytorchExperiment(Experiment):
     def end(self):
         """Ends the experiment and stores the final results/ checkpoint"""
         if isinstance(self.results, ResultLogDict):
-            self.results.print_to_file("]")
+            self.results.close()
         self.save_results()
         self.save_end_checkpoint()
         self._save_exp_config()
