@@ -39,9 +39,13 @@
             <th class="center-elem">Time</th>
             <th class="center-elem">State</th>
             <th class="center-elem">Epochs</th>
-            {% for c in ccols %}
+            {% for c in ccols1 %}
             <th style="background-color: #dcedc8" class="center-elem">{{ c }}</th>
             {% endfor %}
+            {% for c in ccols2 %}
+            <th style="background-color: #dcedc8" class="center-elem">{{ c }}</th>
+            {% endfor %}
+
             {% for c in rcols %}
             <th style="background-color: #fff3e0" class="center-elem">{{ c }}</th>
             {% endfor %}
@@ -89,7 +93,10 @@
             <th>Time</th>
             <th>State</th>
             <th>Epochs</th>
-            {% for c in ccols %}
+            {% for c in ccols1 %}
+            <th>{{ c }}</th>
+            {% endfor %}
+            {% for c in ccols2 %}
             <th>{{ c }}</th>
             {% endfor %}
             {% for c in rcols %}
@@ -101,15 +108,28 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-auto" style="padding-right: 2px">
-                <a role="button" class="btn btn-outline-secondary toggle-config">Toggle all</a>
+                <a role="button" class="btn btn-outline-secondary toggle-config">Toggle all</a><br><br>
             </div>
             <div class="col" style="padding-left: 2px">
-                {% for c in ccols %}
-                <a role="button" class="btn btn-outline-success toggle-vis" data-column="{{ loop.index + 4 }}"
-                   data-type="config">{{ c }}</a>
-                {% endfor %}
+                <div>
+                    {% for c in ccols1 %}
+                    <a role="button" class="btn btn-outline-success toggle-vis" data-column="{{ loop.index + 4 }}"
+                       data-type="config">{{ c }}</a>
+                    {% endfor %}
+                </div>
+                <div div class="collapse" id="collapseExample">
+                    {% for c in ccols2 %}
+                    <a role="button" class="btn btn-outline-success toggle-vis" data-column="{{ loop.index + ccols1|length + 4 }}"
+                       data-type="config">{{ c }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-auto" style="padding-left: 2px">
+                <a role="button" class="btn btn-outline-secondary" data-toggle="collapse" href="#collapseExample">+/-
+                </a>
             </div>
         </div>
+
         <div class="row" style="margin-top: 5px">
             <div class="col-auto" style="padding-right: 2px">
                 <a role="button" class="btn btn-outline-secondary toggle-result">Toggle all</a>
@@ -117,7 +137,7 @@
             <div class="col" style="padding-left: 2px">
                 {% for c in rcols %}
                 <a role="button" class="btn btn-outline-warning toggle-vis"
-                   data-column="{{ loop.index + ccols|length + 4 }}"
+                   data-column="{{ loop.index + ccols1|length + ccols2|length + 4 }}"
                    data-type="result">{{ c }}</a>
                 {% endfor %}
             </div>

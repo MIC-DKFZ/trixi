@@ -78,14 +78,17 @@ def process_base_dir(base_dir, view_dir="", default_val="-", short_len=25, ignor
     result_keys -= set(ignore_keys)
 
     ### Generate table rows
-    sorted_c_keys, _ = zip(*sorted(zip(config_keys, [c not in diff_keys for c in config_keys]), key=lambda x: (x[1],
-                                                                                                   str(x[0]).lower())))
+    sorted_c_keys1 = sorted([c for c in config_keys if c in diff_keys], key = lambda x: str(x).lower())
+    sorted_c_keys2 = sorted([c for c in config_keys if c not in diff_keys], key = lambda x: str(x).lower())
     sorted_r_keys = sorted(result_keys, key=lambda x: str(x).lower())
 
     rows = []
     for exp in exps:
         config_row = []
-        for key in sorted_c_keys:
+        for key in sorted_c_keys1:
+            attr_strng = str(exp.config.flat().get(key, default_val))
+            config_row.append((attr_strng, attr_strng[:short_len]))
+        for key in sorted_c_keys2:
             attr_strng = str(exp.config.flat().get(key, default_val))
             config_row.append((attr_strng, attr_strng[:short_len]))
         result_row = []
@@ -108,7 +111,7 @@ def process_base_dir(base_dir, view_dir="", default_val="-", short_len=25, ignor
                      str(epoch),
                      config_row, result_row))
 
-    return {"ccols": sorted_c_keys, "rcols": sorted_r_keys, "rows": rows, "noexp": non_exps}
+    return {"ccols1": sorted_c_keys1, "ccols2": sorted_c_keys2, "rcols": sorted_r_keys, "rows": rows, "noexp": non_exps}
 
 
 def group_images(images):
