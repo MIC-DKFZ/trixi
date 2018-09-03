@@ -23,7 +23,6 @@ except ImportError as e:
     print("Could not import Pytorch related modules.")
     print(e)
 
-
     class torch:
         dtype = None
 
@@ -233,6 +232,7 @@ def savefig_and_close(figure, *args, **kwargs):
 
 
 def random_string(length):
+    random.seed()
     return "".join(random.choice(string.ascii_letters + string.digits) for _ in range(length))
 
 
