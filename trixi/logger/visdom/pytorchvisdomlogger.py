@@ -446,10 +446,9 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             except:
                 warnings.warn("Sth went wrong with calculating the pr curve")
 
-
     @convert_params
     def show_classification_metrics(self, tensor, labels, name, metric=("roc-auc", "pr-score"),
-                                    add_res_fn=None, use_sub_process=False):
+                                    add_res_fn=None, use_sub_process=False, tag_name=None):
         """
         Displays some classification metrics as line plots in a graph (similar to show value (also uses show value
         for the caluclated values))
@@ -467,7 +466,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         from sklearn import metrics
 
         def __show_classification_metrics(self, tensor, labels, name, metric=("roc-auc", "pr-score"),
-                                          add_res_fn=None):
+                                          add_res_fn=None, tag_name=None):
 
             vals = []
             tags = []
@@ -501,7 +500,9 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
             for val, tag in zip(vals, tags):
                 if add_res_fn is not None:
-                    add_res_fn(val, name=tag + "-" + name, tag=name, plot_result=True)
+                    if tag_name is None:
+                        tag_name = name
+                    add_res_fn(val, name=tag + "-" + name, tag=tag_name, plot_result=True)
                 else:
                     self.show_value(val, name=name, tag=tag)
 
@@ -511,7 +512,8 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                                                                           labels=labels,
                                                                           name=name,
                                                                           metric=metric,
-                                                                          add_res_fn=add_res_fn
+                                                                          add_res_fn=add_res_fn,
+                                                                          tag_name=tag_name
                                                                           ))
             atexit.register(p.terminate)
             p.start()
@@ -522,7 +524,8 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                                               labels=labels,
                                               name=name,
                                               metric=metric,
-                                              add_res_fn=add_res_fn
+                                              add_res_fn=add_res_fn,
+                                              tag_name=tag_name
                                               )
             except:
                 warnings.warn("Sth went wrong with calculating the classification metrics")
