@@ -182,8 +182,6 @@ def combi(base_dir):
     combi_exp = CombiExperimentReader(base_dir, experiment_paths, name=name)
     if do_save == "true":
         combi_exp.save()
-        print("saving")
-    print(combi_exp.exp_name)
     # combi_exp.save()
 
     experiments = [combi_exp]
