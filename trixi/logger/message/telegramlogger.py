@@ -116,14 +116,18 @@ class TelegramLogger(NumpySeabornPlotLogger):
             print("Could not send plot to telegram")
         plt.close(figure)
 
-        def show_barplot(self, *args, **kwargs):
-            pass
+    def show_barplot(self, *args, **kwargs):
+        pass
 
-        def show_lineplot(self, *args, **kwargs):
-            pass
+    def show_lineplot(self, *args, **kwargs):
+        pass
 
-        def show_scatterplot(self, *args, **kwargs):
-            pass
+    def show_scatterplot(self, *args, **kwargs):
+        pass
 
-        def show_piechart(self, *args, **kwargs):
-            pass
+    def show_piechart(self, *args, **kwargs):
+        pass
+
+    def print(self, text, **kwargs):
+        """Just calls show_text()"""
+        self.show_text(text, **kwargs)
