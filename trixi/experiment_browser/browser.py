@@ -63,7 +63,6 @@ def register_url_routes(app, base_dir):
     app.add_url_rule("/", "overview", lambda: overview(base_dir), methods=["GET"])
     app.add_url_rule("/overview", "overview_", lambda: overview_(base_dir), methods=["GET"])
     app.add_url_rule('/experiment', "experiment", lambda: experiment(base_dir), methods=['GET'])
-    app.add_url_rule('/combi', "combi", lambda: combi(base_dir), methods=['GET'])
     app.add_url_rule('/experiment_log', "experiment_log", lambda: experiment_log(base_dir), methods=['GET'])
     app.add_url_rule('/experiment_plots', "experiment_plots", lambda: experiment_plots(base_dir), methods=['GET'])
     app.add_url_rule('/experiment_remove', "experiment_remove", lambda: experiment_remove(base_dir), methods=['GET'])
@@ -105,13 +104,22 @@ def overview_(base_dir):
 
 def experiment(base_dir):
     experiment_paths = request.args.getlist('exp')
+    name = request.args.get('name', "")
+    do_save = request.args.get('save', "")
+    combi = request.args.get('combi', 'false')
 
     experiments = []
 
-    # Get all Experiments
-    for experiment_path in sorted(experiment_paths):
-        exp = ExperimentReader(base_dir, experiment_path)
-        experiments.append(exp)
+    if combi == "true":
+        combi_exp = CombiExperimentReader(base_dir, experiment_paths, name=name)
+        if do_save == "true":
+            combi_exp.save()
+        experiments = [combi_exp]
+    else:
+        # Get all Experiments
+        for experiment_path in sorted(experiment_paths):
+            exp = ExperimentReader(base_dir, experiment_path)
+            experiments.append(exp)
 
     # Assign unique names
     exp_names = [exp.exp_name for exp in experiments]
@@ -174,86 +182,6 @@ def experiment(base_dir):
     return render_template('experiment.html', **content)
 
 
-def combi(base_dir):
-    experiment_paths = request.args.getlist('exp')
-    name = request.args.get('name', "")
-    do_save = request.args.get('save', "")
-
-    combi_exp = CombiExperimentReader(base_dir, experiment_paths, name=name)
-    if do_save == "true":
-        combi_exp.save()
-    # combi_exp.save()
-
-    experiments = [combi_exp]
-
-    # # Get all Experiments
-    # for experiment_path in sorted(experiment_paths):
-    #     exp = ExperimentReader(base_dir, experiment_path)
-    #     experiments.append(exp)
-
-    # # Assign unique names
-    # exp_names = [exp.exp_name for exp in experiments]
-    # if len(exp_names) > len(set(exp_names)):
-    #     for i, exp in enumerate(experiments):
-    #         exp.exp_name += str(i)
-    exp_names = [exp.exp_name for exp in experiments]
-
-    # Site Content
-    content = {}
-
-    # Get config
-    default_val = "-"
-    combi_config = {}
-    exp_configs = [exp.config.flat(False) for exp in experiments]
-    diff_config_keys = list(Config.difference_config_static(*exp_configs).keys())
-    config_keys = set([k for c in exp_configs for k in c.keys()])
-    for k in sorted(config_keys):
-        combi_config[k] = []
-        for conf in exp_configs:
-            combi_config[k].append(conf.get(k, default_val))
-    config_keys = list(sorted(list(config_keys)))
-
-    # Get results
-    default_val = "-"
-    combi_results = {}
-    exp_results = [exp.get_results() for exp in experiments]
-    result_keys = set([k for r in exp_results for k in r.keys()])
-    for k in sorted(result_keys):
-        combi_results[k] = []
-        for res in exp_results:
-            combi_results[k].append(res.get(k, default_val))
-    result_keys = list(sorted(list(result_keys)))
-
-    # Get images
-    images = OrderedDict({})
-    image_keys = set()
-    image_path = {}
-    for exp in experiments:
-        exp_images = exp.get_images()
-        img_groups = group_images(exp_images)
-        images[exp.exp_name] = img_groups
-        image_path[exp.exp_name] = exp.img_dir
-        image_keys.update(list(img_groups.keys()))
-    image_keys = list(image_keys)
-    image_keys.sort()
-
-    # Get logs
-    logs_dict = OrderedDict({})
-    for exp in experiments:
-        exp_logs = [(os.path.basename(l), exp.exp_dir) for l in exp.get_logs()]
-        logs_dict[exp.exp_name] = exp_logs
-
-    content["title"] = experiments
-    content["images"] = {"img_path": image_path, "imgs": images, "img_keys": image_keys}
-    content["config"] = {"exps": experiments, "configs": combi_config, "keys": config_keys, "diff_keys": diff_config_keys}
-    content["results"] = {"exps": exp_names, "results": combi_results, "keys": result_keys}
-    content["logs"] = {"logs_dict": logs_dict}
-
-    return render_template('experiment.html', **content)
-
-
-
-
 def experiment_log(base_dir):
 
     experiment_path = request.args.get('exp')
@@ -280,12 +208,18 @@ def experiment_remove(base_dir):
 
 def experiment_plots(base_dir):
     experiment_paths = request.args.getlist('exp')
+    combi = request.args.get('combi', 'false')
     experiments = []
 
-    # Get all Experiments
-    for experiment_path in sorted(experiment_paths):
-        exp = ExperimentReader(base_dir, experiment_path)
-        experiments.append(exp)
+    if combi == "true":
+        combi_exp = CombiExperimentReader(base_dir, experiment_paths)
+        # combi_exp.save()
+        experiments = [combi_exp]
+    else:
+        # Get all Experiments
+        for experiment_path in sorted(experiment_paths):
+            exp = ExperimentReader(base_dir, experiment_path)
+            experiments.append(exp)
 
     # Assign unique names
     exp_names = [exp.exp_name for exp in experiments]

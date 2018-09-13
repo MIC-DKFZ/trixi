@@ -281,6 +281,7 @@ class CombiExperimentReader(ExperimentReader):
         self.plot_dir = "not_saved_yet"
         self.save_dir = "not_saved_yet"
         self.result_dir = "not_saved_yet"
+        self.exp_dir = "not_saved_yet"
 
         self.meta_name = None
         self.meta_star = False
@@ -336,7 +337,9 @@ class CombiExperimentReader(ExperimentReader):
             final_results_log[tag] = {}
             for s_key, s_key_result_dict in key_result_dict.items():
                 final_results_log[tag][s_key] = defaultdict(list)
-                for cnt, val_list in s_key_result_dict.items():
+                cnts =sorted(s_key_result_dict.keys())
+                for cnt in cnts:
+                    val_list = s_key_result_dict[cnt]
                     final_results_log[tag][s_key]["counter"].append(cnt)
                     final_results_log[tag][s_key]["data"].append(np.median(val_list))
                     final_results_log[tag][s_key]["mean"].append(np.mean(val_list))
@@ -408,9 +411,14 @@ class CombiExperimentReader(ExperimentReader):
             return
         super(CombiExperimentReader, self).update_meta_info(name, star, ignore)
 
-    def save(self):
-        self.elog = ExperimentLogger(experiment_name=self.exp_name, base_dir=self.base_dir)
+    def save(self, target_dir=None):
 
+        if target_dir is None:
+            target_dir = self.base_dir
+
+        self.elog = ExperimentLogger(experiment_name=self.exp_name, base_dir=target_dir)
+
+        self.exp_dir = self.elog.folder_name
         self.work_dir = self.elog.work_dir
         self.config_dir = os.path.join(self.work_dir, "config")
         self.log_dir = os.path.join(self.work_dir, "log")

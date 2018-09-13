@@ -474,12 +474,13 @@
                 experiments.push(dir_name);
             });
             if (experiments.length > 0) {
-                var new_location = "combi?";
+                var new_location = "experiment?";
                 $.each(experiments, function (idx, val) {
                     new_location = new_location + "exp=" + val + "&";
                 });
                 new_location += "name=" + new_name + "&";
-                new_location += "save=" + do_save;
+                new_location += "save=" + do_save+ "&";
+                new_location += "combi=true";
                 // window.location.href = new_location;
 
                 window.open(new_location, '_blank');
