@@ -171,12 +171,12 @@ class ExperimentReader(object):
                 if label not in results_merged:
                     results_merged[label] = {}
                 if key not in results_merged[label]:
-                    results_merged[label][key] = {}
-                    results_merged[label][key]["data"] = [data]
-                    results_merged[label][key]["counter"] = [counter]
-                else:
-                    results_merged[label][key]["data"].append(data)
-                    results_merged[label][key]["counter"].append(counter)
+                    results_merged[label][key] = defaultdict(list)
+                results_merged[label][key]["data"].append(data)
+                results_merged[label][key]["counter"].append(counter)
+                if "max" in result[key] and "min" in result[key]:
+                    results_merged[label][key]["max"].append(result[key]["max"])
+                    results_merged[label][key]["min"].append(result[key]["min"])
 
         return results_merged
 
@@ -386,8 +386,9 @@ class CombiExperimentReader(ExperimentReader):
 
         for tag, key_result_dict in results_dict.items():
             for s_key, s_key_result_dict in key_result_dict.items():
-                for cnt, val in zip(s_key_result_dict["counter"], s_key_result_dict["data"]):
-                    res_list.append({s_key: dict(data=val, counter=cnt, epoch=-1, label=tag)})
+                for cnt, val, max_, min_ in zip(s_key_result_dict["counter"], s_key_result_dict["data"],
+                                              s_key_result_dict["max"], s_key_result_dict["min"]):
+                    res_list.append({s_key: dict(data=val, counter=cnt, epoch=-1, label=tag, max=max_, min=min_)})
 
         return res_list
 
@@ -428,12 +429,15 @@ class CombiExperimentReader(ExperimentReader):
         self.save_dir = os.path.join(self.work_dir, "save")
         self.result_dir = os.path.join(self.work_dir, "result")
 
+        def __default(o):
+            if isinstance(o, np.int64): return int(o)
+            raise TypeError
+
         self.config.dump(os.path.join(self.elog.config_dir, "config.json"))
         self.elog.save_config(self.exp_info, "exp")
-        self.elog.save_result(self.get_results(), "results", encoder_cls=None)
-        self.elog.save_result(self.get_result_log_dict(), "results-log", encoder_cls=None)
+        self.elog.save_result(self.get_results(), "results", encoder_cls=None, default=__default)
+        self.elog.save_result(self.get_result_log_dict(), "results-log", encoder_cls=None, default=__default)
 
-        pass
 
 
 def group_experiments_by(exps, group_by_list):
