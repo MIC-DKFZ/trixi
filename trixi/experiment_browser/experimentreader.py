@@ -1,4 +1,5 @@
 import copy
+import itertools
 import json
 import os
 import time
@@ -69,7 +70,6 @@ class ExperimentReader(object):
 
         self.ignore = self.meta_ignore
         self.star = self.meta_star
-
 
     @staticmethod
     def get_file_contents(folder):
@@ -293,8 +293,8 @@ class CombiExperimentReader(ExperimentReader):
 
     def get_config(self):
         combi_config = copy.deepcopy(self.experiments[0].config)
-        config_diff = Config.difference_config_static(*[e.config for e in self.experiments])
-        combi_config.update(config_diff, deep=True)
+        config_diff = Config.difference_config_static(*[e.config for e in self.experiments], only_set=True)
+        combi_config.update(config_diff)
 
         return combi_config
 
@@ -337,16 +337,17 @@ class CombiExperimentReader(ExperimentReader):
             final_results_log[tag] = {}
             for s_key, s_key_result_dict in key_result_dict.items():
                 final_results_log[tag][s_key] = defaultdict(list)
-                cnts =sorted(s_key_result_dict.keys())
+                cnts = sorted(s_key_result_dict.keys())
                 for cnt in cnts:
                     val_list = s_key_result_dict[cnt]
                     final_results_log[tag][s_key]["counter"].append(cnt)
-                    final_results_log[tag][s_key]["data"].append(np.median(val_list))
-                    final_results_log[tag][s_key]["mean"].append(np.mean(val_list))
-                    final_results_log[tag][s_key]["median"].append(np.median(val_list))
-                    final_results_log[tag][s_key]["max"].append(np.max(val_list))
-                    final_results_log[tag][s_key]["min"].append(np.min(val_list))
-                    final_results_log[tag][s_key]["std"].append(np.std(val_list))
+                    final_results_log[tag][s_key]["data"].append(np.nanmedian(val_list))
+                    final_results_log[tag][s_key]["label"].append(tag)
+                    final_results_log[tag][s_key]["mean"].append(np.nanmean(val_list))
+                    final_results_log[tag][s_key]["median"].append(np.nanmedian(val_list))
+                    final_results_log[tag][s_key]["max"].append(np.nanmax(val_list))
+                    final_results_log[tag][s_key]["min"].append(np.nanmin(val_list))
+                    final_results_log[tag][s_key]["std"].append(np.nanstd(val_list))
 
         return final_results_log
 
@@ -368,12 +369,12 @@ class CombiExperimentReader(ExperimentReader):
         results_aux_dict = defaultdict(dict)
 
         for key, val_list in res_collect.items():
-            results_dict[key] = np.median(val_list)
-            results_aux_dict[key]["mean"] = np.mean(val_list)
-            results_aux_dict[key]["median"] = np.median(val_list)
-            results_aux_dict[key]["max"] = np.max(val_list)
-            results_aux_dict[key]["min"] = np.min(val_list)
-            results_aux_dict[key]["std"] = np.std(val_list)
+            results_dict[key] = np.nanmedian(val_list)
+            results_aux_dict[key]["mean"] = np.nanmean(val_list)
+            results_aux_dict[key]["median"] = np.nanmedian(val_list)
+            results_aux_dict[key]["max"] = np.nanmax(val_list)
+            results_aux_dict[key]["min"] = np.nanmin(val_list)
+            results_aux_dict[key]["std"] = np.nanstd(val_list)
 
         return results_dict
 
@@ -386,10 +387,9 @@ class CombiExperimentReader(ExperimentReader):
         for tag, key_result_dict in results_dict.items():
             for s_key, s_key_result_dict in key_result_dict.items():
                 for cnt, val in zip(s_key_result_dict["counter"], s_key_result_dict["data"]):
-                    res_list.append({s_key:dict(data=val, counter=cnt, epoch=-1, label=tag)})
+                    res_list.append({s_key: dict(data=val, counter=cnt, epoch=-1, label=tag)})
 
         return res_list
-
 
     def ignore_experiment(self):
         """Create a flag file, so the browser ignores this experiment."""
@@ -405,7 +405,7 @@ class CombiExperimentReader(ExperimentReader):
             return
         super(CombiExperimentReader, self).read_meta_info()
 
-    def update_meta_info(self, name=None, star=None, ignore=None):        
+    def update_meta_info(self, name=None, star=None, ignore=None):
         if self.work_dir is None:
             warnings.warn("Can only be called for a combined experiment which is saved")
             return
@@ -435,3 +435,33 @@ class CombiExperimentReader(ExperimentReader):
 
         pass
 
+
+def group_experiments_by(exps, group_by_list):
+    configs_flat = [e.config.flat() for e in exps]  ### Exclude already combined experiments
+    config_diff = Config.difference_config_static(*configs_flat)
+
+    group_diff_key_list = []
+    group_diff_val_list = []
+
+    for diff_key in group_by_list:
+        if diff_key in config_diff:
+            group_diff_key_list.append(diff_key)
+            group_diff_val_list.append(set(config_diff[diff_key]))
+
+    val_combis = itertools.product(*group_diff_val_list)
+
+    group_dict = defaultdict(list)
+
+    for val_combi in val_combis:
+        for e in exps:
+            e_config = e.config.flat()
+            is_match = True
+
+            for key, val in zip(group_diff_key_list, val_combi):
+                if e_config[key] != val:
+                    is_match = False
+
+            if is_match:
+                group_dict[val_combi].append(e)
+
+    return list(group_dict.values())

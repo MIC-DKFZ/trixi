@@ -7,7 +7,7 @@ import colorlover as cl
 from flask import Blueprint, Flask, abort, render_template, request
 
 from trixi.experiment_browser.dataprocessing import group_images, make_graphs, merge_results, process_base_dir
-from trixi.experiment_browser.experimentreader import ExperimentReader, CombiExperimentReader
+from trixi.experiment_browser.experimentreader import ExperimentReader, CombiExperimentReader, group_experiments_by
 from trixi.util import Config
 
 # These keys will be ignored when in a config file
@@ -63,6 +63,7 @@ def register_url_routes(app, base_dir):
     app.add_url_rule("/", "overview", lambda: overview(base_dir), methods=["GET"])
     app.add_url_rule("/overview", "overview_", lambda: overview_(base_dir), methods=["GET"])
     app.add_url_rule('/experiment', "experiment", lambda: experiment(base_dir), methods=['GET'])
+    app.add_url_rule('/combine', "combine", lambda: combine(base_dir), methods=['GET'])
     app.add_url_rule('/experiment_log', "experiment_log", lambda: experiment_log(base_dir), methods=['GET'])
     app.add_url_rule('/experiment_plots', "experiment_plots", lambda: experiment_plots(base_dir), methods=['GET'])
     app.add_url_rule('/experiment_remove', "experiment_remove", lambda: experiment_remove(base_dir), methods=['GET'])
@@ -263,6 +264,35 @@ def experiment_rename(base_dir):
     exp.update_meta_info(name=new_name)
 
     return ""
+
+
+def combine(base_dir):
+    experiment_paths = request.args.getlist('exp')
+    group_by_list = request.args.getlist('group')
+    name = request.args.get('name', "")
+
+    try:
+        exps = []
+        for ep in experiment_paths:
+            expr = ExperimentReader(os.path.join(base_dir, ep))
+            if expr.exp_info.get("state", "Combined") != "Combined":
+                exps.append(expr)
+
+        exp_groups = group_experiments_by(exps, group_by_list)
+
+        combis = []
+        for group in exp_groups:
+            expc = CombiExperimentReader(base_dir="", exp_dirs=[e.work_dir for e in group], name=name)
+            combis.append(expc)
+
+        for expc in combis:
+            expc.save()
+
+        return "1"
+    except:
+        return "0"
+
+    return "0"
 
 
 if __name__ == "__main__":
