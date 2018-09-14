@@ -73,6 +73,10 @@ def register_url_routes(app, base_dir):
 
 def start_browser():
     args, base_dir = parse_args()
+
+    if not isinstance(base_dir, str) or not os.path.isabs(base_dir):
+        raise FileNotFoundError("Your entered folder has to be the absolute path (no relative path support yet)")
+
     app = create_flask_app(base_dir)
     register_url_routes(app, base_dir)
 
