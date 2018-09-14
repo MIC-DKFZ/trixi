@@ -80,6 +80,7 @@ class Experiment(object):
             print("Training complete.")
 
             self.end()
+            self._end_internal()
             self._exp_state = "Ended"
             print("Experiment ended.")
 
@@ -122,6 +123,7 @@ class Experiment(object):
 
             self.test()
             self.end_test()
+            self._end_test_internal()
 
             self._exp_state = "Tested"
             print("Testing complete.")
@@ -193,4 +195,10 @@ class Experiment(object):
         pass
 
     def _start_internal(self):
+        pass
+
+    def _end_internal(self):
+        pass
+
+    def _end_test_internal(self):
         pass

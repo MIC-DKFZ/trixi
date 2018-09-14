@@ -440,7 +440,7 @@ class PytorchExperiment(Experiment):
 
         self.update_attributes(restore_dict)
 
-    def end(self):
+    def _end_internal(self):
         """Ends the experiment and stores the final results/ checkpoint"""
         if isinstance(self.results, ResultLogDict):
             self.results.close()
@@ -449,7 +449,7 @@ class PytorchExperiment(Experiment):
         self._save_exp_config()
         self.print("Experiment ended. Checkpoints stored =)")
 
-    def end_test(self):
+    def _end_test_internal(self):
         """Ends the experiment and stores the final results and config"""
         self.save_results()
         self._save_exp_config()
