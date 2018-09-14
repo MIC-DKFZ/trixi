@@ -85,7 +85,6 @@ class MNISTExperiment(PytorchExperiment):
         if "load_path" in self.config:
             self.load_checkpoint(path=self.config.load_path, name="")
 
-
         ### Criterion
         self.criterion = torch.nn.CrossEntropyLoss()
 
@@ -135,5 +134,3 @@ if __name__ == '__main__':
 
     mnist_exp_continued = MNISTExperiment(config=c, globs=globals())
     mnist_exp_continued.run()
-
-
