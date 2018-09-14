@@ -9,6 +9,7 @@ from graphviz import Digraph
 from torch.autograd import Variable
 from torchvision.utils import make_grid
 
+from trixi.logger.experiment.pytorchexperimentlogger import PytorchExperimentLogger
 from trixi.logger.visdom.numpyvisdomlogger import NumpyVisdomLogger
 from trixi.logger.abstractlogger import convert_params
 from trixi.util.pytorchutils import get_guided_image_gradient, get_smooth_image_gradient, get_vanilla_image_gradient
@@ -362,42 +363,17 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             tensor: Tensor with scores (e.g class probability )
             labels: Labels of the samples to which the scores match
             name: The name of the window
+            reduce_to_n_samples: Reduce/ downsample to to n samples for fewer data points
+            use_sub_process: Use a sub process to do the processing
 
         """
-        from sklearn import metrics
 
-        def __show_roc_curve(self, tensor, labels, name, reduce_to_n_samples=None):
+        res_fn = lambda tpr, fpr:  self.show_lineplot(tpr, fpr, name=name, opts={"fillarea": True,
+                                                                                                "webgl": True})
+        PytorchExperimentLogger.get_roc_curve(tensor=tensor, labels=labels, reduce_to_n_samples=reduce_to_n_samples,
+                                             use_sub_process=use_sub_process, results_fn=res_fn)
 
-            if not isinstance(labels, list):
-                labels = labels.flatten()
-            if not isinstance(tensor, list):
-                tensor = tensor.flatten()
 
-            fpr, tpr, thresholds = metrics.roc_curve(labels, tensor)
-            if reduce_to_n_samples is not None:
-                fpr = [np.mean(x) for x in np.array_split(fpr, reduce_to_n_samples)]
-                tpr = [np.mean(x) for x in np.array_split(tpr, reduce_to_n_samples)]
-            self.show_lineplot(tpr, fpr, name=name, opts={"fillarea": True, "webgl": True})
-            # self.add_to_graph(x_vals=np.arange(0, 1.1, 0.1), y_vals=np.arange(0, 1.1, 0.1), name=name, append=True)
-
-        if use_sub_process:
-            p = Process(target=__show_roc_curve, kwargs=dict(self=self,
-                                                             tensor=tensor,
-                                                             labels=labels,
-                                                             name=name,
-                                                             reduce_to_n_samples=reduce_to_n_samples
-                                                             ))
-            atexit.register(p.terminate)
-            p.start()
-        else:
-            try:
-                __show_roc_curve(self=self,
-                                 tensor=tensor,
-                                 labels=labels,
-                                 name=name,
-                                 reduce_to_n_samples=reduce_to_n_samples)
-            except:
-                warnings.warn("Sth went wrong with calculating the roc curve")
 
     @convert_params
     def show_pr_curve(self, tensor, labels, name, reduce_to_n_samples=None, use_sub_process=False):
@@ -408,47 +384,18 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             tensor: Tensor with scores (e.g class probability )
             labels: Labels of the samples to which the scores match
             name: The name of the window
-
+            reduce_to_n_samples: Reduce/ downsample to to n samples for fewer data points
+            use_sub_process: Use a sub process to do the processing
         """
-        from sklearn import metrics
+        res_fn = lambda precision, recall:  self.show_lineplot(precision, recall, name=name, opts={"fillarea": True,
+                                                                                                "webgl": True})
+        PytorchExperimentLogger.get_pr_curve(tensor=tensor, labels=labels, reduce_to_n_samples=reduce_to_n_samples,
+                                             use_sub_process=use_sub_process, results_fn=res_fn)
 
-        def __show_pr_curve(self, tensor, labels, name, reduce_to_n_samples=None):
-
-            if not isinstance(labels, list):
-                labels = labels.flatten()
-            if not isinstance(tensor, list):
-                tensor = tensor.flatten()
-
-            precision, recall, thresholds = metrics.precision_recall_curve(labels, tensor)
-            if reduce_to_n_samples is not None:
-                precision = [np.mean(x) for x in np.array_split(precision, reduce_to_n_samples)]
-                recall = [np.mean(x) for x in np.array_split(recall, reduce_to_n_samples)]
-            self.show_lineplot(precision, recall, name=name, opts={"fillarea": True, "webgl": True})
-            # self.add_to_graph(x_vals=np.arange(0, 1.1, 0.1), y_vals=np.arange(0, 1.1, 0.1), name=name, append=True)
-
-        if use_sub_process:
-            p = Process(target=__show_pr_curve, kwargs=dict(self=self,
-                                                            tensor=tensor,
-                                                            labels=labels,
-                                                            name=name,
-                                                            reduce_to_n_samples=reduce_to_n_samples
-                                                            ))
-            atexit.register(p.terminate)
-            p.start()
-        else:
-            try:
-                __show_pr_curve(self=self,
-                                tensor=tensor,
-                                labels=labels,
-                                name=name,
-                                reduce_to_n_samples=reduce_to_n_samples
-                                )
-            except:
-                warnings.warn("Sth went wrong with calculating the pr curve")
 
     @convert_params
     def show_classification_metrics(self, tensor, labels, name, metric=("roc-auc", "pr-score"),
-                                    add_res_fn=None, use_sub_process=False, tag_name=None):
+                                    use_sub_process=False, tag_name=None):
         """
         Displays some classification metrics as line plots in a graph (similar to show value (also uses show value
         for the caluclated values))
@@ -463,72 +410,10 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         """
 
-        from sklearn import metrics
+        res_fn = lambda val, name, tag: self.show_value(val, name=name, tag=tag)
+        PytorchExperimentLogger.get_classification_metrics(tensor=tensor, labels=labels, name=name, metric=metric,
+                                    use_sub_process=use_sub_process, tag_name=tag_name, results_fn=res_fn)
 
-        def __show_classification_metrics(self, tensor, labels, name, metric=("roc-auc", "pr-score"),
-                                          add_res_fn=None, tag_name=None):
-
-            vals = []
-            tags = []
-
-            if not isinstance(labels, list):
-                labels = labels.flatten()
-            if not isinstance(tensor, list):
-                tensor = tensor.flatten()
-
-            if "roc-auc" in metric:
-                roc_auc = metrics.roc_auc_score(labels, tensor)
-                vals.append(roc_auc)
-                tags.append("roc-auc")
-            if "pr-auc" in metric:
-                precision, recall, thresholds = metrics.precision_recall_curve(labels, tensor)
-                pr_auc = metrics.auc(recall, precision)
-                vals.append(pr_auc)
-                tags.append("pr-auc")
-            if "pr-score" in metric:
-                pr_score = metrics.average_precision_score(labels, tensor)
-                vals.append(pr_score)
-                tags.append("pr-score")
-            if "mcc" in metric:
-                mcc_score = metrics.matthews_corrcoef(labels, tensor)
-                vals.append(mcc_score)
-                tags.append("mcc")
-            if "f1" in metric:
-                f1_score = metrics.f1_score(labels, tensor)
-                vals.append(f1_score)
-                tags.append("f1")
-
-            for val, tag in zip(vals, tags):
-                if add_res_fn is not None:
-                    if tag_name is None:
-                        tag_name = name
-                    add_res_fn(val, name=tag + "-" + name, tag=tag_name, plot_result=True)
-                else:
-                    self.show_value(val, name=name, tag=tag)
-
-        if use_sub_process:
-            p = Process(target=__show_classification_metrics, kwargs=dict(self=self,
-                                                                          tensor=tensor,
-                                                                          labels=labels,
-                                                                          name=name,
-                                                                          metric=metric,
-                                                                          add_res_fn=add_res_fn,
-                                                                          tag_name=tag_name
-                                                                          ))
-            atexit.register(p.terminate)
-            p.start()
-        else:
-            try:
-                __show_classification_metrics(self=self,
-                                              tensor=tensor,
-                                              labels=labels,
-                                              name=name,
-                                              metric=metric,
-                                              add_res_fn=add_res_fn,
-                                              tag_name=tag_name
-                                              )
-            except:
-                warnings.warn("Sth went wrong with calculating the classification metrics")
 
     def show_image_gradient(self, model, inpt, err_fn, grad_type="vanilla", n_runs=20, eps=0.1,
                             abs=False, **image_grid_params):
@@ -547,16 +432,6 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             **image_grid_params: Params for make image grid.
 
         """
-        if grad_type == "vanilla":
-            grad = get_vanilla_image_gradient(model, inpt, err_fn, abs)
-        elif grad_type == "guided":
-            grad = get_guided_image_gradient(model, inpt, err_fn, abs)
-        elif grad_type == "smooth-vanilla":
-            grad = get_smooth_image_gradient(model, inpt, err_fn, n_runs, eps, grad_type="vanilla")
-        elif grad_type == "smooth-guided":
-            grad = get_smooth_image_gradient(model, inpt, err_fn, n_runs, eps, grad_type="guided")
-        else:
-            warnings.warn("This grad_type is not implemented yet")
-            grad = torch.zeros_like(inpt)
-
+        grad = PytorchExperimentLogger.get_input_gradient(model=model, inpt=inpt, err_fn=err_fn, grad_type=grad_type,
+                                                          n_runs=n_runs, eps=eps, abs=abs)
         self.show_image_grid(grad, **image_grid_params)

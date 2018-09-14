@@ -18,7 +18,7 @@ def get_vanilla_image_gradient(model, inpt, err_fn, abs=False):
     err = err_fn(output)
     err.backward()
 
-    grad = inpt.grad + 0
+    grad = inpt.grad.detach()
 
     if isinstance(model, torch.nn.Module):
         model.zero_grad()
@@ -50,7 +50,7 @@ def get_guided_image_gradient(model: torch.nn.Module, inpt, err_fn, abs=False):
     err = err_fn(output)
     err.backward()
 
-    grad = inpt.grad + 0
+    grad = inpt.grad.detach()
 
     model.zero_grad()
     for hooks in hook_ids:
