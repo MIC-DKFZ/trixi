@@ -154,7 +154,7 @@
         <div id="section2" class="card border-primary" style="margin: 10px;">
             <div class="card-header" style="color: #4285F4">
                 <div style="float: left">
-                    <h2>Images</h2>
+                    <h3>Images</h3>
                 </div>
                 <div style="float: right;">
                     <label class="switch">
@@ -245,14 +245,50 @@
 
         <div id="section3" class="card border-primary" style="margin: 10px;">
             <div class="card-header" style="color: #4285F4">
-                <h3>Plots</h3>
+                <div style="float: left">
+                    <h3>Plots</h3>
+                </div>
+                <div style="float: right;">
+                    <label class="switch">
+                        <input type="checkbox" onchange="toggleliveplots()" id="toggleliveplots" style="z-index: 1;"
+                               checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <div>Live</div>
+                </div>
             </div>
 
-            <div class="card-body">
+            <div class="card-body" id="liveplots">
 
                 <div style="text-align: center;" class="plots" id="plotlyplots">
                     <i class="fa fa-circle-o-notch fa-spin" style="font-size:24px"></i>
                 </div>
+
+                <br>
+            </div>
+            <div class="card-body" id="imgplots" style="display:none;">
+
+                {% set plot_imgs = plots["plots"] %}
+                {% for exps in plot_imgs %}
+
+                {% set plot_pathes = plot_imgs[exps] %}
+
+
+                <h4 style="text-align: center">{{ exps }}</h4>
+
+                <div style="overflow-x: auto; white-space:nowrap;" class="theimagecontentdiv">
+
+                    {% for plot_path in plot_pathes %}
+
+                    <a href="{{plot_path}}" target="_blank" class="image_link">
+                        <img src="{{plot_path}}" alt="{{plot_path}}"
+                             title="{{plot_path}}">
+                    </a>
+
+                    {% endfor %}
+                </div>
+
+                {% endfor %}
 
                 <br>
             </div>
@@ -379,7 +415,7 @@
             var th = $(this);
 
             var expname = $(this)[0].attributes.expname.value;
-            var expdir= $(this)[0].attributes.expdir.value;
+            var expdir = $(this)[0].attributes.expdir.value;
             var logfile = $(this)[0].attributes.logfile.value;
 
             $(".nav").find(".log-file-link-" + expname).removeClass("active");

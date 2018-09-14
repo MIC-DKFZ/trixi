@@ -168,6 +168,14 @@ def experiment(base_dir):
     image_keys = list(image_keys)
     image_keys.sort()
 
+    # Get Plots
+    plots = OrderedDict({})
+    image_keys = set()
+    image_path = {}
+    for exp in experiments:
+        exp_plots = exp.get_plots()
+        plots[exp.exp_name] = exp_plots
+
     # Get logs
     logs_dict = OrderedDict({})
     for exp in experiments:
@@ -176,6 +184,7 @@ def experiment(base_dir):
 
     content["title"] = experiments
     content["images"] = {"img_path": image_path, "imgs": images, "img_keys": image_keys}
+    content["plots"] = {"plots": plots}
     content["config"] = {"exps": experiments, "configs": combi_config, "keys": config_keys, "diff_keys": diff_config_keys}
     content["results"] = {"exps": exp_names, "results": combi_results, "keys": result_keys}
     content["logs"] = {"logs_dict": logs_dict}
