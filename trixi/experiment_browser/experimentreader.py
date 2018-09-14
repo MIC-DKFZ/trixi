@@ -260,7 +260,7 @@ class CombiExperimentReader(ExperimentReader):
             self.experiments.append(ExperimentReader(base_dir=base_dir, exp_dir=exp_dir,
                                                      decode_config_clean_str=decode_config_clean_str))
 
-        exp_base_dirs = os.path.commonpath([e.work_dir for e in self.experiments])
+        exp_base_dirs = os.path.commonpath([os.path.dirname(e.work_dir) for e in self.experiments])
         if exp_base_dirs != "":
             self.base_dir = exp_base_dirs
 
@@ -437,6 +437,7 @@ class CombiExperimentReader(ExperimentReader):
         self.elog.save_config(self.exp_info, "exp")
         self.elog.save_result(self.get_results(), "results", encoder_cls=None, default=__default)
         self.elog.save_result(self.get_result_log_dict(), "results-log", encoder_cls=None, default=__default)
+        self.elog.text_logger.log_to("\n".join(["\n"]+[e.work_dir for e in self.experiments]), "combi_exps")
 
 
 
