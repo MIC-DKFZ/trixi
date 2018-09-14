@@ -170,8 +170,6 @@ def experiment(base_dir):
 
     # Get Plots
     plots = OrderedDict({})
-    image_keys = set()
-    image_path = {}
     for exp in experiments:
         exp_plots = exp.get_plots()
         plots[exp.exp_name] = exp_plots
