@@ -78,8 +78,8 @@ def process_base_dir(base_dir, view_dir="", default_val="-", short_len=25, ignor
     result_keys -= set(ignore_keys)
 
     ### Generate table rows
-    sorted_c_keys1 = sorted([c for c in config_keys if c in diff_keys], key = lambda x: str(x).lower())
-    sorted_c_keys2 = sorted([c for c in config_keys if c not in diff_keys], key = lambda x: str(x).lower())
+    sorted_c_keys1 = sorted([c for c in config_keys if c in diff_keys], key=lambda x: str(x).lower())
+    sorted_c_keys2 = sorted([c for c in config_keys if c not in diff_keys], key=lambda x: str(x).lower())
     sorted_r_keys = sorted(result_keys, key=lambda x: str(x).lower())
 
     rows = []
@@ -175,7 +175,21 @@ def make_graphs(results, trace_options=None, layout_options=None, color_map=COLO
             do_filter = len(y) >= 1000
             opacity = 0.2 if do_filter else 1.
 
-            if do_filter:
+            if "min" in results[group][result] and "max" in results[group][result]:
+                min_ = np.array(results[group][result]["min"])
+                max_ = np.array(results[group][result]["max"])
+                fill_color = color_map[r % len(color_map)][:3] + "a" + color_map[r % len(color_map)][3:-1] + ",0.1)"
+                upper_bound = go.Scatter(x=x, y=max_, name=result, legendgroup=result, showlegend=False,
+                                         mode='lines', line=dict(width=0), hoverinfo='none',
+                                         fillcolor=fill_color, **trace_options)
+                lower_bound = go.Scatter(x=x, y=min_, name=result, legendgroup=result, showlegend=False,
+                                         mode='lines', fill="tonexty", line=dict(width=0), hoverinfo='none',
+                                         fillcolor=fill_color, **trace_options)
+                traces.append(upper_bound)
+                traces.append(lower_bound)
+                traces.append(go.Scatter(x=x, y=y, opacity=opacity, name=result, legendgroup=result,
+                                         line=dict(color=color_map[r % len(color_map)]), **trace_options))
+            elif do_filter:
                 def filter_(x):
                     return savgol_filter(x, max(5, 2 * (len(y) // 50) + 1), 3)
 

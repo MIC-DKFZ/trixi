@@ -7,7 +7,7 @@ import colorlover as cl
 from flask import Blueprint, Flask, abort, render_template, request
 
 from trixi.experiment_browser.dataprocessing import group_images, make_graphs, merge_results, process_base_dir
-from trixi.experiment_browser.experimentreader import ExperimentReader
+from trixi.experiment_browser.experimentreader import ExperimentReader, CombiExperimentReader, group_experiments_by
 from trixi.util import Config
 
 # These keys will be ignored when in a config file
@@ -63,6 +63,7 @@ def register_url_routes(app, base_dir):
     app.add_url_rule("/", "overview", lambda: overview(base_dir), methods=["GET"])
     app.add_url_rule("/overview", "overview_", lambda: overview_(base_dir), methods=["GET"])
     app.add_url_rule('/experiment', "experiment", lambda: experiment(base_dir), methods=['GET'])
+    app.add_url_rule('/combine', "combine", lambda: combine(base_dir), methods=['GET'])
     app.add_url_rule('/experiment_log', "experiment_log", lambda: experiment_log(base_dir), methods=['GET'])
     app.add_url_rule('/experiment_plots', "experiment_plots", lambda: experiment_plots(base_dir), methods=['GET'])
     app.add_url_rule('/experiment_remove', "experiment_remove", lambda: experiment_remove(base_dir), methods=['GET'])
@@ -104,13 +105,22 @@ def overview_(base_dir):
 
 def experiment(base_dir):
     experiment_paths = request.args.getlist('exp')
+    name = request.args.get('name', "")
+    do_save = request.args.get('save', "")
+    combi = request.args.get('combi', 'false')
 
     experiments = []
 
-    # Get all Experiments
-    for experiment_path in sorted(experiment_paths):
-        exp = ExperimentReader(base_dir, experiment_path)
-        experiments.append(exp)
+    if combi == "true":
+        combi_exp = CombiExperimentReader(base_dir, experiment_paths, name=name)
+        if do_save == "true":
+            combi_exp.save()
+        experiments = [combi_exp]
+    else:
+        # Get all Experiments
+        for experiment_path in sorted(experiment_paths):
+            exp = ExperimentReader(base_dir, experiment_path)
+            experiments.append(exp)
 
     # Assign unique names
     exp_names = [exp.exp_name for exp in experiments]
@@ -158,6 +168,12 @@ def experiment(base_dir):
     image_keys = list(image_keys)
     image_keys.sort()
 
+    # Get Plots
+    plots = OrderedDict({})
+    for exp in experiments:
+        exp_plots = exp.get_plots()
+        plots[exp.exp_name] = exp_plots
+
     # Get logs
     logs_dict = OrderedDict({})
     for exp in experiments:
@@ -166,6 +182,7 @@ def experiment(base_dir):
 
     content["title"] = experiments
     content["images"] = {"img_path": image_path, "imgs": images, "img_keys": image_keys}
+    content["plots"] = {"plots": plots}
     content["config"] = {"exps": experiments, "configs": combi_config, "keys": config_keys, "diff_keys": diff_config_keys}
     content["results"] = {"exps": exp_names, "results": combi_results, "keys": result_keys}
     content["logs"] = {"logs_dict": logs_dict}
@@ -199,12 +216,18 @@ def experiment_remove(base_dir):
 
 def experiment_plots(base_dir):
     experiment_paths = request.args.getlist('exp')
+    combi = request.args.get('combi', 'false')
     experiments = []
 
-    # Get all Experiments
-    for experiment_path in sorted(experiment_paths):
-        exp = ExperimentReader(base_dir, experiment_path)
-        experiments.append(exp)
+    if combi == "true":
+        combi_exp = CombiExperimentReader(base_dir, experiment_paths)
+        # combi_exp.save()
+        experiments = [combi_exp]
+    else:
+        # Get all Experiments
+        for experiment_path in sorted(experiment_paths):
+            exp = ExperimentReader(base_dir, experiment_path)
+            experiments.append(exp)
 
     # Assign unique names
     exp_names = [exp.exp_name for exp in experiments]
@@ -248,6 +271,35 @@ def experiment_rename(base_dir):
     exp.update_meta_info(name=new_name)
 
     return ""
+
+
+def combine(base_dir):
+    experiment_paths = request.args.getlist('exp')
+    group_by_list = request.args.getlist('group')
+    name = request.args.get('name', "")
+
+    try:
+        exps = []
+        for ep in experiment_paths:
+            expr = ExperimentReader(os.path.join(base_dir, ep))
+            if expr.exp_info.get("state", "Combined") != "Combined":
+                exps.append(expr)
+
+        exp_groups = group_experiments_by(exps, group_by_list)
+
+        combis = []
+        for group in exp_groups:
+            expc = CombiExperimentReader(base_dir="", exp_dirs=[e.work_dir for e in group], name=name)
+            combis.append(expc)
+
+        for expc in combis:
+            expc.save()
+
+        return "1"
+    except:
+        return "0"
+
+    return "0"
 
 
 if __name__ == "__main__":

@@ -99,3 +99,20 @@ function alignImages() {
     console.log(imgcontentdivs);
 
 }
+
+function toggleliveplots() {
+
+    var x = document.getElementById("toggleliveplots").checked;
+    var liveplotdiv = document.getElementById("liveplots");
+    var imgplotdiv = document.getElementById("imgplots");
+
+    if (x === true) {
+        liveplotdiv.style.display='block';
+        imgplotdiv.style.display='none';
+    }
+    else {
+        liveplotdiv.style.display='none';
+        imgplotdiv.style.display='block';
+    }
+
+}

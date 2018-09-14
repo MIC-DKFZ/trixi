@@ -12,6 +12,7 @@
     <link rel="stylesheet" type="text/css"
           href="https://cdn.datatables.net/select/1.2.5/css/select.bootstrap4.min.css"/>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 
     <link href="https://fonts.googleapis.com/css?family=Roboto:300" rel="stylesheet">
@@ -119,7 +120,8 @@
                 </div>
                 <div div class="collapse" id="collapseExample">
                     {% for c in ccols2 %}
-                    <a role="button" class="btn btn-outline-success toggle-vis" data-column="{{ loop.index + ccols1|length + 4 }}"
+                    <a role="button" class="btn btn-outline-success toggle-vis"
+                       data-column="{{ loop.index + ccols1|length + 4 }}"
                        data-type="config">{{ c }}</a>
                     {% endfor %}
                 </div>
@@ -184,7 +186,6 @@
 </div>
 
 
-
 <!-- Modal -->
 <div class="modal fade" id="renameModal" tabindex="-1" role="dialog" aria-labelledby="renameModalLabel"
      aria-hidden="true">
@@ -203,6 +204,104 @@
             <div class="modal-footer">
                 <a type="button" class="btn btn-secondary" data-dismiss="modal">Close</a>
                 <a type="button" class="btn btn-primary" id="rename-modal-button" data-dismiss="modal">Change Name</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="combineModal" tabindex="-1" role="dialog" aria-labelledby="renameModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="combineModalLabel">Combine Experiments</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <label class="col-form-label">Name:</label>
+                <input type="text" class="form-control" id="combi-name-input">
+                <br>
+                 <div style="float: right;">
+                    <label class="switch">
+                        <input type="checkbox"  id="combi-save-input" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <div>Save</div>
+                </div>
+
+
+            </div>
+            <div class="modal-footer">
+                <a type="button" class="btn btn-secondary" data-dismiss="modal">Close</a>
+                <a type="button" class="btn btn-primary" id="combi-modal-button" data-dismiss="modal">Combine</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="combineModal2" tabindex="-1" role="dialog" aria-labelledby="renameModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="combineModalLabel2">Combine All Experiments</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <label class="col-form-label">Name:</label>
+                <input type="text" class="form-control" id="combi-name-input2">
+                <br>
+                Group By:
+                <div id="combi-checkboxlist">
+                    {% for c in ccols1 %}
+                    <div><input type="checkbox" value="{{ c }}" class="chk"> {{ c }}</div>
+                    {% endfor %}
+
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <a type="button" class="btn btn-secondary" data-dismiss="modal">Close</a>
+                <a type="button" class="btn btn-primary" id="combi-modal-button2" data-dismiss="modal">Combine&Save</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="LoadingModal" tabindex="-1" role="dialog" aria-labelledby="renameModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Loading...</h5>
+                 <i class="fa fa-circle-o-notch fa-spin" style="font-size:24px"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="ErrorModal" tabindex="-1" role="dialog" aria-labelledby="renameModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Error</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>An Error has occurred. Please reload.</p>
+            </div>
+            <div class="modal-footer">
+                <a type="button" class="btn btn-secondary" data-dismiss="modal">Close</a>
             </div>
         </div>
     </div>
@@ -290,13 +389,14 @@
             initComplete: function () {
                 $("div.toolbar")
                     .html('<a role="button" class="compare-experiments btn btn-primary" style="float: left">Details</a>\
+                           <a role="button" class="combine-experiments btn btn-success" style="float: left;margin-left:                                                       2px;">Combine</a>\
                            <a role="button" class="remove-experiments btn btn-danger" style="float: left; margin-left: 2px;">Remove</a>');
             },
             columnDefs: [
                 {targets: [0, 1, 2, 3, 4], visible: true},
                 {targets: "_all", visible: false}
             ],
-            aaSorting: [[2,'desc']]
+            aaSorting: [[2, 'desc']]
         });
 
         // Compare experiments
@@ -342,6 +442,21 @@
                 );
                 table.draw();
 
+            }
+        });
+
+        $('a.combine-experiments').on('click', function (e) {
+            e.preventDefault();
+            var experiments = [];
+            $.each($('#overviewTable tr.selected'), function () {
+                var dir_name = $(this)[0].getAttribute("dir_name");
+                experiments.push(dir_name);
+            });
+            if (experiments.length > 1) {
+                $('#combineModal').modal({show: true});
+            }
+            else if(experiments.length < 1){
+                $('#combineModal2').modal({show: true});
             }
         });
 
@@ -402,13 +517,88 @@
 
             var rename_url = "experiment_rename?exp=" + exp_dir + "&name=" + new_name;
 
-             $.get(
+            $.get(
                 rename_url,
                 {},
                 function () {
                     last_td.innerHTML = new_name;
                 }
-             );
+            );
+
+
+        });
+
+        $('#combi-modal-button').on('click', function (e) {
+            e.preventDefault();
+            var name_input = document.getElementById('combi-name-input');
+            var new_name = name_input.value;
+
+            var save_input = document.getElementById('combi-save-input');
+            var do_save = save_input.checked;
+
+            var experiments = [];
+            $.each($('#overviewTable tr.selected'), function () {
+                var dir_name = $(this)[0].getAttribute("dir_name");
+                experiments.push(dir_name);
+            });
+            if (experiments.length > 0) {
+                var new_location = "experiment?";
+                $.each(experiments, function (idx, val) {
+                    new_location = new_location + "exp=" + val + "&";
+                });
+                new_location += "name=" + new_name + "&";
+                new_location += "save=" + do_save+ "&";
+                new_location += "combi=true";
+                // window.location.href = new_location;
+
+                window.open(new_location, '_blank');
+            }
+
+        });
+
+         $('#combi-modal-button2').on('click', function (e) {
+            e.preventDefault();
+            var name_input = document.getElementById('combi-name-input');
+            var new_name = name_input.value;
+
+            var experiments = [];
+            $.each($('#overviewTable tr'), function () {
+                var dir_name = $(this)[0].getAttribute("dir_name");
+                if(dir_name != null) {
+                    experiments.push(dir_name);
+                }
+            });
+
+            var chkArray = [];
+            $(".chk:checked").each(function() {
+                chkArray.push($(this).val());
+            });
+
+            var new_location = "combine?";
+            $.each(experiments, function (idx, val) {
+                new_location = new_location + "exp=" + val + "&";
+            });
+            $.each(chkArray, function (idx, val) {
+                new_location = new_location + "group=" + val + "&";
+            });
+            new_location += "name=" + new_name + "&";
+
+            $.get(
+                new_location,
+                {},
+                function (data) {
+                    console.log("Combined Experiments");
+                    $('#LoadingModal').modal().hide();
+                    if (data === "1") {
+                        location.reload();
+                    }
+                    else{
+                        $('#ErrorModal').modal({show: true});
+                    }
+                }
+            );
+            $('#LoadingModal').modal({show: true});
+
 
 
         });

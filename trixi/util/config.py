@@ -297,7 +297,7 @@ class Config(dict):
         return self.difference_config_static(self, *other_configs)
 
     @staticmethod
-    def difference_config_static(*configs):
+    def difference_config_static(*configs, only_set=False):
         """Make a Config of all elements that differ between N configs.
 
         The resulting Config looks like this::
@@ -311,6 +311,8 @@ class Config(dict):
 
         Args:
             configs (Config): Any number of Configs
+            only_set (bool): If only the set of different values hould be returned or for each config the
+            corresponding one
 
         Returns:
             Config: Possibly empty
@@ -348,9 +350,12 @@ class Config(dict):
             if not all_equal:
 
                 if not all_configs:
-                    difference[key] = tuple(current_values)
+                    if not only_set:
+                        difference[key] = tuple(current_values)
+                    else:
+                        difference[key] = tuple(set(current_values))
                 else:
-                    difference[key] = Config.difference_config_static(*current_values)
+                    difference[key] = Config.difference_config_static(*current_values, only_set=only_set)
 
         return difference
 

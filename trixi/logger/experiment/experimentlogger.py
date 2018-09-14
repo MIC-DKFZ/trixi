@@ -249,7 +249,7 @@ class ExperimentLogger(AbstractLogger):
     def load_checkpoint(self):
         raise NotImplementedError
 
-    def save_result(self, data, name, indent=4, separators=(",", ": "), **kwargs):
+    def save_result(self, data, name, indent=4, separators=(",", ": "), encoder_cls=MultiTypeEncoder, **kwargs):
         """
         Saves data as a json file in the experiment result dir
 
@@ -266,7 +266,7 @@ class ExperimentLogger(AbstractLogger):
         name = os.path.join(self.result_dir, name)
         create_folder(os.path.dirname(name))
         json.dump(data, open(name, "w"),
-                  cls=MultiTypeEncoder,
+                  cls=encoder_cls,
                   indent=indent,
                   separators=separators,
                   **kwargs)
