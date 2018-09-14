@@ -334,6 +334,7 @@ class ResultLogDict(LogDict):
         self.is_init = False
 
         self.__cntr_dict = defaultdict(float)
+
         if self.file_handler.mode == "w" or os.stat(self.file_handler.baseFilename).st_size == 0:
             self.print_to_file("[")
 
@@ -364,7 +365,7 @@ class ResultLogDict(LogDict):
 
     def load(self, reload_dict):
         for key, item in reload_dict.items():
-            print(key)
+
             if isinstance(item, dict) and "data" in item and "label" in item and "epoch" in item:
                 data = item["data"]
                 if "counter" in item and item["counter"] is not None:
@@ -373,17 +374,19 @@ class ResultLogDict(LogDict):
                 data = item
             self.__cntr_dict[key] += 1
 
-        super(ResultLogDict, self).__setitem__(key, data)
+            super(ResultLogDict, self).__setitem__(key, data)
 
     def close(self):
 
         self.file_handler.close()
-        # this approach (fixed offset) sometimes fails upon errors and the like,
+        # Remove trailing comma, unless we've only written "[".
+        # This approach (fixed offset) sometimes fails upon errors and the like,
         # we could alternatively read the whole file,
         # parse to only keep "clean" rows and rewrite.
         with open(self.file_handler.baseFilename, "rb+") as handle:
-            handle.seek(-2, os.SEEK_END)
-            handle.truncate()
+            if os.stat(self.file_handler.baseFilename).st_size > 2:
+                handle.seek(-2, os.SEEK_END)
+                handle.truncate()
         with open(self.file_handler.baseFilename, "a") as handle:
             handle.write("\n]")
 
