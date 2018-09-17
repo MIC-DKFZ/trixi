@@ -581,7 +581,7 @@ class PytorchExperiment(Experiment):
                 legend = False
             else:
                 legend = True
-            self.clog.show_value(value=value, name=name, tag=tag, counter=counter, show_legend=legend)
+            self.clog.show_value(value=value, name=name, tag=tag_name, counter=counter, show_legend=legend)
 
     def get_result(self, name):
         """
