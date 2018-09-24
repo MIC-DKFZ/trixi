@@ -4,6 +4,7 @@ import warnings
 import torch
 from torch.autograd import Variable
 from torchvision.utils import save_image as tv_save_image
+import numpy as np
 
 from trixi.logger.abstractlogger import threaded
 from trixi.logger.file.numpyplotfilelogger import NumpyPlotFileLogger
@@ -60,6 +61,9 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
             prefix: If True, the formated n_iter will be appended as a prefix, otherwise as a suffix
             image_args: Arguments for the tensorvision save image method
         """
+
+        if isinstance(tensor, np.ndarray):
+            tensor = torch.from_numpy(tensor)
 
         if image_args is None:
             image_args = {}
