@@ -485,7 +485,7 @@ class PytorchExperimentLogger(ExperimentLogger):
                 warnings.warn("Sth went wrong with calculating the pr curve")
 
     @staticmethod
-    def get_classification_metrics(tensor, labels, name, metric=("roc-auc", "pr-score"), use_sub_process=False,
+    def get_classification_metrics(tensor, labels, name="", metric=("roc-auc", "pr-score"), use_sub_process=False,
                                    tag_name=None, results_fn=lambda x, *y, **z: None):
         """
         Displays some classification metrics as line plots in a graph (similar to show value (also uses show value
@@ -507,7 +507,7 @@ class PytorchExperimentLogger(ExperimentLogger):
 
         from sklearn import metrics
 
-        def __get_classification_metrics(tensor, labels, name, metric=("roc-auc", "pr-score"),
+        def __get_classification_metrics(tensor, labels, name="", metric=("roc-auc", "pr-score"),
                                          tag_name=None, results_fn=lambda x, *y, **z: None):
 
             vals = []
