@@ -353,7 +353,7 @@ class CombiExperimentReader(ExperimentReader):
 
         return final_results_log
 
-    def get_results(self):
+    def get_results_full(self):
         exp_results = [e.get_results() for e in self.experiments]
         result_keys = set()
         for res in exp_results:
@@ -378,6 +378,10 @@ class CombiExperimentReader(ExperimentReader):
             results_aux_dict[key]["min"] = np.nanmin(val_list)
             results_aux_dict[key]["std"] = np.nanstd(val_list)
 
+        return results_dict, results_aux_dict
+
+    def get_results(self):
+        results_dict, _ = self.get_results_full()
         return results_dict
 
     def get_result_log_dict(self):
@@ -435,9 +439,11 @@ class CombiExperimentReader(ExperimentReader):
             if isinstance(o, np.int64): return int(o)
             raise TypeError
 
+        results, results_combi = self.get_results_full()
         self.config.dump(os.path.join(self.elog.config_dir, "config.json"))
         self.elog.save_config(self.exp_info, "exp")
-        self.elog.save_result(self.get_results(), "results", encoder_cls=None, default=__default)
+        self.elog.save_result(results, "results", encoder_cls=None, default=__default)
+        self.elog.save_result(results_combi, "results-combi", encoder_cls=None, default=__default)
         self.elog.save_result(self.get_result_log_dict(), "results-log", encoder_cls=None, default=__default)
         self.elog.text_logger.log_to("\n".join(["\n"]+[e.work_dir for e in self.experiments]), "combi_exps")
 
