@@ -156,7 +156,9 @@ class ExperimentReader(object):
             try:
                 with open(os.path.join(self.result_dir, "results-log.json"), "r") as results_file:
                     results_str = results_file.readlines()
-                    results_str[-1] = "{}]"
+                    if "]" in "]" in "".join(results_str):
+                        results_str = [rs.replace("]", ",") for rs in results_str]
+                    results_str.append("{}]")
                     results_json = "".join(results_str)
                     results = json.loads(results_json)
             except Exception as ee:
@@ -167,7 +169,7 @@ class ExperimentReader(object):
             for key in result.keys():
                 counter = result[key]["counter"]
                 data = result[key]["data"]
-                label = result[key]["label"]
+                label = str(result[key]["label"])
                 if label not in results_merged:
                     results_merged[label] = {}
                 if key not in results_merged[label]:
