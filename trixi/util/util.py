@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import time
 import traceback
 import warnings
-from collections import defaultdict
+from collections import defaultdict, deque
 from hashlib import sha256
 from tempfile import gettempdir
 from types import FunctionType, ModuleType
@@ -327,11 +327,12 @@ class LogDict(dict):
 
 
 class ResultLogDict(LogDict):
-    def __init__(self, file_name, base_dir=None, **kwargs):
+    def __init__(self, file_name, base_dir=None, running_mean_length=10, **kwargs):
         """Initializes a new Dict which directly logs value changes to a given target_file."""
         super(ResultLogDict, self).__init__(file_name=file_name, base_dir=base_dir, **kwargs)
 
         self.is_init = False
+        self.running_mean_dict = defaultdict(lambda: deque(maxlen=running_mean_length))
 
         self.__cntr_dict = defaultdict(float)
 
@@ -357,6 +358,8 @@ class ResultLogDict(LogDict):
             json_dict = {key: ResultElement(data=data, counter=self.__cntr_dict[key])}
         self.__cntr_dict[key] += 1
         self.logger.info(json.dumps(json_dict) + ",")
+
+        self.running_mean_dict[key].append(data)
 
         super(ResultLogDict, self).__setitem__(key, data)
 
