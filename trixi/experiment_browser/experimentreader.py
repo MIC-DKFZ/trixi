@@ -377,6 +377,7 @@ class CombiExperimentReader(ExperimentReader):
             results_aux_dict[key]["max"] = np.nanmax(val_list)
             results_aux_dict[key]["min"] = np.nanmin(val_list)
             results_aux_dict[key]["std"] = np.nanstd(val_list)
+            results_aux_dict[key]["all"] = val_list
 
         return results_dict, results_aux_dict
 
