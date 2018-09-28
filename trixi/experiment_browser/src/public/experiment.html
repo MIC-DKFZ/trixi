@@ -4,38 +4,18 @@
     <title>TRIXI - Comparing experiments</title>
 
     <meta charset="utf-8">
-
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/custom.css') }}"/>
-    <link href="https://use.fontawesome.com/releases/v5.0.8/css/all.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Roboto:300" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
-    <meta charset="utf-8">
-
-
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
-
     <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='assets/trixi-icon.png') }}"/>
-
 
 </head>
 
 <body data-spy="scroll" data-target="#spy" data-offset="20">
-
 
 <div id="wrapper">
 
     <!-- Sidebar -->
     <div id="sidebar-wrapper">
         <nav id="spy">
-            <ul class="sidebar-nav nav">
+            <ul class="sidebar-nav navbar-nav">
                 <li>
                     <a href="#section1" class="nav-link">
                         <i class="material-icons">settings</i>
@@ -224,9 +204,9 @@
                                 {% endfor %}
                             </div>
                         </div>
-                        <script>
-                            showSlides("{{exps}}-{{group}}")
-                        </script>
+
+                            {showSlides("{{exps}}-{{group}}")}}
+
                         {% else %}
                         <div style="width:25%; display: none; margin: 20px;" class="imageSpace">
                         </div>
@@ -261,7 +241,7 @@
             <div class="card-body" id="liveplots">
 
                 <div style="text-align: center;" class="plots" id="plotlyplots">
-                    <i class="fa fa-circle-o-notch fa-spin" style="font-size:24px"></i>
+                    <i class="fa fa-circle-notch fa-spin" style="font-size:24px"></i>
                 </div>
 
                 <br>
@@ -401,157 +381,6 @@
     </div>
 
 </div>
-
-
-<script>
-
-    var log_dict = {};
-
-    $(document).ready(function () {
-
-        $('a.log-file-link').on('click', function (e) {
-            e.preventDefault();
-
-            var th = $(this);
-
-            var expname = $(this)[0].attributes.expname.value;
-            var expdir = $(this)[0].attributes.expdir.value;
-            var logfile = $(this)[0].attributes.logfile.value;
-
-            $(".nav").find(".log-file-link-" + expname).removeClass("active");
-
-            var target_elem = document.getElementById(expname + "-log-content");
-
-
-            var dict_key = expname + "-" + logfile;
-            if (dict_key in log_dict) {
-                target_elem.innerHTML = log_dict[dict_key];
-                th.addClass("active");
-
-            }
-            else {
-                $.get(
-                    "experiment_log",
-                    {exp: expdir, log: logfile},
-                    function (data) {
-                        console.log("request");
-                        log_dict[dict_key] = [data];
-                        target_elem.innerHTML = data;
-                        th.addClass("active");
-                    }
-                );
-            }
-            // toggle($(this));
-        });
-
-        $('a.log-file-close').on('click', function (e) {
-            e.preventDefault();
-
-
-            var expname = $(this)[0].attributes.expname.value;
-            var target_elem = document.getElementById(expname + "-log-content");
-            target_elem.innerHTML = "";
-
-            $(".nav").find(".log-file-link-" + expname).removeClass("active");
-
-        });
-
-        $('a.star_element').on('click', function (e) {
-            e.preventDefault();
-
-            console.log("xD");
-
-            var dir_name = $(this)[0].getAttribute("dir_name");
-            var url_exp_star = "experiment_star?" + "exp=" + dir_name;
-            var text = $.trim($(this)[0].text);
-            var th = $(this);
-
-            console.log(text);
-            console.log(th);
-
-            if (text === "star_border") {
-                url_exp_star = url_exp_star + "&star=" + 1;
-                $.get(
-                    url_exp_star,
-                    {},
-                    function () {
-
-                        th[0].innerHTML = '<i class="material-icons">star</i>';
-                    }
-                );
-            }
-            else if (text === "star") {
-                url_exp_star = url_exp_star + "&star=" + 0;
-                $.get(
-                    url_exp_star,
-                    {},
-                    function () {
-                        th[0].innerHTML = '<i class="material-icons">star_border</i>';
-                    }
-                );
-            }
-
-        });
-
-        $('a.image_link').on('click', function (e) {
-            e.preventDefault();
-            console.log("Image clicked");
-        });
-
-        $('a.image_link').on('dblclick', function (e) {
-            e.preventDefault();
-            window.open($(this)[0].href, '_blank')
-        });
-
-        function findGetParameter(parameterName) {
-            var result = null,
-                tmp = [];
-            location.search
-                .substr(1)
-                .split("&")
-                .forEach(function (item) {
-                    tmp = item.split("=");
-                    if (tmp[0] === parameterName) result = decodeURIComponent(tmp[1]);
-                });
-            return result;
-        }
-
-        $.get(
-            "experiment_plots?" + window.location.search.substr(1),
-            {},
-            function (data) {
-                console.log("request");
-                var graph = JSON.parse(data);
-                var plothtml = "";
-
-                var target_elem = document.getElementById("plotlyplots");
-
-                $.each(graph["graphs"], function (index, value) {
-
-                    var height = 450 + 40 * graph["traces"][index];
-
-                    plothtml += '<div class="plot-box" style="height: ';
-                    plothtml += '' + height;
-                    plothtml += 'px">';
-                    plothtml += value;
-                    plothtml += '</div>';
-
-                });
-
-                target_elem.innerHTML = plothtml;
-
-
-                $.each(graph["graphs"], function (index, value) {
-                    var js_strng = value.split('<script type="text/javascript">')[1];
-                    js_strng = js_strng.substring(0, js_strng.length - 9);
-                    eval(js_strng);
-                });
-
-            }
-        );
-
-    });
-</script>
 
 </body>
 </html>

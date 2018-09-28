@@ -1,0 +1,2 @@
+//.babelrc
+{ "presets": [ "env" ] }

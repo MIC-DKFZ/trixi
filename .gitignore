@@ -103,6 +103,10 @@ ENV/
 # mypy
 .mypy_cache/
 
+# npm
+trixi/experiment_browser/node_modules/*
+trixi/experiment_browser_old/*
+
 ### Except build folder in docs:
 
 doc/api

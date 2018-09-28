@@ -1,3 +1,4 @@
+
 h1, h2, h3, h4 {
     margin-top: 0.2em;
 }
@@ -195,12 +196,12 @@ a.toggle-vis, a.toggle-config, a.toggle-result {
 }
 
 .ctable tbody tr:hover {
-    background-color: #e3f2fd;
+    background-color: #ffff99;
     /*font-weight: bold;*/
 }
 
 tr.ctable-diff {
-    background-color: #ffccbc;
+    background-color: #ffccf5;
 }
 
 /* width */
@@ -308,7 +309,6 @@ input:checked + .slider:before {
     color: #fff;
     position: fixed;
     height: 100%;
-    overflow-y: auto;
     z-index: 999;
 }
 
@@ -319,8 +319,12 @@ input:checked + .slider:before {
 
 .sidebar-nav {
     width: 80px;
-    list-style: none;
+    //list-style: none;
     text-align: center;
+    //flex-direction: row;
+    --webkit-flex-direction:row;
+    -ms-flex-direction: row;
+    
 }
 
 .sidebar-nav span, .sidebar-nav i {
