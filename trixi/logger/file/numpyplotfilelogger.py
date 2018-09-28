@@ -41,7 +41,7 @@ class NumpyPlotFileLogger(NumpySeabornPlotLogger):
 
         """
         figure = NumpySeabornPlotLogger.show_image(self, image, name, show=False)
-        outname = os.path.join(self.image_dir, name) + file_format
+        outname = os.path.join(self.img_dir, name) + file_format
         os.makedirs(os.path.dirname(outname), exist_ok=True)
         threaded(savefig_and_close)(figure, outname)
 
@@ -84,17 +84,17 @@ class NumpyPlotFileLogger(NumpySeabornPlotLogger):
         threaded(savefig_and_close)(figure, outname)
 
     @convert_params
-    def show_lineplot(self, y_vals, x_vals, name, file_format=".png", *args, **kwargs):
+    def show_lineplot(self, y_vals, x_vals=None, name="lineplot", file_format=".png", *args, **kwargs):
         """
         Method which creates and stores a lineplot
 
         Args:
-            y_vals: Array of x values
-            x_vals: Array of corresponding y-values
+            y_vals: Array of y values
+            x_vals: Array of corresponding x-values
             name: file-name
             file_format: output-image (plot) file format
         """
-        figure = NumpySeabornPlotLogger.show_lineplot(self, x_vals, y_vals, name, show=False)
+        figure = NumpySeabornPlotLogger.show_lineplot(self, y_vals, x_vals, name, show=False)
         outname = os.path.join(self.plot_dir, name) + file_format
         os.makedirs(os.path.dirname(outname), exist_ok=True)
         threaded(savefig_and_close)(figure, outname)

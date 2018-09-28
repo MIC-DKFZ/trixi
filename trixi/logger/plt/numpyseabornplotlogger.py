@@ -5,6 +5,7 @@ import numpy as np
 import seaborn
 
 from trixi.logger.abstractlogger import AbstractLogger, convert_params
+from trixi.util.util import chw_to_hwc
 
 
 class NumpySeabornPlotLogger(AbstractLogger):
@@ -37,6 +38,8 @@ class NumpySeabornPlotLogger(AbstractLogger):
         """
         figure = self.get_figure(name)
         plt.clf()
+
+        image = chw_to_hwc(image)
 
         plt.imshow(image)
         plt.axis("off")
@@ -121,7 +124,7 @@ class NumpySeabornPlotLogger(AbstractLogger):
         return figure
 
     @convert_params
-    def show_lineplot(self, y_vals, x_vals, name, show=True, *args, **kwargs):
+    def show_lineplot(self, y_vals, x_vals=None, name="lineplot", show=True, *args, **kwargs):
         """
         Creates a line plot figure with (multiple) lines plot, given values Y (and optional the corresponding X values)
 
@@ -140,6 +143,9 @@ class NumpySeabornPlotLogger(AbstractLogger):
         plt.clf()
 
         seaborn.set_style("whitegrid")
+
+        if x_vals is None:
+            x_vals = list(range(len(y_vals)))
 
         plt.plot(x_vals, y_vals)
 
@@ -167,6 +173,10 @@ class NumpySeabornPlotLogger(AbstractLogger):
         if not isinstance(array, np.ndarray):
             raise TypeError("Array must be numpy arrays (this class is called NUMPY seaborn logger, and seaborn"
                             " can only handle numpy arrays -.- .__. )")
+        if len(array.shape) != 2:
+            raise ValueError("Array must be 2D for scatterplot")
+        if array.shape[1] != 2:
+            raise ValueError("Array must be 2D and have x,y pairs in the 2nd dim for scatterplot")
 
         x, y = zip(*array)
         x, y = np.asarray(x), np.asarray(y)

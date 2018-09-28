@@ -143,7 +143,7 @@ class ExperimentLogger(AbstractLogger):
         self.plot_logger.show_barplot(
             array, name, file_format=".png", **kwargs)
 
-    def show_lineplot(self, y_vals, x_vals, name, file_format=".png", **kwargs):
+    def show_lineplot(self, y_vals, x_vals=None, name="lineplot", file_format=".png", **kwargs):
         """
         This function saves a line plot in the experiment plot folder.
 

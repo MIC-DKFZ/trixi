@@ -15,6 +15,7 @@ from hashlib import sha256
 from tempfile import gettempdir
 from types import FunctionType, ModuleType
 
+import numpy as np
 import portalocker
 
 try:
@@ -407,3 +408,16 @@ class ResultElement(dict):
             self["epoch"] = epoch
         if counter is not None:
             self["counter"] = counter
+
+
+
+def chw_to_hwc(np_array):
+    if len(np_array.shape) != 3:
+        return np_array
+    elif np_array.shape[0] != 1 and np_array.shape[0] != 3:
+        return np_array
+    elif np_array.shape[2] == 1 or np_array.shape[2] == 3:
+        return np_array
+    else:
+        np_array = np.transpose(np_array, (1,2,0))
+        return np_array
