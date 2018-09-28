@@ -21,7 +21,7 @@ with open(os.path.join(os.path.dirname(__file__), "Readme.md")) as f:
 with open(os.path.join(os.path.dirname(__file__), "LICENSE")) as f:
     license = f.read()
 
-required = resolve_requirements(os.path.join(os.path.dirname(__file__), 'requirements.txt'))
+required = resolve_requirements(os.path.join(os.path.dirname(__file__), 'requirements_full.txt'))
 
 setup(name='trixi',
       version='0.1',
