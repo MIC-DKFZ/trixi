@@ -457,7 +457,7 @@ class PytorchExperimentLogger(ExperimentLogger):
             p.start()
         else:
             try:
-                __get_pr_curve(tensor=tensor,
+                return __get_pr_curve(tensor=tensor,
                                labels=labels,
                                reduce_to_n_samples=reduce_to_n_samples,
                                results_fn=results_fn

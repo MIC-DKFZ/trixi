@@ -161,7 +161,7 @@ class TestPytorchExperimentLogger(unittest.TestCase):
         array = np.random.random_sample(100)
         labels = np.random.choice((0, 1), 100)
 
-        precision, recall = self.experimentLogger.get_roc_curve(array, labels)
+        precision, recall = self.experimentLogger.get_pr_curve(array, labels)
         self.assertTrue(np.all(precision >= 0) and np.all(precision <= 1)
                         and np.all(recall >= 0) and np.all(recall <= 1),
                         "Got an invalid precision, recall")
