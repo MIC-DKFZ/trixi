@@ -136,6 +136,9 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             delete_tmp_on_close: Determines if the tmp file will be deleted on close. If set true, can cause problems due to the multi threadded plotting.
         """
 
+        if not torch.cuda.is_available():
+            use_cuda = False
+
         def make_dot(output_var, state_dict=None):
             """
             Produces Graphviz representation of Pytorch autograd graph.
