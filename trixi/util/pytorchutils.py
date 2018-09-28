@@ -86,10 +86,11 @@ def update_model(original_model, update_dict, exclude_layers=(), do_warnings=Tru
     # 1. Give warnings for unused update values
     unused = set(update_dict.keys()) - set(exclude_layers) - set(model_dict.keys())
     not_updated = set(model_dict.keys()) - set(exclude_layers) - set(update_dict.keys())
-    for item in unused:
-        warnings.warn("Update layer {} not used.".format(item))
-    for item in not_updated:
-        warnings.warn("{} layer not updated.".format(item))
+    if do_warnings:
+        for item in unused:
+            warnings.warn("Update layer {} not used.".format(item))
+        for item in not_updated:
+            warnings.warn("{} layer not updated.".format(item))
 
     # 2. filter out unnecessary keys
     update_dict = {k: v for k, v in update_dict.items() if

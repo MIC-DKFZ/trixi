@@ -64,25 +64,6 @@ class PytorchExperimentLogger(ExperimentLogger):
         """
         self.plot_logger.show_image_grid(image, name, **kwargs)
 
-    def show_image_gradient(self, *args, **kwargs):
-        """
-        Given a model creates calculates the error and backpropagates it to the image and saves it.
-
-        Args:
-            model: The model to be evaluated
-            inpt: Input to the model
-            err_fn: The error function the evaluate the output of the model on
-            grad_type: Gradient calculation method, currently supports (vanilla, vanilla-smooth, guided,
-            guided-smooth) ( the guided backprob can lead to segfaults -.-)
-            n_runs: Number of runs for the smooth variants
-            eps: noise scaling to be applied on the input image (noise is drawn from N(0,1))
-            abs (bool): Flag, if the gradient should be a absolute value
-            **image_grid_params: Params for make image grid.
-
-
-        """
-        self.plot_logger.show_image_gradient(*args, **kwargs)
-
     @staticmethod
     @threaded
     def save_model_static(model, model_dir, name):
@@ -604,3 +585,23 @@ class PytorchExperimentLogger(ExperimentLogger):
         results_fn(grad)
 
         return grad
+
+    def show_image_gradient(self, name, *args, **kwargs):
+        """
+        Given a model creates calculates the error and backpropagates it to the image and saves it.
+
+        Args:
+            name: Name of the file
+            model: The model to be evaluated
+            inpt: Input to the model
+            err_fn: The error function the evaluate the output of the model on
+            grad_type: Gradient calculation method, currently supports (vanilla, vanilla-smooth, guided,
+            guided-smooth) ( the guided backprob can lead to segfaults -.-)
+            n_runs: Number of runs for the smooth variants
+            eps: noise scaling to be applied on the input image (noise is drawn from N(0,1))
+            abs (bool): Flag, if the gradient should be a absolute value
+
+
+        """
+        grad = self.get_input_gradient(*args, **kwargs)
+        self.show_image_grid(grad, name)

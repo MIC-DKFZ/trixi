@@ -71,6 +71,9 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
         if n_iter is not None:
             name = name_and_iter_to_filename(name=name, n_iter=n_iter, ending=".png", iter_format=iter_format,
                                              prefix=prefix)
+        elif not name.endswith(".png"):
+            name = name + ".png"
+
 
         img_file = os.path.join(image_dir, name)
         os.makedirs(os.path.dirname(img_file), exist_ok=True)
@@ -252,35 +255,3 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
         self.save_image_grid(tensor=images, name=name, n_iter=n_iter, prefix=prefix, iter_format=iter_format,
                              image_args=image_args)
 
-    def show_image_gradient(self, model, inpt, err_fn, grad_type="vanilla", n_runs=20, eps=0.1, abs=False,
-                            **image_grid_params):
-        """
-        Given a model creates calculates the error and backpropagates it to the image and saves it (saliency map).
-
-
-        Args:
-            model: The model to be evaluated
-            inpt: Input to the model
-            err_fn: The error function the evaluate the output of the model on
-            grad_type: Gradient calculation method, currently supports (vanilla, vanilla-smooth, guided,
-            guided-smooth) ( the guided backprob can lead to segfaults -.-)
-            n_runs: Number of runs for the smooth variants
-            eps: noise scaling to be applied on the input image (noise is drawn from N(0,1))
-            abs (bool): Flag, if the gradient should be a absolute value
-            **image_grid_params: Params for make image grid.
-
-        """
-
-        if grad_type == "vanilla":
-            grad = get_vanilla_image_gradient(model, inpt, err_fn, abs)
-        elif grad_type == "guided":
-            grad = get_guided_image_gradient(model, inpt, err_fn, abs)
-        elif grad_type == "smooth-vanilla":
-            grad = get_smooth_image_gradient(model, inpt, err_fn, n_runs, eps, grad_type="vanilla")
-        elif grad_type == "smooth-guided":
-            grad = get_smooth_image_gradient(model, inpt, err_fn, n_runs, eps, grad_type="guided")
-        else:
-            warnings.warn("This grad_type is not implemented yet")
-            grad = torch.zeros_like(inpt)
-
-        self.show_image_grid(grad, **image_grid_params)
