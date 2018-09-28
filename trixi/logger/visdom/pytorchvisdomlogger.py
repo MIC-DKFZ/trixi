@@ -207,13 +207,17 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         # get temp file to store svg in
         fp = tempfile.NamedTemporaryFile(suffix=".svg", delete=delete_tmp_on_close)
-
-        # Create model graph and store it as svg
         g = make_dot(output, model.state_dict())
-        x = g.render(fp.name[:-4], cleanup=True)
 
-        # Display model graph in visdom
-        self.show_svg(svg=x, name=name)
+        try:
+
+            # Create model graph and store it as svg
+            x = g.render(fp.name[:-4], cleanup=True)
+
+            # Display model graph in visdom
+            self.show_svg(svg=x, name=name)
+        except:
+            warnings.warn("Could not remder model, make sure the Graphviz executables are on your systems")
 
     def show_image_grid(self, images, name=None, caption=None, env_appendix="", opts=None,
                         image_args=None, **kwargs):
