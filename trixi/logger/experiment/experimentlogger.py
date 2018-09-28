@@ -265,11 +265,12 @@ class ExperimentLogger(AbstractLogger):
             name += ".json"
         name = os.path.join(self.result_dir, name)
         create_folder(os.path.dirname(name))
-        json.dump(data, open(name, "w"),
-                  cls=encoder_cls,
-                  indent=indent,
-                  separators=separators,
-                  **kwargs)
+        with open(name, "w") as jf:
+            json.dump(data, jf,
+                      cls=encoder_cls,
+                      indent=indent,
+                      separators=separators,
+                      **kwargs)
 
     def save_dict(self, data, path, indent=4, separators=(",", ": "), **kwargs):
         """
@@ -286,11 +287,12 @@ class ExperimentLogger(AbstractLogger):
             path += ".json"
         path = os.path.join(self.save_dir, path)
         create_folder(os.path.dirname(path))
-        json.dump(data, open(path, "w"),
-                  cls=MultiTypeEncoder,
-                  indent=indent,
-                  separators=separators,
-                  **kwargs)
+        with open(path, "w") as jf:
+            json.dump(data, jf,
+                      cls=MultiTypeEncoder,
+                      indent=indent,
+                      separators=separators,
+                      **kwargs)
 
     def load_dict(self, path):
         """
@@ -305,7 +307,10 @@ class ExperimentLogger(AbstractLogger):
         if not path.endswith(".json"):
             path += ".json"
         path = os.path.join(self.save_dir, path)
-        return json.load(open(path, "r"), cls=MultiTypeDecoder)
+        ret_val = dict()
+        with open(path, "r") as df:
+            ret_val = json.load(df, cls=MultiTypeDecoder)
+        return ret_val
 
     def save_numpy_data(self, data, path):
         """
