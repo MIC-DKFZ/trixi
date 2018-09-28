@@ -2,6 +2,7 @@ import atexit
 import fnmatch
 import json
 import os
+import numpy as np
 import sys
 import re
 import random
@@ -465,7 +466,7 @@ class PytorchExperiment(Experiment):
             self.save_results()
             self._save_exp_config()
             self.print("Experiment exited. Checkpoints stored =)")
-        time.sleep(10)  # allow checkpoint saving to finish. We need a better solution for this :D
+        time.sleep(2)  # allow checkpoint saving to finish. We need a better solution for this :D
 
     def _setup_internal(self):
         self.prepare_resume()
@@ -545,7 +546,7 @@ class PytorchExperiment(Experiment):
         """Saves the current checkpoint as checkpoint_last"""
         self.save_checkpoint(name="checkpoint_last")
 
-    def add_result(self, value, name, counter=None, tag=None, label=None, plot_result=True):
+    def add_result(self, value, name, counter=None, tag=None, label=None, plot_result=True, plot_running_mean=False):
         """
         Saves a results and add it to the result dict, this is similar to results[key] = val, but in addition also
         logs the value to the combined logger (it also stores in the results-logs file).
@@ -581,6 +582,8 @@ class PytorchExperiment(Experiment):
                 legend = False
             else:
                 legend = True
+            if plot_running_mean:
+                value = np.mean(self.results.running_mean_dict[name])
             self.clog.show_value(value=value, name=name, tag=tag_name, counter=counter, show_legend=legend)
 
     def get_result(self, name):

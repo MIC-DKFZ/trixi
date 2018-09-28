@@ -228,6 +228,10 @@ class Config(dict):
 
         return True
 
+    def deepcopy(self):
+
+        return Config(config=self, deep=True)
+
     @staticmethod
     def init_objects(config):
         """Returns a new Config with types converted to instances.
