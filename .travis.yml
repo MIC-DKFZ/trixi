@@ -1,0 +1,13 @@
+dist: trusty
+sudo: required  # gives more RAM (otherwise memory error for TOM)
+language: python
+matrix:
+  include:
+  - python: "3.5"
+    env: PYTORCH_URL=http://download.pytorch.org/whl/cpu/torch-0.4.1-cp35-cp35m-linux_x86_64.whl
+before_install:
+  - pip install $PYTORCH_URL
+install:
+  - pip install .
+script:
+  - pytest

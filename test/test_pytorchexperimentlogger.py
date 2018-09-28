@@ -87,7 +87,8 @@ class TestPytorchExperimentLogger(unittest.TestCase):
         self._test_load_save_checkpoint(test_with_cuda=False)
 
     def test_net_save_and_load_checkpoint_with_optimizer_with_cuda(self):
-        self._test_load_save_checkpoint(test_with_cuda=True)
+        if torch.cuda.is_available():
+            self._test_load_save_checkpoint(test_with_cuda=True)
 
     def _test_load_save_checkpoint(self, test_with_cuda):
         # small testing net
