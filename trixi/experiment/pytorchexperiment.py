@@ -22,38 +22,143 @@ from trixi.util.pytorchutils import set_seed
 
 class PytorchExperiment(Experiment):
     """
-    A Pytorch Experiment is a abstract class which extends the basic functionallity of the Experiment class with
-    convenience features for pytorch such as creating a folder structur, saving and plotting results and
-    checkpointing your experiment.
+    A PytorchExperiment is a abstract class which extends the basic
+    functionality of the :class:`.Experiment` class with
+    convenience features for PyTorch such as creating a folder structure,
+    saving, plotting results and checkpointing your experiment.
 
-    The basic life cycle of a PytorchExperiment is the same a Experiment:
+    The basic life cycle of a PytorchExperiment is the same as
+    :class:`.Experiment`::
 
         setup()
-        (--> Automatically restore values if a previous checkpoint is given)
         prepare()
 
         for epoch in n_epochs:
             train()
             validate()
-            (--> save current checkpoint)
 
         end()
 
-    To get your own experiment simply inherit from the PytorchExperiment and overwrite the setup(), prepare(),
-    train(), validate() method (or you can use the experimental decorator "experimentify" to convert your
-    class into a experiment).
-    Then you can run your own experiment by calling the run() method.
+    where the distinction between the first two is that between them
+    PytorchExperiment will automatically restore checkpoints and save the
+    :attr:`_config_raw` in :meth:`._setup_internal`. Please see below for more
+    information on this.
+    To get your own experiment simply inherit from the PytorchExperiment and
+    overwrite the :meth:`.setup`, :meth:`.prepare`, :meth:`.train`,
+    :meth:`.validate` method (or you can use the `very` experimental decorator
+    :func:`.experimentify` to convert your class into a experiment).
+    Then you can run your own experiment by calling the :meth:`.run` method.
 
-    Internally experiment will provide you some member variables which you can access:
-        - n_epochs: Number of epochs
-        - exp_name: Name of your experiment
-        - config: The (initialized) config of your experiment (the serializable/uninitialized config is in _config_raw)
-        - result: A dict in which you can store your result values (can and will be persisted if you use a experiment
-            logger)
-        - vlog (if the flag in the init is True): A visdom logger instance which can log your results to a visdom server
-        - elog (flag in init): A experiment logger instance which can log your results to a given folder
-        - tlog (flat in init): A telegram logger which can send the results to your telegram account
-        - clog: A combined logger which logs to all loggers in different frequencies (which can be defined)
+    Internally PytorchExperiment will provide a number of member variables which
+    you can access.
+
+        - n_epochs
+            Number of epochs.
+        - exp_name
+            Name of your experiment.
+        - config
+            The (initialized) :class:`.Config` of your experiment. You can
+            access the uninitialized one via :attr:`_config_raw`.
+        - result
+            A dict in which you can store your result values. If a
+            :class:`.PytorchExperimentLogger` is used, results will be a
+            :class:`.ResultLogDict` that directly automatically writes to a file
+            and also stores the N last entries for each key for quick access
+            (e.g. to quickly get the running mean).
+        - vlog (if use_visdomlogger is True)
+            A :class:`.PytorchVisdomLogger` instance which can log your results
+            to a running visdom server. Start the server via
+            :code:`python -m visdom.server` or pass :data:`auto_start=True` in
+            the :attr:`visdomlogger_kwargs`.
+        - elog (if use_explogger is True)
+            A :class:`.PytorchExperimentLogger` instance which can log your
+            results to a given folder.
+        - tlog (if use_telegramlogger is True)
+            A :class:`.TelegramLogger` instance which can send the results to
+            your telegram account
+        - clog
+            A :class:`.CombinedLogger` instance which logs to all loggers with
+            different frequencies (specified with the :attr:`_c_freq` for each
+            logger where 1 means every time and N means every Nth time,
+            e.g. if you only want to send stuff to Visdom every 10th time).
+
+    The most important attribute is certainly :attr:`.config`, which is the
+    initialized :class:`.Config` for the experiment. To understand how it needs
+    to be structured to allow for automatic instantiation of types, please refer
+    to its documentation. If you decide not to use this functionality,
+    :attr:`config` and :attr:`_config_raw` are identical. **Beware however that
+    by default the Pytorchexperiment only saves the raw config** after
+    :meth:`.setup`. If you modify :attr:`config` during setup, make sure
+    to implement :meth:`._setup_internal` yourself should you want the modified
+    config to be saved::
+
+        def _setup_internal(self):
+
+            super(YourExperiment, self)._setup_internal() # calls .prepare_resume()
+            self.elog.save_config(self.config, "config")
+
+    Args:
+        config (dict or Config): Configures your experiment. If :attr:`name`,
+            :attr:`n_epochs`, :attr:`seed`, :attr:`base_dir` are given in the
+            config, it will automatically
+            overwrite the other args/kwargs with the values from the config.
+            In addition (defined by :attr:`parse_config_sys_argv`) the config
+            automatically parses the argv arguments and updates its values if a
+            key matches a console argument.
+        name (str):
+            The name of the PytorchExperiment.
+        n_epochs (int): The number of epochs (number of times the training
+            cycle will be executed).
+        seed (int): A random seed (which will set the random, numpy and
+            torch seed).
+        base_dir (str): A base directory in which the experiment result folder
+            will be created.
+        globs: The :func:`globals` of the script which is run. This is necessary
+            to get and save the executed files in the experiment folder.
+        resume (str or PytorchExperiment): Another PytorchExperiment or path to
+            the result dir from another PytorchExperiment from which it will
+            load the PyTorch modules and other member variables and resume
+            the experiment.
+        ignore_resume_config (bool): If :obj:`True` it will not resume with the
+            config from the resume experiment but take the current/own config.
+        resume_save_types (list or tuple): A list which can define which values
+            to restore when resuming. Choices are:
+
+                - "model" <-- Pytorch models
+                - "optimizer" <-- Optimizers
+                - "simple" <-- Simple python variables (basic types and lists/tuples
+                - "th_vars" <-- torch tensors/variables
+                - "results" <-- The result dict
+
+        parse_sys_argv (bool): Parsing the console arguments (argv) to get a
+            :attr:`config path` and/or :attr:`resume_path`.
+        parse_config_sys_argv (bool): Parse argv to update the config
+            (if the keys match).
+        checkpoint_to_cpu (bool): When checkpointing, transfer all tensors to
+            the CPU beforehand.
+        safe_checkpoint_every_epoch (int): Determines after how many epochs a
+            checkpoint is stored.
+        use_visdomlogger (bool): Use a :class:`.PytorchVisdomLogger`. Is
+            accessible via the :attr:`vlog` attribute.
+        visdomlogger_kwargs (dict): Keyword arguments for :attr:`vlog`
+            instantiation.
+        visdomlogger_c_freq (int): The frequency x (meaning one in x) with which
+            the :attr:`clog` will call the :attr:`vlog`.
+        use_explogger (bool): Use a :class:`.PytorchExperimentLogger`. Is
+            accessible via the :attr:`elog` attribute. This will create the
+            experiment folder structure.
+        explogger_kwargs (dict): Keyword arguments for :attr:`elog`
+            instantiation.
+        explogger_c_freq (int): The frequency x (meaning one in x) with which
+            the :attr:`clog` will call the :attr:`elog`.
+        use_telegramlogger (bool): Use a :class:`.TelegramLogger`. Is
+            accessible via the :attr:`tlog` attribute.
+        telegramlogger_kwargs (dict): Keyword arguments for :attr:`tlog`
+            instantiation.
+        telegramlogger_c_freq (int): The frequency x (meaning one in x) with which
+            the :attr:`clog` will call the :attr:`tlog`.
+        append_rnd_to_name (bool): If :obj:`True`, will append a random six
+            digit string to the experiment name.
 
      """
 
@@ -82,45 +187,7 @@ class PytorchExperiment(Experiment):
                  telegramlogger_kwargs=None,
                  telegramlogger_c_freq=1000,
                  append_rnd_to_name=False):
-        """
-        Initializes the Pytorch experiment and creates the basic experiment infrastructure
 
-        Args:
-            config (dict or Config): A config, if name, n_epochs, seed, base_dir, given in the config it will
-            automatically overwrite the other args/kwargs with the values from the config. In addition (defined by
-            parse_config_sys_argv) the config automatically parses the argv arguments and updates its values if a
-             key matches a console argument
-            name (str): The name of the PytorchExperiment
-            n_epochs (int): The number of epochs (number of times the training cycle will be executed)
-            seed (int): A random seed (which will set the random, numpy and torch seed)
-            base_dir (str): A base directory in which the experiment result folder will be created
-            globs: the globals() of the script which in run. This is nesseary to get and save the executed files in
-                the experiment folder.
-            resume (str of PytorchExperiment): Another Pytorch experiment or path to the result dir from another
-                PytorchExperiment from which in will load the pytorch modules and other member variables and resume
-                the experiment
-            ignore_resume_config (bool): If True it will not load resume with the config from the resume Experiment
-                but take the current/own config
-            resume_save_types (list): A list which can define which values to restore when resuming. Choices are:
-                ("model" <-- Pytorch models, "optimizer" <-- Optimizers, "simple" <-- Simple python variables (basic
-                types and list/tuples ), "th_vars" <-- torch tensors/variables, "results" <-- The result dict)
-            parse_sys_argv (bool): Parsing the console arguments (argv) to get a config_path and/or resume_path
-            parse_config_sys_argv (bool): Parse argv to update the config (if the keys match)
-            checkpoint_to_cpu (bool): When checkpointing transfer all tensors to the cpu beforehand
-            safe_checkpoint_every_epoch (int): Determines after how many epochs a current checkpoint is stored
-            use_visdomlogger (bool): Use a pytorch visdom logger. Is accessible via the vlog variable
-            visdomlogger_kwargs (dict): Keyword arguments will are passed to the pytorch visdom logger initialization
-            visdomlogger_c_freq (int): The frequency x ( == one in x) in which the combined logger will call the visdom
-                logger
-            use_explogger (bool): Use a experiment logger. Is accessible via the elog variable. It will create the
-                experiment folder structure
-            explogger_kwargs (dict): Keyword arguments will are passed to the experiment logger initialization
-            explogger_c_freq (int): The frequency in which the combined logger will call the experiment logger
-            use_telegramlogger (bool): Use a telegram logger. Is accessible via the tlog variable.
-            telegramlogger_kwargs (dict):  Keyword arguments will are passed to the telegram logger initialization
-            telegramlogger_c_freq (int): The frequency in which the combined logger will call the telegram logger
-            append_rnd_to_name (bool): If True will append a random six digit string to the experiment name
-        """
         # super(PytorchExperiment, self).__init__()
         Experiment.__init__(self)
 
