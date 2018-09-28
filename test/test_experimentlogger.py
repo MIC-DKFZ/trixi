@@ -25,6 +25,10 @@ class TestExperimentLogger(unittest.TestCase):
                                                  base_dir=self.test_dir,
                                                  folder_format="{experiment_name}")
 
+    def tearDown(self):
+        if os.path.exists(self.test_dir):
+            shutil.rmtree(self.test_dir, ignore_errors=True)
+
     def test_create_folders(self):
         exp_dir = os.path.join(self.test_dir, "test")
         self.assertTrue(os.path.exists(exp_dir), "Experiment dir not created")
@@ -99,6 +103,8 @@ class TestExperimentLogger(unittest.TestCase):
         with open(os.path.join(self.experimentLogger.log_dir, "default.log"), 'r') as log_file:
             log_text = log_file.read()
         self.assertTrue(text in log_text)
+
+
 
     def test_save_and_load_config(self):
         c = Config()
