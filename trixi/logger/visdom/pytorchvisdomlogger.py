@@ -37,7 +37,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             if isinstance(data, Variable):
                 kwargs[key] = data.data.cpu().numpy()
             elif torch.is_tensor(data):
-                kwargs[key] = data.cpu().numpy()
+                kwargs[key] = data.detach().cpu().numpy()
 
         return f(self, *args, **kwargs)
 
