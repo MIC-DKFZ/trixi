@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 import unittest
@@ -37,10 +38,6 @@ class TestPytorchExperiment(unittest.TestCase):
         self.experiment.validate = lambda epoch: self.cntr.append(0)
         self.experiment.run()
         self.assertTrue(len(self.cntr) == 10, "Did not call train for the right number of epochs")
-
-    def test_resume(self):
-        # TODO
-        pass
 
     def test_update_attributes(self):
         results2 = ResultLogDict("results-log.json", base_dir=self.test_dir)
@@ -141,6 +138,97 @@ class TestPytorchExperiment(unittest.TestCase):
         self.assertTrue(self.experiment.svar == svar, "svar could not be restored from checkpoint")
         self.assertTrue(self.experiment.lvar == lvar, "lvar could not be restored from checkpoint")
         self.assertTrue(self.experiment.results["test"] == 1, "Results could not be restored from checkpoint")
+
+    def test_add_results(self):
+        self.experiment.add_result(name="test", value=1)
+
+        self.assertTrue(self.experiment.results["test"] == 1,
+                        "Result was not added")
+        self.assertTrue(self.experiment.get_result("test") == 1,
+                        "Result was not added")
+
+        self.assertTrue(os.path.exists(os.path.join(self.experiment.elog.result_dir, "results-log.json")),
+                        "result file could not be stored")
+
+        with open(os.path.join(self.experiment.elog.result_dir, "results-log.json"), "r") as f:
+            content = f.read()
+        self.assertTrue("test" in content and "1" in content, "results content not sucessfully saved")
+
+    def test_save_tmp_results(self):
+        self.experiment.add_result(name="test", value=1)
+        self.experiment.run()
+
+        self.assertTrue(os.path.exists(os.path.join(self.experiment.elog.result_dir, "results.json")),
+                        "result file could not be stored")
+
+        with open(os.path.join(self.experiment.elog.result_dir, "results.json"), "r") as f:
+            content = f.read()
+        self.assertTrue("test" in content and "1" in content, "results content not sucessfully temporarily saved")
+
+    def test_save_tmp_checkpoint(self):
+        self.experiment.test_var = "test"
+        self.experiment.run()
+
+        self.assertTrue(os.path.exists(os.path.join(self.experiment.elog.checkpoint_dir, "checkpoint_current.pth.tar")),
+                        "Temp Checkpoint file could not be stored")
+        self.assertTrue(os.path.exists(os.path.join(self.experiment.elog.checkpoint_dir, "checkpoint_last.pth.tar")),
+                        "Last Checkpoint file could not be stored")
+
+        self.experiment.test_var = "test2"
+        self.experiment.load_checkpoint("checkpoint_current")
+        self.assertTrue(self.experiment.test_var == "test",
+                        "Temp Checkpoint file loading could not sucessful")
+        self.experiment.test_var = "test2"
+        self.experiment.load_checkpoint("checkpoint_last")
+        self.assertTrue(self.experiment.test_var == "test",
+                        "Temp Checkpoint file loading could not sucessful")
+
+    def test_save_exp_info(self):
+        self.experiment.run()
+
+        with open(os.path.join(self.experiment.elog.config_dir, "exp.json"), "r") as f:
+            exp_info = json.load(f)
+
+        self.assertTrue(exp_info['epoch'] == 10, "Epoch not sucessfully stored in exp info")
+        self.assertTrue(exp_info['name'] == 'test_experiment', "Name not sucessfully stored in exp info")
+        self.assertTrue(exp_info['state'] == 'Trained', "State not sucessfully stored as 'Trained' in exp info")
+
+    def test_print(self):
+        self.experiment.print("0o zD 0o")
+        with open(os.path.join(self.experiment.elog.log_dir, "default.log"), "r") as f:
+            content = f.read()
+        self.assertTrue("0o zD 0o" in content, "Print not sucessfully saved")
+
+    def test_resume(self):
+        # TODO
+
+        self.cntr = []
+        self.experiment.train = lambda epoch: self.cntr.append(0)
+        self.experiment.run()
+        self.assertTrue(len(self.cntr) == 10, "Did not call train for the right number of epochs")
+
+        exp2 = PytorchExperiment(name="test-exp2", base_dir=self.test_dir, resume=self.experiment.elog.work_dir,
+                                 use_visdomlogger=False)
+        exp3 = PytorchExperiment(name="test-exp2", base_dir=self.test_dir, resume=self.experiment.elog.work_dir,
+                                 resume_reset_epochs=False, use_visdomlogger=False)
+
+        exp2.prepare_resume()
+        exp3.prepare_resume()
+
+        self.assertTrue(exp2.exp_name == 'test_experiment', "Did not restore exp_name")
+        self.assertTrue(exp2._epoch_idx == 0, "Did not reset epochs")
+        self.assertTrue(exp3._epoch_idx == 10, "Did reset epochs")
+
+        exp2.train = lambda epoch: self.cntr.append(0)
+        exp3.train = lambda epoch: self.cntr.append(0)
+        exp2.run()
+        self.assertTrue(len(self.cntr) == 20, "Did call not train for exp2")
+        exp3.run()
+        self.assertTrue(len(self.cntr) == 20, "Did call train for exp3")
+
+        exp2._exp_state = "Ended"
+        exp3._exp_state = "Ended"
+
 
 
 class Net(nn.Module):
