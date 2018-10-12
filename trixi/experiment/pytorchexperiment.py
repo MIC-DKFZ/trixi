@@ -211,6 +211,8 @@ class PytorchExperiment(Experiment):
         self.n_epochs = n_epochs
         if 'n_epochs' in self._config_raw:
             self.n_epochs = self._config_raw["n_epochs"]
+        if self.n_epochs is None:
+            self.n_epochs = 0
 
         self._seed = seed
         if 'seed' in self._config_raw:
@@ -550,6 +552,8 @@ class PytorchExperiment(Experiment):
         checkpoint_file = ""
         base_dir = ""
 
+        reset_epochs = self._resume_reset_epochs
+
         if self._resume_path is not None:
             if isinstance(self._resume_path, str):
                 if self._resume_path.endswith(".pth.tar"):
@@ -584,6 +588,7 @@ class PytorchExperiment(Experiment):
             shutil.copyfile(checkpoint_file, os.path.join(self.elog.checkpoint_dir, "0_checkpoint.pth.tar"))
             self.print("Loaded existing checkpoint from:", checkpoint_file)
 
+            self._resume_reset_epochs = reset_epochs
             if self._resume_reset_epochs:
                 self._epoch_idx = 0
 
@@ -601,7 +606,7 @@ class PytorchExperiment(Experiment):
                                             'time': self._time_start,
                                             'state': self._exp_state,
                                             'current_time': cur_time,
-                                            'epoch': self._epoch_idx + 1
+                                            'epoch': self._epoch_idx
                                             }),
                                   "exp")
 

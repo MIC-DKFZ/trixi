@@ -71,10 +71,10 @@ class Experiment(object):
             print("Experiment started.")
 
             for epoch in range(self._epoch_idx, self.n_epochs):
-                self._epoch_idx = epoch
                 self.train(epoch=epoch)
                 self.validate(epoch=epoch)
                 self._end_epoch_internal(epoch=epoch)
+                self._epoch_idx += 1
 
             self._exp_state = "Trained"
             print("Training complete.")
