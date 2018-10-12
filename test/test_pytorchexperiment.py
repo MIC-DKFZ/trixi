@@ -18,7 +18,8 @@ class TestPytorchExperiment(unittest.TestCase):
 
     def setUp(self):
         self.test_dir = tempfile.gettempdir()
-        self.experiment = PytorchExperiment(name="test_experiment", base_dir=self.test_dir, n_epochs=10)
+        self.experiment = PytorchExperiment(name="test_experiment", base_dir=self.test_dir, n_epochs=10,
+                                            use_visdomlogger=False)
 
     def tearDown(self):
         self.experiment._exp_state = "Ended"

@@ -357,7 +357,7 @@ class PytorchExperiment(Experiment):
         for key, val in self.__dict__.items():
             if key in ignore:
                 continue
-            if isinstance(val, (*torch._tensor_classes, torch.autograd.Variable)):
+            if torch.is_tensor(val):
                 pytorch_vars[key] = val
         return pytorch_vars
 
