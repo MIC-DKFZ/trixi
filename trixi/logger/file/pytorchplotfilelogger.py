@@ -159,6 +159,9 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
 
         """
 
+        if isinstance(tensor, np.ndarray):
+            tensor = torch.tensor(tensor)
+
         if not (tensor.size(1) == 1 or tensor.size(1) == 3):
             warnings.warn("The 1. dimension (channel) has to be either 1 (gray) or 3 (rgb), taking the first "
                           "dimension now !!!")

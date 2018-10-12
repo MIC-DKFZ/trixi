@@ -258,6 +258,7 @@ class ExperimentLogger(AbstractLogger):
             name: name of the result json file
             indent: Indent for the json file
             separators: Separators for the json file
+            encoder_cls: Encoder Class for the encoding to json
 
         """
 
@@ -272,7 +273,7 @@ class ExperimentLogger(AbstractLogger):
                       separators=separators,
                       **kwargs)
 
-    def save_dict(self, data, path, indent=4, separators=(",", ": "), **kwargs):
+    def save_dict(self, data, path, indent=4, separators=(",", ": "), encoder_cls=MultiTypeEncoder, **kwargs):
         """
         Saves a dict as a json file in the experiment save dir
 
@@ -281,6 +282,7 @@ class ExperimentLogger(AbstractLogger):
             path: sub path in the save folder (or simply filename)
             indent: Indent for the json file
             separators: Separators for the json file
+            encoder_cls: Encoder Class for the encoding to json
         """
 
         if not path.endswith(".json"):
@@ -289,7 +291,7 @@ class ExperimentLogger(AbstractLogger):
         create_folder(os.path.dirname(path))
         with open(path, "w") as jf:
             json.dump(data, jf,
-                      cls=MultiTypeEncoder,
+                      cls=encoder_cls,
                       indent=indent,
                       separators=separators,
                       **kwargs)
