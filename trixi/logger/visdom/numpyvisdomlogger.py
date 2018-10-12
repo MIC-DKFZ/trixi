@@ -542,7 +542,7 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
-    def show_lineplot(self, y_vals, x_vals=None, name=None, env_appendix="", opts=None, **kwargs):
+    def show_lineplot(self, y_vals, x_vals=None, name=None, env_appendix="", show_legend=True, opts=None, **kwargs):
         """
         Displays (multiple) lines plot, given values Y (and optional the corresponding X values)
 
@@ -562,12 +562,13 @@ class NumpyVisdomLogger(AbstractLogger):
             "x_vals": x_vals,
             "y_vals": y_vals,
             "name": name,
+            "show_legend": show_legend,
             "env_appendix": env_appendix,
             "opts": opts
         }
         self._queue.put_nowait(vis_task)
 
-    def __show_lineplot(self, y_vals, x_vals=None, name=None, env_appendix="", opts=None, **kwargs):
+    def __show_lineplot(self, y_vals, x_vals=None, name=None, env_appendix="", show_legend=True, opts=None, **kwargs):
         """
        Internal show_lineplot method, called by the internal process.
        This function does all the magic.
@@ -579,6 +580,9 @@ class NumpyVisdomLogger(AbstractLogger):
         opts.update(dict(
             title=name,
         ))
+
+        if "showlegend" not in opts and show_legend:
+            opts["showlegend"] = True
 
         win = self.vis.line(
             X=x_vals,

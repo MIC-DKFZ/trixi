@@ -28,7 +28,19 @@ class Config(dict):
         if update_from_argv:
             update_from_sys_argv(self)
 
-    def update(self, dict_like, deep=False, ignore=None):
+    def update(self, dict_like, deep=False, ignore=None, allow_dict_overwrite=True):
+        """Update entries in the Config.
+
+        Args:
+            dict_like (dict or derivative thereof): Update source.
+            deep (bool): Make deep copies of all references in the source.
+            ignore (iterable): Iterable of keys to ignore in update.
+            allow_dict_overwrite (bool): Allow overwriting with dict.
+                Regular dicts only update on the highest level while we recurse
+                and merge Configs. This decides whether it is possible to
+                overwrite a 'regular' value with a dict/Config at lower levels.
+
+        """
 
         if ignore is None:
             ignore = ()
@@ -40,7 +52,13 @@ class Config(dict):
                 if key in ignore:
                     continue
                 if key in self and isinstance(value, dict):
-                    self[key].update(value)
+                    try:
+                        self[key].update(value)
+                    except AttributeError as ae:
+                        if allow_dict_overwrite:
+                            self[key] = value
+                        else:
+                            raise ae
                 else:
                     self[key] = value
 
@@ -285,10 +303,11 @@ class Config(dict):
                         ret_dict[key] = val
                 return ret_dict
             elif isinstance(objs, (list, tuple, set)):
+                orig_type = type(objs)
                 ret_list = []
                 for el in objs:
                     ret_list.append(init_sub_objects(el))
-                return ret_list
+                return orig_type(ret_list)
             else:
                 return objs
 
@@ -464,7 +483,7 @@ def update_from_sys_argv(config, warn=False):
 
     if len(sys.argv) > 1:
 
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser(allow_abbrev=False)
         encoder = ModuleMultiTypeEncoder()
         decoder = ModuleMultiTypeDecoder()
 
