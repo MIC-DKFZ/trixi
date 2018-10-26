@@ -169,6 +169,8 @@ class TestPytorchExperiment(unittest.TestCase):
         self.experiment.test_var = "test"
         self.experiment.run()
 
+        time.sleep(5)
+
         self.assertTrue(os.path.exists(os.path.join(self.experiment.elog.checkpoint_dir, "checkpoint_current.pth.tar")),
                         "Temp Checkpoint file could not be stored")
         self.assertTrue(os.path.exists(os.path.join(self.experiment.elog.checkpoint_dir, "checkpoint_last.pth.tar")),
