@@ -14,11 +14,17 @@ trixi is a tool to help you configure, visualize and log your experiments in a r
 ## Features
 
 Trixi consists of three parts:
-* Logging API ( e.g. local, visdom)
-* Experiment Infrastructure ( for reproducibility with easy config and checkpointing)
-* Experiment Browser (for evaluation of your experiments)
+* [Logging API](##logging api) <br>
+    *Log what ever data you like in what ever way you like to whatever backend you like.*
+    
+* Experiment Infrastructure<br>
+    *Standardize your experiment, let them the framework do all the inconvenient stuff, and simple start, resume, 
+    change, finetune and compare all your experiments*.
 
-An overview is given [here](https://trixi.readthedocs.io/en/latest/class_diagram.html).
+* Experiment Browser <br>
+    *Compare, Combine and visually inspect the results of your Experiments*.
+
+An detailed implementation overview is given [here](https://trixi.readthedocs.io/en/latest/class_diagram.html).
 
 ### Logging API
 
