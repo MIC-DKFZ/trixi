@@ -55,8 +55,7 @@ Here are some examples:
 <img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_file.png" alt="file-logger" height="200"/>
 
 * Telegram:<br>
-<img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_telegram.png" alt="telegram-logger" 
-width="300"/>
+<img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_telegram.png" alt="telegram-logger" width="150"/>
 
 
 ### Experiment Infrastructure
