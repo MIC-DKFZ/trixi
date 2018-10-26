@@ -10,6 +10,7 @@ trixi is a tool to help you configure, visualize and log your experiments in a r
 * [Features](#features)
 * [Installation](#installation)
 * [Docs](#docs)
+* [Examples](#examples)
 
 ## Features
 
@@ -48,14 +49,14 @@ storing of config, results, plots, dict, array, images, ...
 Here are some examples:
 
 * [Visdom](https://github.com/facebookresearch/visdom):<br>
-<img src="https://lh3.googleusercontent.com/-h3HuvbU2V0SfgqgXGiK3LPghE5vqvS0pzpObS0YgG_LABMFk62JCa3KVu_2NV_4LJKaAa5
--tg=s0" alt="visdom-logger" width="300"/>
+<img src="https://lh3.googleusercontent.com/-h3HuvbU2V0SfgqgXGiK3LPghE5vqvS0pzpObS0YgG_LABMFk62JCa3KVu_2NV_4LJKaAa5-tg=s0" alt="visdom-logger" width="300"/>
 
 * Files:<br>
 <img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_file.png" alt="file-logger" height="200"/>
 
 * Telegram:<br>
-<img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_telegram.png" alt="telegram-logger" width="300"/>
+<img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_telegram.png" alt="telegram-logger" 
+width="300"/>
 
 
 ### Experiment Infrastructure
@@ -127,4 +128,11 @@ This follows the Google style docstring guidelines:
         """
 
 
-* [API](#api)
+## Examples:
+
+Examples can be found here for:
+* [Visdom-Logger](https://github.com/MIC-DKFZ/trixi/blob/master/examples/numpy_visdom_logger_example.ipynb)
+* [Experiment-Logger](https://github.com/MIC-DKFZ/trixi/blob/master/examples/pytorch_example.ipynb)
+* [Eperiment Infrastrucutre](https://github.com/MIC-DKFZ/trixi/blob/master/examples/pytorch_experiment.ipynb) (with a
+ simple MNIST Experiment example and resuming and comparison of different hyper parameters)
+
