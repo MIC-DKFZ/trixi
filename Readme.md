@@ -9,42 +9,80 @@ trixi is a tool to help you configure, visualize and log your experiments in a r
 
 * [Features](#features)
 * [Installation](#installation)
-* [Sphinx Setup](#sphinx-setup)
-* [Remote Usage](#remote-usage)
+* [Docs](#docs)
 
 ## Features
-### Visdom
-![icon](https://github.com/MIC-DKFZ/trixi/blob/master/trixi/experiment_browser/static/assets/trixi-icon.png)
-trixi integrates with [Visdom](https://github.com/facebookresearch/visdom) and offers the complete Visdom functionality.
+
+Trixi consists of three parts:
+* Logging API ( e.g. local, visdom)
+* Experiment Infrastructure ( for reproducibility with easy config and checkpointing)
+* Experiment Browser (for evaluation of your experiments)
+
+An overview is given [here](https://trixi.readthedocs.io/en/latest/class_diagram.html).
+
+### Logging API
+
+The Logging-Api provides a standardized way for logging results to different backends. 
+The logging api supports 
+(among others):
+* Values
+* Text
+* Plots (Bar, Line, Scatter, Piechart, ...)
+* Images (Single, as grid)
+
+And offers different Backends, e.g. :
+* Visdom ([visdom-loggers](https://trixi.readthedocs.io/en/latest/api/trixi.logger.visdom.html))
+* Matplotlib / Seaborn ([plt-loggers](https://trixi.readthedocs.io/en/latest/api/trixi.logger.plt.html))
+* Local Disk ([file-loggers](https://trixi.readthedocs.io/en/latest/api/trixi.logger.file.html))
+* Telegram ([message-loggers](https://trixi.readthedocs.io/en/latest/api/trixi.logger.message.html))
+
+And an [Experiment-logger](https://trixi.readthedocs.io/en/latest/api/trixi.logger.experiment.experimentlogger.html) for logging your experiments, which automatically creates a structured directory and allows 
+storing of config, results, plots, dict, array, images, ...
+
+Here are some examples:
+
+* [Visdom](https://github.com/facebookresearch/visdom):
 ![visdom](https://lh3.googleusercontent.com/-h3HuvbU2V0SfgqgXGiK3LPghE5vqvS0pzpObS0YgG_LABMFk62JCa3KVu_2NV_4LJKaAa5-tg=s0)
 
-### trixi Experiment Browser
-![icon](https://github.com/MIC-DKFZ/trixi/blob/master/trixi/experiment_browser/static/assets/trixi-icon.png)
-trixi's experimt browser offers a complete overview of experiments along with all config parameters, an interactive
-comparison highlighting differences in the configs and a detailed view of all images, plots, results and logs of each experiment.
+### Experiment Infrastructure
+
+The [Experiment Infrastructure](https://trixi.readthedocs.io/en/latest/api/trixi.experiment.pytorchexperiment.html) provides a unified way to configure, run, store and evaluate your results.
+It provides you an Experiment-Interface, for which you can implement the training, validation and testing.
+Furthermore it automatically provides you with easy access to the Logging API and stores your config es well as the 
+results for easy evaluation and reproduction of different experiments.
+
+For more info, visit the Documentation.
+
+### Experiment Browser
+The Experiment Browser offers a complete overview of experiments along with all config parameters and results.
+It also allows to combine and/or compare different experiments. 
+It also gives an interactive comparison highlighting differences in the configs and a detailed view of all images, 
+plots, results and logs of each experiment, with live plots and more.
 ![trixi browser](https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_browser.gif)
 
 ## Installation
 Install dependencies:
 ```
-pip install -r requirements.txt
+pip install trixi
 ```
 
-If you want to use the full functionallity e.g. any of the PyTorch loggers or the Experiment class:
-```
-pip install -r requirements_full.txt
-```
 
-Install trixi:
+Or to always get the newest version you can install trixi directly via git:
 ```
 git clone https://github.com/MIC-DKFZ/trixi.git
 cd trixi
 pip install -e .
 ```
 
-## Sphinx Setup
+## Docs
 
-### Setup
+The docs can be found here: [trixi.rtfd.io](https://trixi.readthedocs.io/en/latest/)
+
+Or you can build your own docs using Sphinx.
+
+### Sphinx Setup
+
+#### Setup
 
 Install Sphinx:
 `pip install sphinx`
@@ -55,13 +93,13 @@ Generate Api-docs:
 Open index.html:
 `firefox path/to/PROJECT/doc/_build/html/index.html`
 
-### Notes
+#### Notes
 * rerun make html each time existing modules are updated
 * DO NOT forget indent or blank lines
 * Code with no classes or functions is not automatically captured using apidoc
 
 
-### Example Documentation
+#### Example Documentation
 
 This follows the Google style docstring guidelines:
 
@@ -75,31 +113,4 @@ This follows the Google style docstring guidelines:
         """
 
 
-**IMPORTANT NOTE**: Somehow pytorch and lasagne/theano do not play nicely together. So if you
-import lasagne/theano and trixi (which imports pytorch if you have it installed),
-your program will get stuck. So you can only use trixi with lasagne/theano if you do not
-have pytorch installed. If you need both you can use virtual_envs.
-
-## Remote Usage
-
-### Use on remote server in same network
-Simple run visdom on remote server and then on your local computer go to `MY_REMOTE_SERVER_NAME:8080`.
-
-### Use on remote server in different network
-
-If you want to run trixi on a remote server, but show the results locally
-you can do:
-
-```
-# On local computer:
-ssh -N -f -L localhost:8080:localhost:8080 USERNAME@REMOTE_SERVERNAME
-
-# On remote server:
-python -m visdom.server -port 8080
-python my_random_trixi_script.py
-```
-
-Now on your local computer you can go to `localhost:8080` and see the visdom dashboard.
 * [API](#api)
-* [To Do](#to-do)
-* [Contributing](#contributing)
