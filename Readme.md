@@ -14,7 +14,7 @@ trixi is a tool to help you configure, visualize and log your experiments in a r
 ## Features
 
 Trixi consists of three parts:
-* [Logging API](##logging api) <br>
+* Logging API<br>
     *Log what ever data you like in what ever way you like to whatever backend you like.*
     
 * Experiment Infrastructure<br>
@@ -47,8 +47,16 @@ storing of config, results, plots, dict, array, images, ...
 
 Here are some examples:
 
-* [Visdom](https://github.com/facebookresearch/visdom):
-![visdom](https://lh3.googleusercontent.com/-h3HuvbU2V0SfgqgXGiK3LPghE5vqvS0pzpObS0YgG_LABMFk62JCa3KVu_2NV_4LJKaAa5-tg=s0)
+* [Visdom](https://github.com/facebookresearch/visdom):<br>
+<img src="https://lh3.googleusercontent.com/-h3HuvbU2V0SfgqgXGiK3LPghE5vqvS0pzpObS0YgG_LABMFk62JCa3KVu_2NV_4LJKaAa5
+-tg=s0" alt="visdom-logger" width="300"/>
+
+* Files:<br>
+<img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_file.png" alt="file-logger" height="200"/>
+
+* Telegram:<br>
+<img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_telegram.png" alt="telegram-logger" width="300"/>
+
 
 ### Experiment Infrastructure
 
