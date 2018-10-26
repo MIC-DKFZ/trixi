@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import json
+from copy import deepcopy
 
 from trixi.util.util import ModuleMultiTypeDecoder, ModuleMultiTypeEncoder, StringMultiTypeDecoder
 
@@ -22,9 +23,19 @@ class Config(dict):
             self.load(file_)
 
         if config is not None:
-            self.update(config, deep)
+            if deep:
+                # convert config to Config (in case it's just a dict)
+                # and get deepcopy
+                config = Config(config=config, update_from_argv=False, deep=False)
+                config = config.deepcopy()
+            self.update(config, deep=False)
 
-        self.update(kwargs, deep)
+        if len(kwargs) >= 1:
+            if deep:
+                kwargs = Config(config=kwargs, update_from_argv=False, deep=False)
+                kwargs = kwargs.deepcopy()
+            self.update(kwargs, deep=False)
+
         if update_from_argv:
             update_from_sys_argv(self)
 
@@ -37,8 +48,42 @@ class Config(dict):
             ignore (iterable): Iterable of keys to ignore in update.
             allow_dict_overwrite (bool): Allow overwriting with dict.
                 Regular dicts only update on the highest level while we recurse
-                and merge Configs. This decides whether it is possible to
+                and merge Configs. This flag decides whether it is possible to
                 overwrite a 'regular' value with a dict/Config at lower levels.
+                See examples for an illustration of the difference
+
+
+        Examples:
+            The following illustrates the update behaviour if
+            :obj:allow_dict_overwrite is active. If it isn't, an AttributeError
+            would be raised, originating from trying to update "string"::
+
+                config1 = Config(config={
+                    "lvl0": {
+                        "lvl1": "string",
+                        "something": "else"
+                    }
+                })
+
+                config2 = Config(config={
+                    "lvl0": {
+                        "lvl1": {
+                            "lvl2": "string"
+                        }
+                    }
+                })
+
+                config1.update(config2, allow_dict_overwrite=True)
+
+                >>>config1
+                {
+                    "lvl0": {
+                        "lvl1": {
+                            "lvl2": "string"
+                        },
+                        "something": "else"
+                    }
+                }
 
         """
 
@@ -46,14 +91,22 @@ class Config(dict):
             ignore = ()
 
         if deep:
-            self.deepupdate(dict_like, ignore)
+            update_config = Config(config=dict_like, deep=True)
+            self.update(update_config,
+                        deep=False,
+                        ignore=ignore,
+                        allow_dict_overwrite=allow_dict_overwrite)
+
         else:
             for key, value in dict_like.items():
                 if key in ignore:
                     continue
                 if key in self and isinstance(value, dict):
                     try:
-                        self[key].update(value)
+                        self[key].update(value,
+                                         deep=False,
+                                         ignore=ignore,
+                                         allow_dict_overwrite=allow_dict_overwrite)
                     except AttributeError as ae:
                         if allow_dict_overwrite:
                             self[key] = value
@@ -62,30 +115,17 @@ class Config(dict):
                 else:
                     self[key] = value
 
-    def deepupdate(self, dict_like, ignore=None):
-
-        def make_mutable(obj, attr, val):
-            if isinstance(val, dict):
-                obj[attr] = Config()
-                for k, v in val.items():
-                    make_mutable(obj[attr], k, v)
-            elif isinstance(val, list):
-                obj[attr] = [None, ] * len(val)
-                for i, item in enumerate(val):
-                    make_mutable(obj[attr], i, item)
-            else:
-                obj[attr] = val
-
-        for key, val in dict_like.items():
-            if key in ignore:
-                continue
-            make_mutable(self, key, val)
+    def deepupdate(self, dict_like, ignore=None, allow_dict_overwrite=True):
+        self.update(dict_like,
+                    deep=True,
+                    ignore=ignore,
+                    allow_dict_overwrite=allow_dict_overwrite)
 
     def __setattr__(self, key, value):
 
         if type(value) == dict:
             new_config = Config()
-            new_config.update(value)
+            new_config.update(value, deep=False)
             super(Config, self).__setattr__(key, new_config)
         else:
             super(Config, self).__setattr__(key, value)
@@ -248,7 +288,18 @@ class Config(dict):
 
     def deepcopy(self):
 
-        return Config(config=self, deep=True)
+        def _deepcopy(source, target):
+            for key, val in source.items():
+                if not isinstance(val, dict):
+                    target[key] = deepcopy(val)
+                else:
+                    target[key] = Config()
+                    _deepcopy(source[key], target[key])
+
+        new_config = Config()
+        _deepcopy(self, new_config)
+
+        return new_config
 
     @staticmethod
     def init_objects(config):
