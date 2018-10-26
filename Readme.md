@@ -75,7 +75,8 @@ plots, results and logs of each experiment, with live plots and more.
 ![trixi browser](https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_browser.gif)
 
 ## Installation
-Install dependencies:
+
+Install Trixi:
 ```
 pip install trixi
 ```
@@ -132,6 +133,7 @@ This follows the Google style docstring guidelines:
 Examples can be found here for:
 * [Visdom-Logger](https://github.com/MIC-DKFZ/trixi/blob/master/examples/numpy_visdom_logger_example.ipynb)
 * [Experiment-Logger](https://github.com/MIC-DKFZ/trixi/blob/master/examples/pytorch_example.ipynb)
-* [Eperiment Infrastrucutre](https://github.com/MIC-DKFZ/trixi/blob/master/examples/pytorch_experiment.ipynb) (with a
+* <b>[Experiment Infrastructure](https://github.com/MIC-DKFZ/trixi/blob/master/examples/pytorch_experiment.ipynb) 
+</b>(with a
  simple MNIST Experiment example and resuming and comparison of different hyper parameters)
 
