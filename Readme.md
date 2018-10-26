@@ -65,8 +65,7 @@ It provides you an Experiment-Interface, for which you can implement the trainin
 Furthermore it automatically provides you with easy access to the Logging API and stores your config es well as the 
 results for easy evaluation and reproduction of different experiments.
 
-<img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_exp1.png" alt="exp-train" height="300"/>
-<img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_exp2.png" alt="exp-test" height="300"/>
+<img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_exp2.png" alt="exp-train" height="300"/><img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_exp1.png" alt="exp-test" height="300"/>
 
 For more info, visit the Documentation.
 
