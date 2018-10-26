@@ -10,6 +10,6 @@ Install trixi::
 
 
 
-Have a look at a example:
+Have a look and run a simple MNIST example:
 
-{\colortbl ;\red0\green0\blue238;}{\field{\*\fldinst HYPERLINK "https://github.com/MIC-DKFZ/trixi/blob/master/examples/pytorch_experiment.ipynb"}{\fldrslt{\ul\cf1Example}}}
+https://github.com/MIC-DKFZ/trixi/blob/master/examples/pytorch_experiment.ipynb
