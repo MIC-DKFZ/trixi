@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import sys
 from collections import OrderedDict
 
 import colorlover as cl
@@ -30,20 +31,31 @@ COLORMAP = cl.scales["8"]["qual"]["Dark2"]
 
 def parse_args():
     # Read in base directory
-    parser = argparse.ArgumentParser()
-    parser.add_argument("base_directory",
-                        help="Give the path to the base directory of your project files",
-                        type=str)
-    parser.add_argument("-d", "--debug", action="store_true",
-                        help="Turn debug mode on, eg. for live reloading.")
-    parser.add_argument("-x", "--expose", action="store_true",
-                        help="Make server externally visible")
-    parser.add_argument("-p", "--port", default=5000, type=int,
-                        help="Port to start the server on (5000 by default)")
-    args = parser.parse_args()
-    base_dir = args.base_directory
-    if base_dir[-1] == os.sep:
-        base_dir = base_dir[:-1]
+
+    if len(sys.argv) > 1:
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument("base_directory",
+                            help="Give the path to the base directory of your project files",
+                            type=str, default=".")
+        parser.add_argument("-d", "--debug", action="store_true",
+                            help="Turn debug mode on, eg. for live reloading.")
+        parser.add_argument("-x", "--expose", action="store_true",
+                            help="Make server externally visible")
+        parser.add_argument("-p", "--port", default=5000, type=int,
+                            help="Port to start the server on (5000 by default)")
+        args = parser.parse_args()
+        base_dir = args.base_directory
+        if base_dir[-1] == os.sep:
+            base_dir = base_dir[:-1]
+
+    else:
+        args = type('', (), {})()
+        args.port = 5000
+        args.expose = False
+        args.debug = False
+        args.base_directory = "."
+        base_dir = "."
 
     return args, base_dir
 
@@ -186,7 +198,8 @@ def experiment(base_dir):
     content["title"] = experiments
     content["images"] = {"img_path": image_path, "imgs": images, "img_keys": image_keys}
     content["plots"] = {"plots": plots}
-    content["config"] = {"exps": experiments, "configs": combi_config, "keys": config_keys, "diff_keys": diff_config_keys}
+    content["config"] = {"exps": experiments, "configs": combi_config, "keys": config_keys,
+                         "diff_keys": diff_config_keys}
     content["results"] = {"exps": exp_names, "results": combi_results, "keys": result_keys}
     content["logs"] = {"logs_dict": logs_dict}
 
@@ -194,7 +207,6 @@ def experiment(base_dir):
 
 
 def experiment_log(base_dir):
-
     experiment_path = request.args.get('exp')
     log_name = request.args.get('log')
 
