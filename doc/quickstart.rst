@@ -3,6 +3,11 @@
 Quick Start
 ===========
 
+Introduction & Features:
+
+https://github.com/MIC-DKFZ/trixi#features
+
+
 Install trixi::
 
 	pip install trixi
