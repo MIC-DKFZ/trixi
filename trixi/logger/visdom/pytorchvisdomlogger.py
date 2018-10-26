@@ -238,7 +238,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         if opts is None: opts = {}
         if image_args is None: image_args = {}
 
-        tensor = images.cpu()
+        tensor = images.detach().cpu()
         viz_task = {
             "type": "image_grid",
             "tensor": tensor,
