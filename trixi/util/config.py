@@ -8,6 +8,7 @@ from trixi.util.util import ModuleMultiTypeDecoder, ModuleMultiTypeEncoder, Stri
 
 
 class Config(dict):
+    """TBD"""
 
     def __init__(self, file_=None, config=None, update_from_argv=False, deep=False, **kwargs):
 
@@ -116,12 +117,25 @@ class Config(dict):
                     self[key] = value
 
     def deepupdate(self, dict_like, ignore=None, allow_dict_overwrite=True):
+        """Identical to :meth:`update` with `deep=True`.
+
+        Args:
+            dict_like (dict or derivative thereof): Update source.
+            ignore (iterable): Iterable of keys to ignore in update.
+            allow_dict_overwrite (bool): Allow overwriting with dict.
+                Regular dicts only update on the highest level while we recurse
+                and merge Configs. This flag decides whether it is possible to
+                overwrite a 'regular' value with a dict/Config at lower levels.
+                See examples for an illustration of the difference
+
+        """
         self.update(dict_like,
                     deep=True,
                     ignore=ignore,
                     allow_dict_overwrite=allow_dict_overwrite)
 
     def __setattr__(self, key, value):
+        """Modified to automatically convert `dict` to Config."""
 
         if type(value) == dict:
             new_config = Config()
@@ -131,6 +145,9 @@ class Config(dict):
             super(Config, self).__setattr__(key, value)
 
     def __getitem__(self, key):
+        """Allows convenience access to deeper levels using dots to separate
+        levels, for example `config["a.b.c"]`.
+        """
 
         if key == "":
             if len(self.keys()) == 1:
@@ -151,6 +168,9 @@ class Config(dict):
             return super(Config, self).__getitem__(key)
 
     def __setitem__(self, key, value):
+        """Allows convenience access to deeper levels using dots to separate
+        levels, for example `config["a.b.c"]`.
+        """
 
         if key == "":
             if len(self.keys()) == 1:
@@ -175,6 +195,25 @@ class Config(dict):
             super(Config, self).__setitem__(key, value)
 
     def set_with_decode(self, key, value, stringify_value=False):
+        """Set single value, using :class:`.ModuleMultiTypeDecoder` to interpret
+        key and value strings by creating a temporary JSON string.
+
+        Args:
+            key (str): Config key.
+            value (str): New value key will map to.
+            stringify_value (bool): If `True`, will insert the value into the
+                temporary JSON as a real string. See examples!
+
+        Examples:
+            Example for when you need to set `stringify_value=True`::
+
+                config.set_with_decode("key", "__type__(trixi.util.config.Config)", stringify_value=True)
+
+            Example for when you need to set `stringify_value=False`::
+
+                config.set_with_decode("key", "[1, 2, 3]")
+
+        """
 
         if type(key) != str:
             # We could encode the key if it's not a string, but for now raise
@@ -202,20 +241,54 @@ class Config(dict):
         self.loads(dict_str)
 
     def set_from_string(self, str_, stringify_value=False):
+        """Set a value from a single string, separated with "=".
+        Uses :meth:´set_with_decode´.
+
+        Args:
+            str_ (str): String that looks like "key=value".
+
+        """
 
         key, value = str_.split("=")
         self.set_with_decode(key, value, stringify_value)
 
-    def update_missing(self, dict_like):
+    def update_missing(self, dict_like, deep=False, ignore=None):
+        """Recursively insert values that do not yet exist.
+
+        Args:
+            dict_like (dict or derivative thereof): Update source.
+            deep (bool): Make deep copies of all references in the source.
+            ignore (iterable): Iterable of keys to ignore in update.
+
+        """
 
         for key, value in dict_like.items():
 
             if key not in self:
-                self[key] = value
-            elif isinstance(value, dict):
-                self[key].update_missing(value)
+                if type(value) == Config:
+                    if deep:
+                        self[key] = value.deepcopy()
+                    else:
+                        self[key] = value
+                else:
+                    if deep:
+                        self[key] = deepcopy(value)
+                    else:
+                        self[key] = value
+            else:
+                if isinstance(value, dict) and isinstance(self[key], dict):
+                    self[key].update_missing(Config(config=value, deep=deep))
 
     def dump(self, file_, indent=4, separators=(",", ": "), **kwargs):
+        """Write config to file using :meth:`json.dump`.
+
+        Args:
+            file_ (str or File): Write to this location.
+            indent (int): Formatting option.
+            separators (iterable): Formatting option.
+            **kwargs: Will be passed to :meth:`json.dump`.
+
+        """
 
         if hasattr(file_, "write"):
             json.dump(self, file_,
@@ -232,6 +305,14 @@ class Config(dict):
                           **kwargs)
 
     def dumps(self, indent=4, separators=(",", ": "), **kwargs):
+        """Get string representation using :meth:`json.dumps`.
+
+        Args:
+            indent (int): Formatting option.
+            separators (iterable): Formatting option.
+            **kwargs: Will be passed to :meth:`json.dumps`.
+
+        """
         return json.dumps(self,
                           cls=ModuleMultiTypeEncoder,
                           indent=indent,
@@ -239,6 +320,15 @@ class Config(dict):
                           **kwargs)
 
     def load(self, file_, raise_=True, decoder_cls_=ModuleMultiTypeDecoder, **kwargs):
+        """Load config from file using :meth:`json.load`.
+
+        Args:
+            file_ (str or File): Read from this location.
+            raise (bool): Raise errors.
+            decoder_cls_ (type): Class that is used to decode JSON string.
+            **kwargs: Will be passed to :meth:`json.load`.
+
+        """
 
         try:
             if hasattr(file_, "read"):
@@ -252,13 +342,21 @@ class Config(dict):
 
         self.update(new_dict)
 
-    def loads(self, json_str, **kwargs):
+    def loads(self, json_str, decoder_cls_=ModuleMultiTypeDecoder, **kwargs):
+        """Load config from JSON string using :meth:`json.loads`.
+
+        Args:
+            json_str (str): Interpret this string.
+            decoder_cls_ (type): Class that is used to decode JSON string.
+            **kwargs: Will be passed to :meth:`json.loads`.
+
+        """
 
         if not json_str.startswith("{"):
             json_str = "{" + json_str
         if not json_str.endswith("}"):
             json_str = json_str + "}"
-        new_dict = json.loads(json_str, cls=ModuleMultiTypeDecoder, **kwargs)
+        new_dict = json.loads(json_str, cls=decoder_cls_, **kwargs)
         self.update(new_dict)
 
     def hasattr_not_none(self, key):
@@ -268,7 +366,17 @@ class Config(dict):
         return False
 
     def contains(self, dict_like):
-        """Check whether all items in a dictionary-like object match the ones in this Config."""
+        """Check whether all items in a dictionary-like object match the ones in
+        this Config.
+
+        Args:
+            dict_like (dict or derivative thereof): Returns True if this is
+                contained in this Config.
+
+        Returns:
+            bool: True if dict_like is contained in self, otherwise False.
+
+        """
 
         dict_like_config = Config(config=dict_like)
 
@@ -287,6 +395,12 @@ class Config(dict):
         return True
 
     def deepcopy(self):
+        """Get a deep copy of this Config.
+
+        Returns:
+            Config: A deep copy of self.
+
+        """
 
         def _deepcopy(source, target):
             for key, val in source.items():
@@ -368,6 +482,16 @@ class Config(dict):
         return self.dumps(sort_keys=True)
 
     def difference_config(self, *other_configs):
+        """Get the difference of this and any number of other configs.
+        See :meth:`difference_config_static` for more information.
+
+        Args:
+            *other_configs (Config): Compare these configs and self.
+
+        Returns:
+            Config: Difference of self and the other configs.
+
+        """
         return self.difference_config_static(self, *other_configs)
 
     @staticmethod
@@ -389,7 +513,7 @@ class Config(dict):
             corresponding one
 
         Returns:
-            Config: Possibly empty
+            Config: Possibly empty Config
         """
 
         difference = dict()
@@ -501,6 +625,14 @@ class Config(dict):
         return flat_(self)
 
     def to_cmd_args_str(self):
+        """Create a string representing what one would need to pass to the
+        command line. Does not yet use JSON encoding!
+
+        Returns:
+            str: Command line string
+
+        """
+
         c_flat = self.flat()
 
         str_list = []
@@ -517,12 +649,21 @@ class Config(dict):
 
 
 def update_from_sys_argv(config, warn=False):
+    """Updates Config with the arguments passed as args when running the
+    program. Keys will be converted to command line options, then matching
+    options in `sys.argv` will be used to update the Config.
+
+    Args:
+        config (Config): Update this Config.
+        warn (bool): Raise warnings if there are unknown options. Turn this on
+            if you don't use any :class:`argparse.ArgumentParser` after to
+            check for possible errors.
+
+    """
+
     import sys
     import argparse
     import warnings
-
-    """Updates the current config with the arguments passed as args when running the programm and removes given
-    classes / converts them to None"""
 
     def str2bool(v):
         if v.lower() in ('yes', 'true', 't', 'y', '1'):
