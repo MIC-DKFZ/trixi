@@ -24,7 +24,7 @@ with open(os.path.join(os.path.dirname(__file__), "LICENSE")) as f:
 required = resolve_requirements(os.path.join(os.path.dirname(__file__), 'requirements_full.txt'))
 
 setup(name='trixi',
-      version='0.1',
+      version='0.1.0.1',
       description='Package to log visualizations and experiments, e.g. with visdom',
       long_description=readme,
       url='https://github.com/MIC-DKFZ/trixi',
