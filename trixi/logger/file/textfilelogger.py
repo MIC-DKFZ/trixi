@@ -9,7 +9,7 @@ from trixi.logger.abstractlogger import AbstractLogger
 from trixi.util import random_string
 
 
-class TextLogger(AbstractLogger):
+class TextFileLogger(AbstractLogger):
     """
     A Logger for logging text into different text files and output streams (using the python logging framework)
     """
@@ -17,7 +17,7 @@ class TextLogger(AbstractLogger):
     def __init__(self, base_dir=None, logging_level=logging.DEBUG, logging_stream=sys.stdout,
                  default_stream_handler=True, **kwargs):
         """
-        Initializes a TextLogger and a default logger
+        Initializes a TextFileLogger and a default logger
 
         Args:
             base_dir: Directory to save the log files in
@@ -26,7 +26,7 @@ class TextLogger(AbstractLogger):
             default_stream_handler: Falg, if a default stream handler should be added
         """
 
-        super(TextLogger, self).__init__(**kwargs)
+        super(TextFileLogger, self).__init__(**kwargs)
 
         self.base_dir = base_dir
         self.logging_level = logging_level

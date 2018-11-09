@@ -8,7 +8,7 @@
 </p>
 
 Finally get some structure into your machine learning experiments.
-*trixi* is a tool that helps you configure, log and visualize your experiments in a reproducible fashion.
+**trixi** is a tool that helps you configure, log and visualize your experiments in a reproducible fashion.
 
 * [Features](#features)
 * [Installation](#installation)
@@ -17,7 +17,7 @@ Finally get some structure into your machine learning experiments.
 
 # Features
 
-*trixi* consists of three parts:
+**trixi** consists of three parts:
 * Logging API<br>
     *Log whatever data you like in whatever way you like to whatever backend you like.*
 
@@ -80,13 +80,13 @@ plots, results and logs of each experiment, with live plots and more.
 
 # Installation
 
-Install *trixi*:
+Install **trixi**:
 ```
 pip install trixi
 ```
 
 
-Or to always get the newest version you can install *trixi* directly via git:
+Or to always get the newest version you can install **trixi** directly via git:
 ```
 git clone https://github.com/MIC-DKFZ/trixi.git
 cd trixi

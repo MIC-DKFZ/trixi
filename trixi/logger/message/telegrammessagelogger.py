@@ -10,20 +10,20 @@ from PIL import Image
 from trixi.logger.plt.numpyseabornplotlogger import NumpySeabornPlotLogger
 
 
-class TelegramLogger(NumpySeabornPlotLogger):
+class TelegramMessageLogger(NumpySeabornPlotLogger):
     """
     Telegram logger, inherits the AbstractLogger and sends plots/logs to a chat via a Telegram bot.
     """
 
     def __init__(self, token, chat_id, exp_name=None, **kwargs):
         """
-        Creates a new TelegramLogger object.
+        Creates a new TelegramMessageLogger object.
 
         Args:
             token (str): The token of the Telegram bot used.
             chat_id (str): The chat ID for the chat between the user and the Telegram bot.
         """
-        super(TelegramLogger, self).__init__(**kwargs)
+        super(TelegramMessageLogger, self).__init__(**kwargs)
 
         self.token = token
         self.chat_id = chat_id
