@@ -1,6 +1,8 @@
 [![DOI](https://zenodo.org/badge/134823632.svg)](https://zenodo.org/badge/latestdoi/134823632)
+[![PyPI version](https://badge.fury.io/py/trixi.svg)](https://badge.fury.io/py/trixi)
 [![Build Status](https://travis-ci.org/MIC-DKFZ/trixi.svg?branch=master)](https://travis-ci.org/MIC-DKFZ/trixi)
 [![Documentation Status](https://readthedocs.org/projects/trixi/badge/?version=latest)](https://trixi.readthedocs.io/en/latest/?badge=latest)
+[![GitHub](https://img.shields.io/pypi/l/trixi.svg)](https://github.com/MIC-DKFZ/trixi/blob/master/LICENSE)
 <p align="center">
     <img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/logo/trixi-small.png">
 </p>
