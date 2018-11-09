@@ -101,16 +101,13 @@ class Experiment(object):
         """
         This method runs the experiment.
 
-        The test consist of an optional setup and then calls the :meth:`.test` and :meth:`.end_test` .
-
+        The test consist of an optional setup and then calls the :meth:`.test` and :meth:`.end_test`.
 
         Args:
             setup: If True it will execute the :meth:`.setup` and :meth:`.prepare` function similar to the run method
-            before calling :meth:`.test` .
+                before calling :meth:`.test`.
 
         """
-
-        """"""
 
         try:
 

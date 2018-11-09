@@ -15,7 +15,7 @@ import warnings
 import torch
 
 from trixi.experiment.experiment import Experiment
-from trixi.logger import CombinedLogger, PytorchExperimentLogger, PytorchVisdomLogger, TelegramLogger
+from trixi.logger import CombinedLogger, PytorchExperimentLogger, PytorchVisdomLogger, TelegramMessageLogger
 from trixi.util import Config, ResultElement, ResultLogDict, SourcePacker, name_and_iter_to_filename
 from trixi.util.pytorchutils import set_seed
 
@@ -73,8 +73,8 @@ class PytorchExperiment(Experiment):
         - elog (if use_explogger is True)
             A :class:`.PytorchExperimentLogger` instance which can log your
             results to a given folder.
-        - tlog (if use_telegramlogger is True)
-            A :class:`.TelegramLogger` instance which can send the results to
+        - tlog (if use_telegrammessagelogger is True)
+            A :class:`.TelegramMessageLogger` instance which can send the results to
             your telegram account
         - clog
             A :class:`.CombinedLogger` instance which logs to all loggers with
@@ -151,11 +151,11 @@ class PytorchExperiment(Experiment):
             instantiation.
         explogger_c_freq (int): The frequency x (meaning one in x) with which
             the :attr:`clog` will call the :attr:`elog`.
-        use_telegramlogger (bool): Use a :class:`.TelegramLogger`. Is
+        use_telegrammessagelogger (bool): Use a :class:`.TelegramMessageLogger`. Is
             accessible via the :attr:`tlog` attribute.
-        telegramlogger_kwargs (dict): Keyword arguments for :attr:`tlog`
+        telegrammessagelogger_kwargs (dict): Keyword arguments for :attr:`tlog`
             instantiation.
-        telegramlogger_c_freq (int): The frequency x (meaning one in x) with which
+        telegrammessagelogger_c_freq (int): The frequency x (meaning one in x) with which
             the :attr:`clog` will call the :attr:`tlog`.
         append_rnd_to_name (bool): If :obj:`True`, will append a random six
             digit string to the experiment name.
@@ -183,9 +183,9 @@ class PytorchExperiment(Experiment):
                  use_explogger=True,
                  explogger_kwargs=None,
                  explogger_c_freq=100,
-                 use_telegramlogger=False,
-                 telegramlogger_kwargs=None,
-                 telegramlogger_c_freq=1000,
+                 use_telegrammessagelogger=False,
+                 telegrammessagelogger_kwargs=None,
+                 telegrammessagelogger_c_freq=1000,
                  append_rnd_to_name=False):
 
         # super(PytorchExperiment, self).__init__()
@@ -260,12 +260,12 @@ class PytorchExperiment(Experiment):
             # Set results log dict to the right path
             self.results = ResultLogDict("results-log.json", base_dir=self.elog.result_dir)
         self.tlog = None
-        if use_telegramlogger:
-            if telegramlogger_kwargs is None:
-                telegramlogger_kwargs = {}
-            self.tlog = TelegramLogger(**telegramlogger_kwargs, exp_name=self.exp_name)
-            if telegramlogger_c_freq is not None and telegramlogger_c_freq > 0:
-                logger_list.append((self.tlog, telegramlogger_c_freq))
+        if use_telegrammessagelogger:
+            if telegrammessagelogger_kwargs is None:
+                telegrammessagelogger_kwargs = {}
+            self.tlog = TelegramMessageLogger(**telegrammessagelogger_kwargs, exp_name=self.exp_name)
+            if telegrammessagelogger_c_freq is not None and telegrammessagelogger_c_freq > 0:
+                logger_list.append((self.tlog, telegrammessagelogger_c_freq))
 
         self.clog = CombinedLogger(*logger_list)
 

@@ -78,7 +78,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = []
+exclude_patterns = ["_api/_build/*"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -205,6 +205,9 @@ autodoc_mock_imports = [
     "visdom",
 ]
 
+# We use the following to automatically run sphinx-apidoc, whenever we run make html.
+# The output is ignored (see exclude_patterns above) and just created for convenience,
+# so that we can compare _build with the existing rst files and see what we need to update.
 
 def run_apidoc(_):
     from sphinx.apidoc import main
@@ -213,11 +216,8 @@ def run_apidoc(_):
     sys.path.append(parentFolder)
     # change "backend" to your module name
     module = os.path.join(parentFolder, 'trixi')
-    output_path = os.path.join(cur_dir, 'api')
+    output_path = os.path.join(cur_dir, '_api/_build')
     main(['-e', '-f', '-o', output_path, module, "-d", "1"])
-    file = open(os.path.join(output_path, "modules.rst"), 'a')
-    file.write("   ../class_diagram\n")
-    file.close()
 
 
 def setup(app):
