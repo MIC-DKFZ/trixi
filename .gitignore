@@ -106,6 +106,7 @@ ENV/
 # npm
 trixi/experiment_browser/node_modules/*
 trixi/experiment_browser_old/*
+trixi/experiment_browser (copy)/*
 
 ### Except build folder in docs:
 

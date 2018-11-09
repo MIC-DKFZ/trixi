@@ -1,1 +1,0 @@
-from trixi.experiment_browser.experimentreader import ExperimentReader

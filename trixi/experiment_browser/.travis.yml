@@ -1,0 +1,20 @@
+language: node_js
+
+os: osx
+
+node_js:
+  - 8
+  - 6
+  
+script:
+  - npm run test
+  - npm run build
+
+notifications:
+  email:
+    on_failure: change
+
+cache:
+  yarn: true
+  directories:
+    - node_modules
