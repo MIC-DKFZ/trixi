@@ -1,6 +1,6 @@
 [![DOI](https://zenodo.org/badge/134823632.svg)](https://zenodo.org/badge/latestdoi/134823632)
 [![Build Status](https://travis-ci.org/MIC-DKFZ/trixi.svg?branch=master)](https://travis-ci.org/MIC-DKFZ/trixi)
-<a href="https://trixi.readthedocs.io/"><img src="https://img.shields.io/badge/docs-trixi-brightgreen.svg?link=https://trixi.readthedocs.io/" /></a>
+[![Documentation Status](https://readthedocs.org/projects/trixi/badge/?version=latest)](https://trixi.readthedocs.io/en/latest/?badge=latest)
 <p align="center">
     <img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/logo/trixi-small.png">
 </p>
