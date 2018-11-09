@@ -19,4 +19,4 @@ from trixi.util.util import (
 from trixi.util.config import Config
 from trixi.util.extravisdom import ExtraVisdom
 from trixi.util.sourcepacker import SourcePacker
-from trixi.util.grid import GridSearch
+from trixi.util.gridsearch import GridSearch

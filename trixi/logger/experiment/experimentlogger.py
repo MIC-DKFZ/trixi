@@ -15,7 +15,7 @@ except ImportError:
 import numpy as np
 
 from trixi.logger.abstractlogger import AbstractLogger
-from trixi.logger.file.textlogger import TextLogger
+from trixi.logger.file.textfilelogger import TextFileLogger
 from trixi.logger.file.numpyplotfilelogger import NumpyPlotFileLogger
 from trixi.util import create_folder, MultiTypeEncoder, MultiTypeDecoder, Config
 
@@ -60,7 +60,7 @@ class ExperimentLogger(AbstractLogger):
             base_dir (str): The base directory in which the experiment folder will be created
             folder_format (str): The format for the naming of the experiment folder
             resume (bool): if True use the given folder and do not create new ones
-            text_logger_args: Parameters for the TextLogger initialization
+            text_logger_args: Parameters for the TextFileLogger initialization
             plot_logger_args: Parameters for the NumpyPlotFileLogger initialization
         """
 
@@ -116,7 +116,7 @@ class ExperimentLogger(AbstractLogger):
         if plot_logger_args is None:
             plot_logger_args = {}
 
-        self.text_logger = TextLogger(self.log_dir, **text_logger_args)
+        self.text_logger = TextFileLogger(self.log_dir, **text_logger_args)
         self.plot_logger = NumpyPlotFileLogger(
             self.img_dir, self.plot_dir, **plot_logger_args)
 

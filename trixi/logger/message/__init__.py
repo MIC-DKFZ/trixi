@@ -1,1 +1,1 @@
-from trixi.logger.message.telegramlogger import TelegramLogger
+from trixi.logger.message.telegrammessagelogger import TelegramMessageLogger

@@ -105,5 +105,5 @@ ENV/
 
 ### Except build folder in docs:
 
-doc/api
+doc/_api/_build
 doc/_build
