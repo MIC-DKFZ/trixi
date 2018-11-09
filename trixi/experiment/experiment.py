@@ -45,16 +45,17 @@ class Experiment(object):
         self._epoch_idx = 0
 
     def run(self):
-        """This method runs the experiment. It runs through the basic lifecycle of an experiment::
+        """
+        This method runs the experiment. It runs through the basic lifecycle of an experiment::
 
-        setup()
-        prepare()
+            setup()
+            prepare()
 
-        for epoch in n_epochs:
-            train()
-            validate()
+            for epoch in n_epochs:
+                train()
+                validate()
 
-        end()
+            end()
 
         """
 

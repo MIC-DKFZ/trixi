@@ -322,20 +322,32 @@ class PytorchExperiment(Experiment):
             if hasattr(self, key):
                 setattr(self, key, val)
 
-    def get_pytorch_modules(self):
+    def get_pytorch_modules(self, from_config=True):
         """Returns all pytorch (nn) modules stored in the algo in a dict"""
         pyth_modules = dict()
         for key, val in self.__dict__.items():
             if isinstance(val, torch.nn.Module):
                 pyth_modules[key] = val
+        if from_config:
+            for key, val in self.config.items():
+                if isinstance(val, torch.nn.Module):
+                    if type(key) == str:
+                        key = "config." + key
+                    pyth_modules[key] = val
         return pyth_modules
 
-    def get_pytorch_optimizers(self):
+    def get_pytorch_optimizers(self, from_config=True):
         """Returns all pytorch optimizers stored in the algo in a dict"""
         pyth_optimizers = dict()
         for key, val in self.__dict__.items():
             if isinstance(val, torch.optim.Optimizer):
                 pyth_optimizers[key] = val
+        if from_config:
+            for key, val in self.config.items():
+                if isinstance(val, torch.optim.Optimizer):
+                    if type(key) == str:
+                        key = "config." + key
+                    pyth_optimizers[key] = val
         return pyth_optimizers
 
     def get_simple_variables(self, ignore=()):
@@ -343,7 +355,7 @@ class PytorchExperiment(Experiment):
         Returns all variables in the experiment which might be interesting in a dict.
 
         Args:
-            ignore: A list of names, which will be ignores
+            ignore: A list of names, which will be ignored
         """
         simple_vars = dict()
         for key, val in self.__dict__.items():
