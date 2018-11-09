@@ -5,7 +5,7 @@ class Experiment(object):
     """
     An abstract Experiment which can be run for a number of epochs.
 
-    The basic life cyle of an experiment is:
+    The basic life cycle of an experiment is::
 
         setup()
         prepare()
@@ -17,21 +17,21 @@ class Experiment(object):
         end()
 
     To write a new Experiment simply inherit the Experiment class and overwrite the methods.
-    You can then start your experiment calling experiment.run()
+    You can then start your experiment calling :meth:`.run`
 
-    In Addition the Experiment also has a test function. If you call the run_test() method is will call the test()
-    and end_test() method internally (and if you give the parameter setup = True in run_test is will again call
-    setup() and prepare()).
+    In Addition the Experiment also has a test function. If you call the :meth:`.run_test` method is will call the
+    :meth:`.test` and :meth:`.end_test` method internally (and if you give the parameter setup = True
+    in run_test is will again call :meth:`.setup` and :meth:`.prepare` ).
 
-    Each experiment also has its current state in _exp_state, its start time in _time_start, its end time in
-    _time_end and the current epoch index in _epoch_idx
+    Each experiment also has its current state in  :attr:`_exp_state`, its start time in  :attr:`_time_start`,
+    its end time in :attr:`_time_end` and the current epoch index in :attr:`_epoch_idx`
 
     """
 
 
     def __init__(self, n_epochs=0):
         """
-        Initiallizes a new Experiment with a given number of epochs
+        Initializes a new Experiment with a given number of epochs
 
         Args:
             n_epochs (int): The number of epochs in the experiment (how often the train and validate method
@@ -45,7 +45,7 @@ class Experiment(object):
         self._epoch_idx = 0
 
     def run(self):
-        """This method runs the experiment. It runs through the basic lifecycle of an experiment:
+        """This method runs the experiment. It runs through the basic lifecycle of an experiment::
 
         setup()
         prepare()
@@ -100,12 +100,12 @@ class Experiment(object):
         """
         This method runs the experiment.
 
-        The test consist of an optional setup and then calls the test() and end_test() methods
+        The test consist of an optional setup and then calls the :meth:`.test` and :meth:`.end_test` .
 
 
         Args:
-            setup: If True it will execute the setup() and prepare() function similar to the run method before
-             calling test()
+            setup: If True it will execute the :meth:`.setup` and :meth:`.prepare` function similar to the run method
+            before calling :meth:`.test` .
 
         """
 
@@ -123,9 +123,10 @@ class Experiment(object):
 
             self.test()
             self.end_test()
+            self._exp_state = "Tested"
+
             self._end_test_internal()
 
-            self._exp_state = "Tested"
             print("Testing complete.")
 
         except Exception as e:
@@ -153,7 +154,7 @@ class Experiment(object):
 
     def validate(self, epoch):
         """
-        The evaluation/valdiation part of the experiment, it is called once for each epoch (after the training
+        The evaluation/validation part of the experiment, it is called once for each epoch (after the training
         part)
 
         Args:
@@ -168,7 +169,7 @@ class Experiment(object):
 
     def process_err(self, e):
         """
-        This method is called if an error occurs during the execution of an experimtn
+        This method is called if an error occurs during the execution of an experiment
 
         Args:
             e (Exception): The exception which was raised during the experiment life cycle
