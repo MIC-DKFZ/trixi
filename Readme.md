@@ -41,12 +41,12 @@ The logging API supports
 * Images (Single, Grid)
 
 And offers different Backends, e.g. :
-* Visdom ([visdom-loggers](https://trixi.readthedocs.io/en/latest/api/trixi.logger.visdom.html))
-* Matplotlib / Seaborn ([plt-loggers](https://trixi.readthedocs.io/en/latest/api/trixi.logger.plt.html))
-* Local Disk ([file-loggers](https://trixi.readthedocs.io/en/latest/api/trixi.logger.file.html))
-* Telegram ([message-loggers](https://trixi.readthedocs.io/en/latest/api/trixi.logger.message.html))
+* Visdom ([visdom-loggers](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.visdom))
+* Matplotlib / Seaborn ([plt-loggers](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.plt))
+* Local Disk ([file-loggers](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.file))
+* Telegram ([message-loggers](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.message))
 
-And an [experiment-logger](https://trixi.readthedocs.io/en/latest/api/trixi.logger.experiment.experimentlogger.html) for logging your experiments, which uses a file logger to automatically create a structured directory and allows
+And an [experiment-logger](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.experiment) for logging your experiments, which uses a file logger to automatically create a structured directory and allows
 storing of config, results, plots, dict, array, images, etc. That way your experiments will always have the same structure on disk.
 
 Here are some examples:
@@ -63,14 +63,14 @@ Here are some examples:
 
 ### Experiment Infrastructure
 
-The [Experiment Infrastructure](https://trixi.readthedocs.io/en/latest/api/trixi.experiment.pytorchexperiment.html) provides a unified way to configure, run, store and evaluate your results.
+The [Experiment Infrastructure](https://trixi.readthedocs.io/en/latest/_api/trixi.experiment.html) provides a unified way to configure, run, store and evaluate your results.
 It gives you an Experiment interface, for which you can implement the training, validation and testing.
 Furthermore it automatically provides you with easy access to the Logging API and stores your config as well as the
-results for easy evaluation and reproduction. There is an abstract [Experiment](https://trixi.readthedocs.io/en/latest/api/trixi.experiment.experiment.html) class and a [PytorchExperiment](https://trixi.readthedocs.io/en/latest/api/trixi.experiment.pytorchexperiment.html) with many convenience features.
+results for easy evaluation and reproduction. There is an abstract [Experiment](https://trixi.readthedocs.io/en/latest/_api/trixi.experiment.html#trixi.experiment.experiment.Experiment) class and a [PytorchExperiment](https://trixi.readthedocs.io/en/latest/_api/trixi.experiment.html#trixi.experiment.pytorchexperiment.PytorchExperiment) with many convenience features.
 
 <img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_exp2.png" alt="exp-train" height="300"/><img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_exp1.png" alt="exp-test" height="300"/>
 
-For more info, visit the Documentation.
+For more info, visit the [Documentation](https://trixi.readthedocs.io/en/latest/_api/trixi.experiment.html).
 
 ### Experiment Browser
 The Experiment Browser offers a complete overview of experiments along with all config parameters and results.
@@ -138,3 +138,4 @@ Examples can be found here for:
 * [Experiment Infrastructure](https://github.com/MIC-DKFZ/trixi/blob/master/examples/pytorch_experiment.ipynb)
 </b>(with a
  simple MNIST Experiment example and resuming and comparison of different hyperparameters)
+* [U-Net Example](https://github.com/MIC-DKFZ/basic_unet_example)
