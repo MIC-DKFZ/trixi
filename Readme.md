@@ -4,7 +4,7 @@
 [![Documentation Status](https://readthedocs.org/projects/trixi/badge/?version=latest)](https://trixi.readthedocs.io/en/latest/?badge=latest)
 [![GitHub](https://img.shields.io/pypi/l/trixi.svg)](https://github.com/MIC-DKFZ/trixi/blob/master/LICENSE)
 <p align="center">
-    <img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/logo/trixi-small.png">
+    <img src="https://raw.githubusercontent.com/MIC-DKFZ/trixi/master/doc/_static/logo/trixi-small.png">
 </p>
 
 Finally get some structure into your machine learning experiments.
@@ -32,8 +32,8 @@ An detailed implementation overview is given [here](https://trixi.readthedocs.io
 
 ### Logging API
 
-The logging API provides a standardized way for logging results to different backends.
-The logging API supports
+The Logging API provides a standardized way for logging results to different backends.
+The Logging API supports
 (among others):
 * Values
 * Text
@@ -55,10 +55,10 @@ Here are some examples:
 <img src="https://lh3.googleusercontent.com/-h3HuvbU2V0SfgqgXGiK3LPghE5vqvS0pzpObS0YgG_LABMFk62JCa3KVu_2NV_4LJKaAa5-tg=s0" alt="visdom-logger" width="300"/>
 
 * Files:<br>
-<img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_file.png" alt="file-logger" height="200"/>
+<img src="https://raw.githubusercontent.com/MIC-DKFZ/trixi/master/doc/_static/trixi_file.png" alt="file-logger" height="200"/>
 
 * Telegram:<br>
-<img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_telegram.png" alt="telegram-logger" width="150"/>
+<img src="https://raw.githubusercontent.com/MIC-DKFZ/trixi/master/doc/_static/trixi_telegram.png" alt="telegram-logger" width="150"/>
 
 
 ### Experiment Infrastructure
@@ -68,7 +68,7 @@ It gives you an Experiment interface, for which you can implement the training, 
 Furthermore it automatically provides you with easy access to the Logging API and stores your config as well as the
 results for easy evaluation and reproduction. There is an abstract [Experiment](https://trixi.readthedocs.io/en/latest/_api/trixi.experiment.html#trixi.experiment.experiment.Experiment) class and a [PytorchExperiment](https://trixi.readthedocs.io/en/latest/_api/trixi.experiment.html#trixi.experiment.pytorchexperiment.PytorchExperiment) with many convenience features.
 
-<img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_exp2.png" alt="exp-train" height="300"/><img src="https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_exp1.png" alt="exp-test" height="300"/>
+<img src="https://raw.githubusercontent.com/MIC-DKFZ/trixi/master/doc/_static/trixi_exp2.png" alt="exp-train" height="300"/><img src="https://raw.githubusercontent.com/MIC-DKFZ/trixi/master/doc/_static/trixi_exp1.png" alt="exp-test" height="300"/>
 
 For more info, visit the [Documentation](https://trixi.readthedocs.io/en/latest/_api/trixi.experiment.html).
 
@@ -76,7 +76,7 @@ For more info, visit the [Documentation](https://trixi.readthedocs.io/en/latest/
 The Experiment Browser offers a complete overview of experiments along with all config parameters and results.
 It also allows to combine and/or compare different experiments, giving you an interactive comparison highlighting differences in the configs and a detailed view of all images,
 plots, results and logs of each experiment, with live plots and more.
-![trixi browser](https://github.com/MIC-DKFZ/trixi/blob/master/doc/_static/trixi_browser.gif)
+![trixi browser](https://raw.githubusercontent.com/MIC-DKFZ/trixi/master/doc/_static/trixi_browser.gif)
 
 # Installation
 
@@ -135,7 +135,6 @@ We use Google style docstrings:
 Examples can be found here for:
 * [Visdom-Logger](https://github.com/MIC-DKFZ/trixi/blob/master/examples/numpy_visdom_logger_example.ipynb)
 * [Experiment-Logger](https://github.com/MIC-DKFZ/trixi/blob/master/examples/pytorch_example.ipynb)
-* [Experiment Infrastructure](https://github.com/MIC-DKFZ/trixi/blob/master/examples/pytorch_experiment.ipynb)
-</b>(with a
+* [Experiment Infrastructure](https://github.com/MIC-DKFZ/trixi/blob/master/examples/pytorch_experiment.ipynb) (with a
  simple MNIST Experiment example and resuming and comparison of different hyperparameters)
 * [U-Net Example](https://github.com/MIC-DKFZ/basic_unet_example)
