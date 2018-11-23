@@ -3,11 +3,19 @@ from __future__ import division, print_function
 import atexit
 from collections import defaultdict
 
-try:
-    import torch.multiprocessing as mp
-    print("Using torch multi processing")
-except:
-    import multiprocessing as mp
+import os
+
+if os.name == "nt":
+    IS_WINDOWS = True
+    from queue import Queue
+    from threading import Thread as Process
+else:
+    IS_WINDOWS = False
+    try:
+        from torch.multiprocessing import Queue, Process
+        print("Using torch multi processing")
+    except:
+        from multiprocessing import Queue, Process
 import sys
 import traceback
 
@@ -53,12 +61,13 @@ class NumpyVisdomLogger(AbstractLogger):
         self._value_counter = defaultdict(dict)
         self._3d_histograms = dict()
 
-        self._queue = mp.Queue()
-        self._process = mp.Process(target=self.__show, args=(self._queue,))
+        self._queue = Queue()
+        self._process = Process(target=self.__show, args=(self._queue,))
 
         if auto_close:
             # atexit.register(self.close_all)
-            atexit.register(self.exit)
+            if not IS_WINDOWS:
+                atexit.register(self.exit)
             atexit.register(self.save_vis)
 
         self._process.start()
