@@ -14,7 +14,7 @@ else:
     try:
         from torch.multiprocessing import Queue, Process
         print("Using torch multi processing")
-    except:
+    except ImportError:
         from multiprocessing import Queue, Process
 import sys
 import traceback
