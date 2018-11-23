@@ -16,27 +16,31 @@ class Experiment(object):
 
         end()
 
+    The reason there is both :meth:`.setup` and :meth:`.prepare` is that internally there is also
+    a :meth:`._setup_internal` method for hidden magic in classes that inherit from this. For
+    example, the :class:`trixi.experiment.pytorchexperiment.PytorchExperiment` uses this to restore checkpoints. Think
+    if :meth:`.setup` as an :meth:`.__init__` that is only called when the Experiment is actually
+    asked to do anything. Then use :meth:`.prepare` to modify the fully instantiated Experiment if
+    you need to.
+
     To write a new Experiment simply inherit the Experiment class and overwrite the methods.
-    You can then start your experiment calling :meth:`.run`
+    You can then start your Experiment calling :meth:`.run`
 
-    In Addition the Experiment also has a test function. If you call the :meth:`.run_test` method is will call the
-    :meth:`.test` and :meth:`.end_test` method internally (and if you give the parameter setup = True
-    in run_test is will again call :meth:`.setup` and :meth:`.prepare` ).
+    In Addition the Experiment also has a test function. If you call the :meth:`.run_test` method it
+    will call the :meth:`.test` and :meth:`.end_test` method internally (and if you give the
+    parameter setup = True in run_test is will again call :meth:`.setup` and :meth:`.prepare` ).
 
-    Each experiment also has its current state in  :attr:`_exp_state`, its start time in  :attr:`_time_start`,
-    its end time in :attr:`_time_end` and the current epoch index in :attr:`_epoch_idx`
+    Each Experiment also has its current state in  :attr:`_exp_state`, its start time in
+    :attr:`_time_start`, its end time in :attr:`_time_end` and the current epoch index in
+    :attr:`_epoch_idx`
+
+    Args:
+        n_epochs (int): The number of epochs in the Experiment (how often the train and validate
+            method will be called)
 
     """
 
-
     def __init__(self, n_epochs=0):
-        """
-        Initializes a new Experiment with a given number of epochs
-
-        Args:
-            n_epochs (int): The number of epochs in the experiment (how often the train and validate method
-                will be called)
-        """
 
         self.n_epochs = n_epochs
         self._exp_state = "Preparing"
@@ -46,7 +50,7 @@ class Experiment(object):
 
     def run(self):
         """
-        This method runs the experiment. It runs through the basic lifecycle of an experiment::
+        This method runs the Experiment. It runs through the basic lifecycle of an Experiment::
 
             setup()
             prepare()
@@ -99,7 +103,7 @@ class Experiment(object):
 
     def run_test(self, setup=True):
         """
-        This method runs the experiment.
+        This method runs the Experiment.
 
         The test consist of an optional setup and then calls the :meth:`.test` and :meth:`.end_test`.
 
@@ -137,12 +141,12 @@ class Experiment(object):
             raise e
 
     def setup(self):
-        """Is called at the beginning of each experiment run to setup the basic components needed for a run"""
+        """Is called at the beginning of each Experiment run to setup the basic components needed for a run"""
         pass
 
     def train(self, epoch):
         """
-        The training part of the experiment, it is called once for each epoch
+        The training part of the Experiment, it is called once for each epoch
 
         Args:
             epoch (int): The current epoch the train method is called in
@@ -152,7 +156,7 @@ class Experiment(object):
 
     def validate(self, epoch):
         """
-        The evaluation/validation part of the experiment, it is called once for each epoch (after the training
+        The evaluation/validation part of the Experiment, it is called once for each epoch (after the training
         part)
 
         Args:
@@ -162,7 +166,7 @@ class Experiment(object):
         pass
 
     def test(self):
-        """The testing part of the experiment"""
+        """The testing part of the Experiment"""
         pass
 
     def process_err(self, e):

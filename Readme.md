@@ -8,7 +8,7 @@
 </p>
 
 Finally get some structure into your machine learning experiments.
-**trixi** is a tool that helps you configure, log and visualize your experiments in a reproducible fashion.
+**trixi** (Training & Retrospective Insights eXperiment Infrastructure) is a tool that helps you configure, log and visualize your experiments in a reproducible fashion.
 
 * [Features](#features)
 * [Installation](#installation)
@@ -28,7 +28,7 @@ Finally get some structure into your machine learning experiments.
 * Experiment Browser <br>
     *Compare, combine and visually inspect the results of your experiments*.
 
-An detailed implementation overview is given [here](https://trixi.readthedocs.io/en/latest/class_diagram.html).
+An implementation diagram is given [here](https://trixi.readthedocs.io/en/latest/class_diagram.html).
 
 ### Logging API
 
@@ -64,7 +64,7 @@ Here are some examples:
 ### Experiment Infrastructure
 
 The [Experiment Infrastructure](https://trixi.readthedocs.io/en/latest/_api/trixi.experiment.html) provides a unified way to configure, run, store and evaluate your results.
-It gives you an Experiment interface, for which you can implement the training, validation and testing.
+It gives you an experiment interface, for which you can implement the training, validation and testing.
 Furthermore it automatically provides you with easy access to the Logging API and stores your config as well as the
 results for easy evaluation and reproduction. There is an abstract [Experiment](https://trixi.readthedocs.io/en/latest/_api/trixi.experiment.html#trixi.experiment.experiment.Experiment) class and a [PytorchExperiment](https://trixi.readthedocs.io/en/latest/_api/trixi.experiment.html#trixi.experiment.pytorchexperiment.PytorchExperiment) with many convenience features.
 
@@ -73,6 +73,9 @@ results for easy evaluation and reproduction. There is an abstract [Experiment](
 For more info, visit the [Documentation](https://trixi.readthedocs.io/en/latest/_api/trixi.experiment.html).
 
 ### Experiment Browser
+
+**(We're currently remaking this from scratch, expect major improvements :))**
+
 The Experiment Browser offers a complete overview of experiments along with all config parameters and results.
 It also allows to combine and/or compare different experiments, giving you an interactive comparison highlighting differences in the configs and a detailed view of all images,
 plots, results and logs of each experiment, with live plots and more.

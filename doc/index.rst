@@ -22,7 +22,7 @@ You can jump right into the package by looking into our :ref:`quick-start-label`
    quickstart
    license
    authors
-   changes
+   Github <https://github.com/MIC-DKFZ/trixi>
 
 .. toctree::
    :maxdepth: 1

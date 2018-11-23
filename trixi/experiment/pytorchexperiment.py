@@ -22,9 +22,9 @@ from trixi.util.pytorchutils import set_seed
 
 class PytorchExperiment(Experiment):
     """
-    A PytorchExperiment is a abstract class which extends the basic
+    A PytorchExperiment extends the basic
     functionality of the :class:`.Experiment` class with
-    convenience features for PyTorch such as creating a folder structure,
+    convenience features for PyTorch (and general logging) such as creating a folder structure,
     saving, plotting results and checkpointing your experiment.
 
     The basic life cycle of a PytorchExperiment is the same as
@@ -308,9 +308,9 @@ class PytorchExperiment(Experiment):
         Updates the member attributes with the attributes given in the var_dict
 
         Args:
-            var_dict: dict in which the values which are updated are stored. If a key matches a member attribute name
+            var_dict (dict): dict in which the update values stored. If a key matches a member attribute name
                 the member attribute will be updated
-            ignore: a list of keys to ignore
+            ignore (list or tuple): iterable of keys to ignore
 
         """
         for key, val in var_dict.items():
@@ -323,7 +323,17 @@ class PytorchExperiment(Experiment):
                 setattr(self, key, val)
 
     def get_pytorch_modules(self, from_config=True):
-        """Returns all pytorch (nn) modules stored in the algo in a dict"""
+        """
+        Returns all torch.nn.Modules stored in the experiment in a dict.
+
+        Args:
+            from_config (bool): Also get modules that are stored in the :attr:`.config` attribute.
+
+        Returns:
+            dict: Dictionary of PyTorch modules
+
+        """
+
         pyth_modules = dict()
         for key, val in self.__dict__.items():
             if isinstance(val, torch.nn.Module):
@@ -337,7 +347,18 @@ class PytorchExperiment(Experiment):
         return pyth_modules
 
     def get_pytorch_optimizers(self, from_config=True):
-        """Returns all pytorch optimizers stored in the algo in a dict"""
+        """
+        Returns all torch.optim.Optimizers stored in the experiment in a dict.
+
+        Args:
+            from_config (bool): Also get optimizers that are stored in the :attr:`.config`
+                attribute.
+
+        Returns:
+            dict: Dictionary of PyTorch optimizers
+
+        """
+
         pyth_optimizers = dict()
         for key, val in self.__dict__.items():
             if isinstance(val, torch.optim.Optimizer):
@@ -352,11 +373,18 @@ class PytorchExperiment(Experiment):
 
     def get_simple_variables(self, ignore=()):
         """
-        Returns all variables in the experiment which might be interesting in a dict.
+        Returns all standard variables in the experiment in a dict.
+        Specifically, this looks for types :class:`int`, :class:`float`, :class:`bytes`,
+        :class:`bool`, :class:`str`, :class:`set`, :class:`list`, :class:`tuple`.
 
         Args:
-            ignore: A list of names, which will be ignored
+            ignore (list or tuple): Iterable of names which will be ignored
+
+        Returns:
+            dict: Dictionary of variables
+
         """
+
         simple_vars = dict()
         for key, val in self.__dict__.items():
             if key in ignore:
@@ -365,8 +393,18 @@ class PytorchExperiment(Experiment):
                 simple_vars[key] = val
         return simple_vars
 
-    def get_pytorch_variables(self, ignore=()):
-        """Returns all variables in the experiment which might be interesting"""
+    def get_pytorch_tensors(self, ignore=()):
+        """
+        Returns all torch.tensors in the experiment in a dict.
+
+        Args:
+            ignore (list or tuple): Iterable of names which will be ignored
+
+        Returns:
+            dict: Dictionary of PyTorch tensor
+
+        """
+
         pytorch_vars = dict()
         for key, val in self.__dict__.items():
             if key in ignore:
@@ -375,12 +413,16 @@ class PytorchExperiment(Experiment):
                 pytorch_vars[key] = val
         return pytorch_vars
 
+    def get_pytorch_variables(self, ignore=()):
+        """Same as :meth:`.get_pytorch_tensors`."""
+        return self.get_pytorch_tensors(ignore)
+
     def save_results(self, name="results.json"):
         """
         Saves the result dict as a json file in the result dir of the experiment logger.
 
         Args:
-            name: The name of the json file, in which the results are written.
+            name (str): The name of the json file in which the results are written.
 
         """
         if self.elog is None:
@@ -389,7 +431,8 @@ class PytorchExperiment(Experiment):
             json.dump(self.results, file_, indent=4)
 
     def save_pytorch_models(self):
-        """Saves all pytorch models as model files in the experiment model folder"""
+        """Saves all torch.nn.Modules as model files in the experiment checkpoint folder."""
+
         if self.elog is None:
             return
 
@@ -398,7 +441,8 @@ class PytorchExperiment(Experiment):
             self.elog.save_model(val, key)
 
     def load_pytorch_models(self):
-        """Loads all pytorch models as models frpom the files in the experiment model folder"""
+        """Loads all model files from the experiment checkpoint folder."""
+
         if self.elog is None:
             return
         pyth_modules = self.get_pytorch_modules()
@@ -406,7 +450,11 @@ class PytorchExperiment(Experiment):
             self.elog.load_model(val, key)
 
     def log_simple_vars(self):
-        """Logs all simple python member variables as a json file in the log dir"""
+        """
+        Logs all simple python member variables as a json file in the experiment log folder.
+        The file will be names 'simple_vars.json'.
+        """
+
         if self.elog is None:
             return
         simple_vars = self.get_simple_variables()
@@ -414,7 +462,11 @@ class PytorchExperiment(Experiment):
             json.dump(simple_vars, file_)
 
     def load_simple_vars(self):
-        """Restores all simple python member variables from a json file in the log dir"""
+        """
+        Restores all simple python member variables from the 'simple_vars.json' file in the log
+        folder.
+        """
+
         if self.elog is None:
             return
         simple_vars = {}
@@ -422,21 +474,30 @@ class PytorchExperiment(Experiment):
             simple_vars = json.load(file_)
         self.update_attributes(simple_vars)
 
-    def save_checkpoint(self, name="checkpoint", save_types=("model", "optimizer", "simple", "th_vars", "results"),
-                        n_iter=None, iter_format="{:05d}", prefix=False):
+    def save_checkpoint(self,
+                        name="checkpoint",
+                        save_types=("model", "optimizer", "simple", "th_vars", "results"),
+                        n_iter=None,
+                        iter_format="{:05d}",
+                        prefix=False):
         """
-        Saves a current checkpoint from the experiment.
+        Saves a current model checkpoint from the experiment.
 
         Args:
-            name: The name of the checkpoint file
-            save_types: What kind of member variables should be stored: Choices are:
-                ("model" <-- Pytorch models, "optimizer" <-- Optimizers, "simple" <-- Simple python variables (basic
-                types and list/tuples ), "th_vars" <-- torch tensors/variables, "results" <-- The result dict)
-            n_iter: Number of iteration. together with the name, defined by the iter_format a file name will be created
-            iter_format: Defines how the name and the n_iter will be combined
-            prefix: If True, the formated n_iter will be appended as a prefix, otherwise as a suffix
+            name (str): The name of the checkpoint file
+            save_types (list or tuple): What kind of member variables should be stored? Choices are:
+                "model" <-- Pytorch models,
+                "optimizer" <-- Optimizers,
+                "simple" <-- Simple python variables (basic types and lists/tuples),
+                "th_vars" <-- torch tensors,
+                "results" <-- The result dict
+            n_iter (int): Number of iterations. Together with the name, defined by the iter_format,
+                a file name will be created.
+            iter_format (str): Defines how the name and the n_iter will be combined.
+            prefix (bool): If True, the formatted n_iter will be prepended, otherwise appended.
 
         """
+
         if self.elog is None:
             return
 
@@ -462,25 +523,36 @@ class PytorchExperiment(Experiment):
         self.elog.save_checkpoint(name=name, n_iter=n_iter, iter_format=iter_format, prefix=prefix,
                                   move_to_cpu=self._checkpoint_to_cpu, **checkpoint_dict)
 
-    def load_checkpoint(self, name="checkpoint", save_types=("model", "optimizer", "simple", "th_vars", "results"),
-                        n_iter=None, iter_format="{:05d}", prefix=False, path=None):
+    def load_checkpoint(self,
+                        name="checkpoint",
+                        save_types=("model", "optimizer", "simple", "th_vars", "results"),
+                        n_iter=None,
+                        iter_format="{:05d}",
+                        prefix=False,
+                        path=None):
         """
         Loads a checkpoint and restores the experiment.
 
-        Make sure you have your torch stuff already on the right devices beforehand, otherwise this could lead to
-        errors e.g. when making a optimizer step (and for some reason the adam states are not already on the gpu:
+        Make sure you have your torch stuff already on the right devices beforehand,
+        otherwise this could lead to errors e.g. when making a optimizer step
+        (and for some reason the Adam states are not already on the GPU:
         https://discuss.pytorch.org/t/loading-a-saved-model-for-continue-training/17244/3 )
 
         Args:
-            name: The name of the checkpoint file
-            save_types: What kind of member variables should be stored: Choices are:
-                ("model" <-- Pytorch models, "optimizer" <-- Optimizers, "simple" <-- Simple python variables (basic
-                types and list/tuples ), "th_vars" <-- torch tensors/variables, "results" <-- The result dict)
-            n_iter: Number of iteration. together with the name, defined by the iter_format a file name will be created
-            iter_format: Defines how the name and the n_iter will be combined
-            prefix: If True, the formated n_iter will be appended as a prefix, otherwise as a suffix
-            path: If a path is given than it will take the current experiment dir and formated name, otherwise it will
-                simple use the path and the formatted name to define the checkpoint file
+            name (str): The name of the checkpoint file
+            save_types (list or tuple): What kind of member variables should be loaded? Choices are:
+                "model" <-- Pytorch models,
+                "optimizer" <-- Optimizers,
+                "simple" <-- Simple python variables (basic types and lists/tuples),
+                "th_vars" <-- torch tensors,
+                "results" <-- The result dict
+            n_iter (int): Number of iterations. Together with the name, defined by the iter_format,
+                a file name will be created and searched for.
+            iter_format (str): Defines how the name and the n_iter will be combined.
+            prefix (bool): If True, the formatted n_iter will be prepended, otherwise appended.
+            path (str): If no path is given then it will take the current experiment dir and formatted
+                name, otherwise it will simply use the path and the formatted name to define the
+                checkpoint file.
 
         """
         if self.elog is None:
@@ -523,7 +595,7 @@ class PytorchExperiment(Experiment):
         self.update_attributes(restore_dict)
 
     def _end_internal(self):
-        """Ends the experiment and stores the final results/ checkpoint"""
+        """Ends the experiment and stores the final results/checkpoint"""
         if isinstance(self.results, ResultLogDict):
             self.results.close()
         self.save_results()
@@ -532,14 +604,17 @@ class PytorchExperiment(Experiment):
         self.print("Experiment ended. Checkpoints stored =)")
 
     def _end_test_internal(self):
-        """Ends the experiment and stores the final results and config"""
+        """Ends the experiment after test and stores the final results and config"""
         self.save_results()
         self._save_exp_config()
         self.print("Testing ended. Results stored =)")
 
     def at_exit_func(self):
-        """Stores the results and checkpoint at the end (if nor already stored). This method is also called if an
-        error occurs"""
+        """
+        Stores the results and checkpoint at the end (if not already stored).
+        This method is also called if an error occurs.
+        """
+
         if self._exp_state not in ("Ended", "Tested"):
             if isinstance(self.results, ResultLogDict):
                 self.results.print_to_file("]")
@@ -560,7 +635,8 @@ class PytorchExperiment(Experiment):
         self._save_exp_config()
 
     def prepare_resume(self):
-        """Tries to resume the experiment by using the defined resume path or resume PytorchExperiment"""
+        """Tries to resume the experiment by using the defined resume path or PytorchExperiment."""
+
         checkpoint_file = ""
         base_dir = ""
 
@@ -623,27 +699,31 @@ class PytorchExperiment(Experiment):
                                   "exp")
 
     def save_temp_checkpoint(self):
-        """Saves the current checkpoint as checkpoint_current"""
+        """Saves the current checkpoint as checkpoint_current."""
         self.save_checkpoint(name="checkpoint_current")
 
     def save_end_checkpoint(self):
-        """Saves the current checkpoint as checkpoint_last"""
+        """Saves the current checkpoint as checkpoint_last."""
         self.save_checkpoint(name="checkpoint_last")
 
     def add_result(self, value, name, counter=None, tag=None, label=None, plot_result=True, plot_running_mean=False):
         """
-        Saves a results and add it to the result dict, this is similar to results[key] = val, but in addition also
-        logs the value to the combined logger (it also stores in the results-logs file).
+        Saves a results and add it to the result dict, this is similar to results[key] = val,
+        but in addition also logs the value to the combined logger
+        (it also stores in the results-logs file).
 
         **This should be your preferred method to log your numeric values**
 
         Args:
             value: The value of your variable
-            name: The name/ key of your variable
-            counter: A counter which can be seen a the x-axis of your value
-            tag: A label/ tag which can group similar values and will plot values with the same label in the same plot
+            name (str): The name/key of your variable
+            counter (int or float): A counter which can be seen as the x-axis of your value.
+                Normally you would just use the current epoch for this.
+            tag (str): A label/tag which can group similar values and will plot values with the same
+                label in the same plot
             label: deprecated label
-            plot_result: By default True, will also log all your values to the combined logger (with show value)
+            plot_result (bool): By default True, will also log all your values to the combined
+                logger (with show_value).
 
         """
 
@@ -672,40 +752,49 @@ class PytorchExperiment(Experiment):
 
     def get_result(self, name):
         """
-        Similar to result[key] this will return the values in result with the given name/key
+        Similar to result[key] this will return the values in the results dictionary with the given
+        name/key.
 
         Args:
-            name: the name/ key for which a value is stores
+            name (str): the name/key for which a value is stored.
 
-        Returns: The value with the key 'name' in the results dict
+        Returns:
+            The value with the key 'name' in the results dict.
 
         """
         return self.results.get(name)
 
     def add_result_without_epoch(self, val, name):
         """
-        A faster method to store your results, has less overhead and does not call the combined logger
+        A faster method to store your results, has less overhead and does not call the combined
+        logger. Will only store to the results dictionary.
 
         Args:
-            val: the values you want to add
-            name: the name/ key of your value
+            val: the value you want to add.
+            name (str): the name/key of your value.
 
         """
         self.results[name] = val
 
     def get_result_without_epoch(self, name):
         """
-        Similar to result[key] this will return the values in result with the given name/key
+        Similar to result[key] this will return the values in result with the given name/key.
 
         Args:
-            name: the name/ key for which a value is stores
+            name (str): the name/ key for which a value is stores.
 
-        Returns: The value with the key 'name' in the results dict
+        Returns:
+            The value with the key 'name' in the results dict.
 
         """
         return self.results.get(name)
 
     def print(self, *args):
+        """
+        Calls 'print' on the experiment logger or uses builtin 'print' if former is not
+        available.
+        """
+
         if self.elog is None:
             print(*args)
         else:
@@ -720,7 +809,8 @@ def get_last_file(dir_, name=None):
         dir_: The base directory to start the search in
         name: The name pattern to match with the files
 
-    Returns: the path to the (alphabetically) last file
+    Returns:
+        str: the path to the (alphabetically) last file
 
     """
     if name is None:
@@ -747,7 +837,8 @@ def get_vars_from_sys_argv():
     """
     Parses the command line args (argv) and looks for --config_path and --resume_path and returns them if found.
 
-    Returns: a Tuple of (config_path, resume_path ) , None if it is not found
+    Returns:
+        tuple: a tuple of (config_path, resume_path ) , None if it is not found
 
     """
     import sys
@@ -773,8 +864,8 @@ def get_vars_from_sys_argv():
 
 def experimentify(setup_fn="setup", train_fn="train", validate_fn="validate", end_fn="end", test_fn="test", **decoargs):
     """
-    Experimental decorator with monkey patches your class into a PytorchExperiment.
-    You can then call run on your new PytorchExperiment Class.
+    Experimental decorator which monkey patches your class into a PytorchExperiment.
+    You can then call run on your new :class:`.PytorchExperiment` class.
 
     Args:
         setup_fn: The name of your setup() function

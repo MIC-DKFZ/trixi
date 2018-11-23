@@ -4,11 +4,53 @@
 import json
 from copy import deepcopy
 
-from trixi.util.util import ModuleMultiTypeDecoder, ModuleMultiTypeEncoder, StringMultiTypeDecoder
+from trixi.util.util import ModuleMultiTypeDecoder, ModuleMultiTypeEncoder
 
 
 class Config(dict):
-    """TBD"""
+    """
+    Config is the main object used to store configurations. As a rule of thumb, anything you might
+    want to change in your experiment should go into the Config. It's basically a :class:`dict`,
+    but vastly more powerful. Key features are
+
+        - Access keys as attributes
+            Config["a"]["b"]["c"] is the same as Config.a.b.c.
+            Can also be used for setting if the second to last key exists. Only works for keys that
+            conform with Python syntax (Config.myattr-1 is not allowed).
+        - Advanced de-/serialization
+            Using specialized JSON encoders and decoders, almost anything can be serialized and
+            deserialized. This includes types, functions (except lambdas) and modules. For example,
+            you could have something like::
+
+                c = Config(model=MyModel)
+                c.dump("somewhere")
+
+            and end up with a JSON file that looks like this::
+
+                {
+                    "model": "__type__(your.model.module.MyModel)"
+                }
+
+            and vice versa. We use double underscores and parentheses for serialization,
+            so it's probably a good idea to not use this pattern for other stuff!
+        - Automatic CLI exposure
+            If desired, the Config will create an ArgumentParser that contains all keys in the
+            Config as arguments in the form "- - key", so you can run your experiment from the command
+            line and manually overwrite certain values. Deeper levels are also accessible via dot
+            notation "- - key_with_dict_value.inner_key".
+        - Comparison
+            Compare any number of Configs and get a new Config containing only the values that
+            differ among input Configs.
+
+    Args:
+        file_ (str): Load Config from this file.
+        config (Config): Update with values from this Config (can be combined with :attr:`file_`).
+            Will by default only make shallow copies, see :attr:`deep`.
+        update_from_argv (bool): Update values from argv. Will automatically expose keys to the
+            CLI as '- - key'.
+        deep (bool): Make deep copies if :attr:`config` is given.
+
+    """
 
     def __init__(self, file_=None, config=None, update_from_argv=False, deep=False, **kwargs):
 
