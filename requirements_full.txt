@@ -2,3 +2,4 @@
 python-telegram-bot==10.1.0
 umap>=0.1.1
 scikit-learn>=0.19.1
+gputil
