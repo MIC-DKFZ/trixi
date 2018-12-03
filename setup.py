@@ -1,7 +1,7 @@
 import os
 import re
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 def resolve_requirements(file):
@@ -44,7 +44,7 @@ setup(name='trixi',
       author='Medical Image Computing Group, DKFZ',
       author_email='mic@dkfz-heidelberg.de',
       license=license,
-      packages=['trixi'],
+      packages=find_packages(),
       install_requires=required,
       zip_safe=True,
       entry_points={
