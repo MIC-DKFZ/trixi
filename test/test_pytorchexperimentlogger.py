@@ -51,6 +51,15 @@ class TestPytorchExperimentLogger(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(self.experimentLogger.img_dir, "image_grid.png")),
                         "Show image grid could not create image grid from tensor")
 
+    def test_show_image_grid_heatmap(self):
+        images = np.random.random_sample((4, 3, 128, 128))
+        tensor = torch.from_numpy(images)
+        self.experimentLogger.show_image_grid_heatmap(tensor, name="image_grid_heatmap")
+
+        time.sleep(1)
+        self.assertTrue(os.path.exists(os.path.join(self.experimentLogger.img_dir, "image_grid_heatmap.png")),
+                        "Show image grid could not create image grid from tensor")
+
     def test_show_barplot(self):
         tensor = torch.from_numpy(np.random.random_sample(5))
         self.experimentLogger.show_barplot(tensor, "barplot")

@@ -41,6 +41,10 @@ class TestPytorchVisdomLogger(unittest.TestCase):
         tensor = torch.from_numpy(images)
         self.visdomLogger._PytorchVisdomLogger__show_image_grid(tensor, "image_grid")
 
+    def test_show_image_grid_heatmap(self):
+        images = np.random.random_sample((4, 3, 128, 128))
+        self.visdomLogger._PytorchVisdomLogger__show_image_grid_heatmap(images, name="image_grid_heatmap")
+
     def test_show_barplot(self):
         tensor = torch.from_numpy(np.random.random_sample(5))
         self.visdomLogger.show_barplot(tensor, name="barplot")
