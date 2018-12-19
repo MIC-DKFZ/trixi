@@ -48,7 +48,7 @@ class Experiment(object):
         self._time_end = ""
         self._epoch_idx = 0
 
-    def run(self):
+    def run(self, setup=True):
         """
         This method runs the Experiment. It runs through the basic lifecycle of an Experiment::
 
@@ -67,8 +67,9 @@ class Experiment(object):
             self._time_start = time.strftime("%y-%m-%d_%H:%M:%S", time.localtime(time.time()))
             self._time_end = ""
 
-            self.setup()
-            self._setup_internal()
+            if setup:
+                self.setup()
+                self._setup_internal()
             self.prepare()
 
             self._exp_state = "Started"
