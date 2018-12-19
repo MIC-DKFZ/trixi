@@ -64,6 +64,18 @@ class PytorchExperimentLogger(ExperimentLogger):
         """
         self.plot_logger.show_image_grid(image, name, **kwargs)
 
+    def show_image_grid_heatmap(self, heatmap, background=None, name="heatmap", **kwargs):
+        """
+        Saves images in the img folder as a image grid
+
+        Args:
+            heatmap: The images to be converted to a heatmap
+            background: Context of the heatmap (to be underlayed)
+            name: file name of the new image file
+
+        """
+        self.plot_logger.show_image_grid_heatmap(heatmap=heatmap, background=background, name=name, **kwargs)
+
     @staticmethod
     @threaded
     def save_model_static(model, model_dir, name):
@@ -458,10 +470,10 @@ class PytorchExperimentLogger(ExperimentLogger):
         else:
             try:
                 return __get_pr_curve(tensor=tensor,
-                               labels=labels,
-                               reduce_to_n_samples=reduce_to_n_samples,
-                               results_fn=results_fn
-                               )
+                                      labels=labels,
+                                      reduce_to_n_samples=reduce_to_n_samples,
+                                      results_fn=results_fn
+                                      )
             except:
                 warnings.warn("Sth went wrong with calculating the pr curve")
 

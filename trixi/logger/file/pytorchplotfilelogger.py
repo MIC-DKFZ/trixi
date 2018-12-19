@@ -2,11 +2,15 @@ import os
 import warnings
 
 import torch
+from PIL import Image
+from cv2 import cv2
+from scipy.misc import imsave
 from torch.autograd import Variable
 from torchvision.utils import save_image as tv_save_image
 import numpy as np
+from trixi.util.util import np_make_grid
 
-from trixi.logger.abstractlogger import threaded
+from trixi.logger.abstractlogger import threaded, convert_params
 from trixi.logger.file.numpyplotfilelogger import NumpyPlotFileLogger
 from trixi.util import name_and_iter_to_filename
 from trixi.util.pytorchutils import get_guided_image_gradient, get_smooth_image_gradient, get_vanilla_image_gradient
@@ -35,14 +39,11 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
 
         ### convert args
         args = (a.detach().cpu().numpy() if torch.is_tensor(a) else a for a in args)
-        #args = (a.data.cpu().numpy() if isinstance(a, Variable) else a for a in args)
 
         ### convert kwargs
         for key, data in kwargs.items():
-            if isinstance(data, Variable):
-                kwargs[key] = data.data.cpu().numpy()
-            elif torch.is_tensor(data):
-                kwargs[key] = data.cpu().numpy()
+            if torch.is_tensor(data):
+                kwargs[key] = data.detach().cpu().numpy()
 
         return f(self, *args, **kwargs)
 
@@ -73,7 +74,6 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
                                              prefix=prefix)
         elif not name.endswith(".png"):
             name = name + ".png"
-
 
         img_file = os.path.join(image_dir, name)
         os.makedirs(os.path.dirname(img_file), exist_ok=True)
@@ -258,3 +258,51 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
         self.save_image_grid(tensor=images, name=name, n_iter=n_iter, prefix=prefix, iter_format=iter_format,
                              image_args=image_args)
 
+    @convert_params
+    def show_image_grid_heatmap(self, heatmap, background=None, ratio=0.3, normalize=True,
+                                colormap=cv2.COLORMAP_JET, name="heatmap", n_iter=None,
+                                prefix=False, iter_format="{:05d}", image_args=None, **kwargs):
+        """
+        Creates heat map from the given map and if given combines it with the background and then
+        displays results with as image grid.
+
+        Args:
+           heatmap:  4d- tensor (N, C, H, W) to be converted to a heatmap
+           background: 4d- tensor (N, C, H, W) background/ context of the heatmap (to be underlayed)
+           name: The name of the window
+           ratio: The ratio to mix the map with the background (0 = only background, 1 = only map)
+           n_iter: The iteration number, formatted with the iter_format and added to the model name (if not None)
+           iter_format: The format string, which indicates how n_iter will be formated as a string
+           prefix: If True, the formated n_iter will be appended as a prefix, otherwise as a suffix
+           image_args: Arguments for the tensorvision save image method
+
+        """
+
+        if image_args is None: image_args = {}
+
+        if n_iter is not None:
+            name = name_and_iter_to_filename(name=name, n_iter=n_iter, ending=".png", iter_format=iter_format,
+                                             prefix=prefix)
+        elif not name.endswith(".png"):
+            name += ".png"
+
+        file_name = os.path.join(self.img_dir, name)
+
+        map_grid = np_make_grid(heatmap, normalize=normalize)
+        map_ = np.clip(map_grid * 255, a_min=0, a_max=255)
+        map_ = map_.astype(np.uint8)
+
+        map_ = cv2.applyColorMap(map_.transpose(1, 2, 0), colormap=colormap)
+        map_ = cv2.cvtColor(map_, cv2.COLOR_BGR2RGB)
+        map_ = map_.transpose(2, 0, 1)
+
+        fuse_img = map_
+
+        if background is not None:
+            img_grid = np_make_grid(background, **image_args)
+            image = np.clip(img_grid * 255, a_min=0, a_max=255)
+            image = image.astype(np.uint8)
+
+            fuse_img = (1.0 - ratio) * image + ratio * map_
+
+        imsave(file_name, fuse_img.transpose(1, 2, 0))

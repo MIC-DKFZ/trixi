@@ -2,6 +2,8 @@ import ast
 import importlib
 import json
 import logging
+import math
+
 import numpy as np
 import os
 import random
@@ -23,6 +25,7 @@ try:
 except ImportError as e:
     print("Could not import Pytorch related modules.")
     print(e)
+
 
     class torch:
         dtype = None
@@ -413,7 +416,6 @@ class ResultElement(dict):
             self["counter"] = counter
 
 
-
 def chw_to_hwc(np_array):
     if len(np_array.shape) != 3:
         return np_array
@@ -422,5 +424,92 @@ def chw_to_hwc(np_array):
     elif np_array.shape[2] == 1 or np_array.shape[2] == 3:
         return np_array
     else:
-        np_array = np.transpose(np_array, (1,2,0))
+        np_array = np.transpose(np_array, (1, 2, 0))
         return np_array
+
+
+def np_make_grid(np_array, nrow=8, padding=2,
+                 normalize=False, range_=None, scale_each=False, pad_value=0):
+    """Make a grid of images.
+
+    Args:
+        np_array (numpy array): 4D mini-batch Tensor of shape (B x C x H x W)
+            or a list of images all of the same size.
+        nrow (int, optional): Number of images displayed in each row of the grid.
+            The Final grid size is (B / nrow, nrow). Default is 8.
+        padding (int, optional): amount of padding. Default is 2.
+        normalize (bool, optional): If True, shift the image to the range (0, 1),
+            by subtracting the minimum and dividing by the maximum pixel value.
+        range_ (tuple, optional): tuple (min, max) where min and max are numbers,
+            then these numbers are used to normalize the image. By default, min and max
+            are computed from the tensor.
+        scale_each (bool, optional): If True, scale each image in the batch of
+            images separately rather than the (min, max) over all images.
+        pad_value (float, optional): Value for the padded pixels.
+
+    Example:
+        See this notebook `here <https://gist.github.com/anonymous/bf16430f7750c023141c562f3e9f2a91>`_
+
+    """
+    if not (isinstance(np_array, np.ndarray) or
+            (isinstance(np_array, list) and all(isinstance(a, np.ndarray) for a in np_array))):
+        raise TypeError('Numpy array or list of tensors expected, got {}'.format(type(np_array)))
+
+    # if list of tensors, convert to a 4D mini-batch Tensor
+    if isinstance(np_array, list):
+        np_array = np.stack(np_array, axis=0)
+
+    if len(np_array.shape) == 2:  # single image H x W
+        np_array = np_array.reshape((1, np_array.shape[0], np_array.shape[1]))
+    if len(np_array.shape) == 3:  # single image
+        if np_array.shape[0] == 1:  # if single-channel, convert to 3-channel
+            np_array = np.concatenate((np_array, np_array, np_array), 0)
+        np_array = np_array.reshape((1, np_array.shape[0], np_array.shape[1], np_array.shape[2]))
+
+    if len(np_array.shape) == 3 == 4 and np_array.shape[1] == 1:  # single-channel images
+        np_array = np.concatenate((np_array, np_array, np_array), 1)
+
+    if normalize is True:
+        np_array = np.copy(np_array)  # avoid modifying tensor in-place
+        if range_ is not None:
+            assert isinstance(range_, tuple), \
+                "range has to be a tuple (min, max) if specified. min and max are numbers"
+
+        def norm_ip(img, min_, max_):
+            img = np.clip(img, a_min=min_, a_max=max_)
+            img = (img - min_) / (max_ - min_ + 1e-5)
+            return img
+
+        def norm_range(t, range__=None):
+            if range__ is not None:
+                t = norm_ip(t, range__[0], range__[1])
+            else:
+                t = norm_ip(t, float(t.min()), float(t.max()))
+            return t
+
+        if scale_each is True:
+            for i in range(np_array.shape[0]):  # loop over mini-batch dimension
+                np_array[i] = norm_range(np_array[i], range_)
+        else:
+            np_array = norm_range(np_array, range_)
+
+    if np_array.shape[0] == 1:
+        return np_array.squeeze(0)
+
+    # make the mini-batch of images into a grid
+    nmaps = np_array.shape[0]
+    xmaps = min(nrow, nmaps)
+    ymaps = int(math.ceil(float(nmaps) / xmaps))
+    height, width = int(np_array.shape[2] + padding), int(np_array.shape[3] + padding)
+    grid = np.zeros((3, height * ymaps + padding, width * xmaps + padding))
+    grid += pad_value
+    k = 0
+    for y in range(ymaps):
+        for x in range(xmaps):
+            if k >= nmaps:
+                break
+            grid[:,
+            y * height + padding: y * height + padding + height - padding,
+            x * width + padding: x * width + padding + width - padding] = np_array[k]
+            k = k + 1
+    return grid

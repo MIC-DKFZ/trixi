@@ -5,9 +5,11 @@ from multiprocessing import Process
 
 import numpy as np
 import torch
+from cv2 import cv2
 from graphviz import Digraph
 from torch.autograd import Variable
 from torchvision.utils import make_grid
+from trixi.util.util import np_make_grid
 
 from trixi.logger.experiment.pytorchexperimentlogger import PytorchExperimentLogger
 from trixi.logger.visdom.numpyvisdomlogger import NumpyVisdomLogger
@@ -29,14 +31,14 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         """
 
         ### convert args
-        args = (a.cpu().numpy() if torch.is_tensor(a) else a for a in args)
-        args = (a.data.cpu().numpy() if isinstance(a, Variable) else a for a in args)
+        args = (a.detach().cpu().numpy() if torch.is_tensor(a) else a for a in args)
+        # args = (a.data.cpu().numpy() if isinstance(a, Variable) else a for a in args)
 
         ### convert kwargs
         for key, data in kwargs.items():
-            if isinstance(data, Variable):
-                kwargs[key] = data.data.cpu().numpy()
-            elif torch.is_tensor(data):
+            # if isinstance(data, Variable):
+            #     kwargs[key] = data.detach().cpu().numpy()
+            if torch.is_tensor(data):
                 kwargs[key] = data.detach().cpu().numpy()
 
         return f(self, *args, **kwargs)
@@ -66,8 +68,8 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                 win_name = "%s_grad" % model_name
 
             if m_param is not None:
-                param_mean = m_param.data.mean()
-                param_std = m_param.data.std()
+                param_mean = m_param.detach().mean()
+                param_std = m_param.detach().std()
 
                 if np.isnan(param_std):
                     param_std = 0
@@ -261,17 +263,28 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         if image_args is None: image_args = {}
 
         if isinstance(tensor, Variable):
-            tensor = tensor.data
+            tensor = tensor.detach()
 
-        assert torch.is_tensor(tensor), "tensor has to be a pytorch tensor or variable"
-        assert tensor.dim() == 4, "tensor has to have 4 dimensions"
-        if not (tensor.size(1) == 1 or tensor.size(1) == 3):
-            warnings.warn("The 1. dimension (channel) has to be either 1 (gray) or 3 (rgb), taking the first "
-                          "dimension now !!!")
-            tensor = tensor[:, 0:1, ]
+        if torch.is_tensor(tensor):
+            assert torch.is_tensor(tensor), "tensor has to be a pytorch tensor or variable"
+            assert tensor.dim() == 4, "tensor has to have 4 dimensions"
+            if not (tensor.size(1) == 1 or tensor.size(1) == 3):
+                warnings.warn("The 1. dimension (channel) has to be either 1 (gray) or 3 (rgb), taking the first "
+                              "dimension now !!!")
+                tensor = tensor[:, 0:1, ]
 
-        grid = make_grid(tensor, **image_args)
-        image = grid.mul(255).clamp(0, 255).byte().numpy()
+            grid = make_grid(tensor, **image_args)
+            image = grid.mul(255).clamp(0, 255).byte().numpy()
+        elif isinstance(tensor, np.ndarray):
+            grid = np_make_grid(tensor, **image_args)
+            image = np.clip(grid * 255, a_min=0, a_max=255)
+            image = image.astype(np.uint8)
+
+            image = cv2.applyColorMap(image.transpose(1, 2, 0), cv2.COLORMAP_JET)
+            image = image.transpose(2, 0, 1)
+
+        else:
+            raise ValueError("Tensor has to be a torch tensor or a numpy array")
 
         opts = opts.copy()
         opts.update(dict(
@@ -289,6 +302,89 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         return win
 
     NumpyVisdomLogger.show_funcs["image_grid"] = __show_image_grid
+
+    @convert_params
+    def show_image_grid_heatmap(self, heatmap, background=None, ratio=0.3, normalize=True, colormap=cv2.COLORMAP_JET,
+                                name=None, caption=None, env_appendix="", opts=None,
+                                image_args=None, **kwargs):
+        """
+        Creates heat map from the given map and if given combines it with the background and then
+        displays results with as image grid.
+
+        Args:
+           heatmap:  4d- tensor (N, C, H, W)
+           background: 4d- tensor (N, C, H, W)
+           name: The name of the window
+           ratio: The ratio to mix the map with the background (0 = only background, 1 = only map)
+           caption: Caption of the generated image grid
+           env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+           opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+           image_args: Arguments for the tensorvision save image method
+
+        """
+
+        if opts is None: opts = {}
+        if image_args is None: image_args = {}
+
+        viz_task = {
+            "type": "image_grid_heatmap",
+            "tensor": background,
+            "heatmap": heatmap,
+            "ratio": ratio,
+            "normalize": normalize,
+            "colormap": colormap,
+            "name": name,
+            "caption": caption,
+            "env_appendix": env_appendix,
+            "opts": opts,
+            "image_args": image_args
+        }
+        self._queue.put_nowait(viz_task)
+
+    def __show_image_grid_heatmap(self, heatmap, tensor=None, ratio=0.3, colormap=cv2.COLORMAP_JET,
+                                  normalize=True, name=None, caption=None,
+                                  env_appendix="", opts=None, image_args=None, **kwargs):
+        """
+          Internal show_image_grid_heatmap method, called by the internal process.
+          This function does all the magic.
+        """
+
+        if opts is None: opts = {}
+        if image_args is None: image_args = {}
+
+        map_grid = np_make_grid(heatmap, normalize=normalize)
+        map_ = np.clip(map_grid * 255, a_min=0, a_max=255)
+        map_ = map_.astype(np.uint8)
+
+        map_ = cv2.applyColorMap(map_.transpose(1, 2, 0), colormap=colormap)
+        map_ = cv2.cvtColor(map_, cv2.COLOR_BGR2RGB)
+        map_ = map_.transpose(2, 0, 1)
+
+        fuse_img = map_
+
+        if tensor is not None:
+            img_grid = np_make_grid(tensor, **image_args)
+            image = np.clip(img_grid * 255, a_min=0, a_max=255)
+            image = image.astype(np.uint8)
+
+            fuse_img = (1.0 - ratio) * image + ratio * map_
+
+        opts = opts.copy()
+        opts.update(dict(
+            title=name,
+            caption=caption
+        ))
+
+        win = self.vis.image(
+            img=fuse_img,
+            win=name,
+            env=self.name + env_appendix,
+            opts=opts
+        )
+
+        return win
+
+    NumpyVisdomLogger.show_funcs["image_grid_heatmap"] = __show_image_grid_heatmap
 
     @convert_params
     def show_embedding(self, tensor, labels=None, name=None, method="tsne", n_dims=2, n_neigh=30, **meth_args):
@@ -375,12 +471,10 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         """
 
-        res_fn = lambda tpr, fpr:  self.show_lineplot(tpr, fpr, name=name, opts={"fillarea": True,
-                                                                                                "webgl": True})
+        res_fn = lambda tpr, fpr: self.show_lineplot(tpr, fpr, name=name, opts={"fillarea": True,
+                                                                                "webgl": True})
         PytorchExperimentLogger.get_roc_curve(tensor=tensor, labels=labels, reduce_to_n_samples=reduce_to_n_samples,
-                                             use_sub_process=use_sub_process, results_fn=res_fn)
-
-
+                                              use_sub_process=use_sub_process, results_fn=res_fn)
 
     @convert_params
     def show_pr_curve(self, tensor, labels, name, reduce_to_n_samples=None, use_sub_process=False):
@@ -394,11 +488,10 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             reduce_to_n_samples: Reduce/ downsample to to n samples for fewer data points
             use_sub_process: Use a sub process to do the processing
         """
-        res_fn = lambda precision, recall:  self.show_lineplot(precision, recall, name=name, opts={"fillarea": True,
-                                                                                                "webgl": True})
+        res_fn = lambda precision, recall: self.show_lineplot(precision, recall, name=name, opts={"fillarea": True,
+                                                                                                  "webgl": True})
         PytorchExperimentLogger.get_pr_curve(tensor=tensor, labels=labels, reduce_to_n_samples=reduce_to_n_samples,
                                              use_sub_process=use_sub_process, results_fn=res_fn)
-
 
     @convert_params
     def show_classification_metrics(self, tensor, labels, name, metric=("roc-auc", "pr-score"),
@@ -419,8 +512,8 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         res_fn = lambda val, name, tag: self.show_value(val, name=name, tag=tag)
         PytorchExperimentLogger.get_classification_metrics(tensor=tensor, labels=labels, name=name, metric=metric,
-                                    use_sub_process=use_sub_process, tag_name=tag_name, results_fn=res_fn)
-
+                                                           use_sub_process=use_sub_process, tag_name=tag_name,
+                                                           results_fn=res_fn)
 
     def show_image_gradient(self, model, inpt, err_fn, grad_type="vanilla", n_runs=20, eps=0.1,
                             abs=False, **image_grid_params):
