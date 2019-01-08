@@ -1,4 +1,4 @@
-use_agg = True
+use_agg = False
 import matplotlib
 if use_agg: matplotlib.use("Agg", warn=False)
 
