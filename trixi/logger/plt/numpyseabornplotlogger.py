@@ -52,7 +52,7 @@ class NumpySeabornPlotLogger(AbstractLogger):
     @convert_params
     def show_value(self, value, name, counter=None, tag=None, show=True, *args, **kwargs):
         """
-       Creates a line plot that is automatically appended with new values and returns it as a figurte.
+       Creates a line plot that is automatically appended with new values and returns it as a figure.
 
        Args:
            value: Value to be plotted / appended to the graph (y-axis value)
@@ -100,7 +100,7 @@ class NumpySeabornPlotLogger(AbstractLogger):
         Creates a bar plot figure from an array
 
         Args:
-            array: array of shape NxM where N is the nomber of rows and M is the number of elements in the row.
+            array: array of shape NxM where N is the number of rows and M is the number of elements in the row.
             name: The name of the figure
             show: Flag if it should also display the figure (result might also depend on the matplotlib backend )
 
