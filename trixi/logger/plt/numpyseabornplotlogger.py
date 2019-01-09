@@ -23,7 +23,7 @@ class NumpySeabornPlotLogger(AbstractLogger):
         self.max_values = defaultdict(int)
 
     @convert_params
-    def show_image(self, image, name, show=True, *args, **kwargs):
+    def show_image(self, image, name=None, show=True, *args, **kwargs):
         """
         Create an image figure
 
@@ -95,7 +95,7 @@ class NumpySeabornPlotLogger(AbstractLogger):
         return figure
 
     @convert_params
-    def show_barplot(self, array, name, show=True, *args, **kwargs):
+    def show_barplot(self, array, name=None, show=True, *args, **kwargs):
         """
         Creates a bar plot figure from an array
 
@@ -124,7 +124,7 @@ class NumpySeabornPlotLogger(AbstractLogger):
         return figure
 
     @convert_params
-    def show_lineplot(self, y_vals, x_vals=None, name="lineplot", show=True, *args, **kwargs):
+    def show_lineplot(self, y_vals, x_vals=None, name=None, show=True, *args, **kwargs):
         """
         Creates a line plot figure with (multiple) lines plot, given values Y (and optional the corresponding X values)
 
@@ -156,7 +156,7 @@ class NumpySeabornPlotLogger(AbstractLogger):
         return figure
 
     @convert_params
-    def show_scatterplot(self, array, name, show=True, *args, **kwargs):
+    def show_scatterplot(self, array, name=None, show=True, *args, **kwargs):
         """
         Creates a scatter plot figure with the points given in array
 
@@ -193,7 +193,7 @@ class NumpySeabornPlotLogger(AbstractLogger):
         return figure
 
     @convert_params
-    def show_piechart(self, array, name, show=True, *args, **kwargs):
+    def show_piechart(self, array, name=None, show=True, *args, **kwargs):
         """
         Creates a scatter plot figure
 

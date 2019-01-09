@@ -21,7 +21,7 @@ class NumpySeabornImagePlotLogger(NumpySeabornPlotLogger):
         super(NumpySeabornImagePlotLogger, self).__init__(**kwargs)
 
     @convert_params
-    def show_image(self, image, name, *args, **kwargs):
+    def show_image(self, image, name=None, *args, **kwargs):
         """
         Create an image figure
 
@@ -59,7 +59,7 @@ class NumpySeabornImagePlotLogger(NumpySeabornPlotLogger):
         return figure_image
 
     @convert_params
-    def show_barplot(self, array, name, *args, **kwargs):
+    def show_barplot(self, array, name=None, *args, **kwargs):
         """
         Creates a bar plot figure from an array
 
@@ -77,7 +77,7 @@ class NumpySeabornImagePlotLogger(NumpySeabornPlotLogger):
         return figure_image
 
     @convert_params
-    def show_lineplot(self, y_vals, x_vals=None, name="lineplot", *args, **kwargs):
+    def show_lineplot(self, y_vals, x_vals=None, name=None, *args, **kwargs):
         """
         Creates a line plot figure with (multiple) lines plot, given values Y (and optional the corresponding X values)
 
@@ -91,13 +91,13 @@ class NumpySeabornImagePlotLogger(NumpySeabornPlotLogger):
             A numpy array image of the figure
         """
 
-        figure = super().show_lineplot(x_vals, y_vals, name, show=False, *args, **kwargs)
+        figure = super().show_lineplot(y_vals=y_vals, x_vals=x_vals, name=name, show=False, *args, **kwargs)
         figure_image = figure_to_image(figure)
 
         return figure_image
 
     @convert_params
-    def show_scatterplot(self, array, name, *args, **kwargs):
+    def show_scatterplot(self, array, name=None, *args, **kwargs):
         """
         Creates a scatter plot figure with the points given in array
 
@@ -116,7 +116,7 @@ class NumpySeabornImagePlotLogger(NumpySeabornPlotLogger):
         return figure_image
 
     @convert_params
-    def show_piechart(self, array, name, *args, **kwargs):
+    def show_piechart(self, array, name=None, *args, **kwargs):
         """
         Creates a scatter plot figure
 
