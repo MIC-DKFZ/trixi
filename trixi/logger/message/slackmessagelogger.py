@@ -115,7 +115,7 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
 
     def show_text(self, text, *args, **kwargs):
         """
-        Sends a text to a chat using an existing Telegram bot.
+        Sends a text to a chat using an existing slack bot.
 
         Args:
             text (str): Text message to be sent to the bot.
@@ -125,11 +125,11 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
         try:
             self.send_message(message=text)
         except:
-            print("Could not send text to telegram")
+            print("Could not send text to slack")
 
     def show_image(self, image, *args,  **kwargs):
         """
-        Sends an image file to a chat using an existing Telegram bot.
+        Sends an image file to a chat using an existing slack bot.
 
         Args:
             image (str or np array): Path to the image file to be sent to the chat.
@@ -143,12 +143,12 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
                 self.send_message(message=self.exp_name, file=buf)
 
         except:
-            print("Could not send image to telegram")
+            print("Could not send image to slack")
 
     def show_image_grid(self, image_array, name=None, nrow=8, padding=2,
                         normalize=False, range=None, scale_each=False, pad_value=0, *args, **kwargs):
         """
-        Sends an array of images to a chat using  an existing Telegram bot. (Requires torch and torchvision)
+        Sends an array of images to a chat using  an existing Slack bot. (Requires torch and torchvision)
 
 
         Args:
@@ -173,11 +173,11 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
         try:
             self.send_message(message=caption, file=buf)
         except:
-            print("Could not send image_grid to telegram")
+            print("Could not send image_grid to slack")
 
     def show_value(self, value, name, counter=None, tag=None, *args, **kwargs):
         """
-        Sends a value to a chat using an existing Telegram bot.
+        Sends a value to a chat using an existing slack bot.
 
         Args:
             value: Value to be plotted sent to the chat.
@@ -197,11 +197,11 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
         try:
             self.send_message(message=caption, file=buf)
         except:
-            print("Could not send plot to telegram")
+            print("Could not send plot to slack")
 
     def show_barplot(self, array, name="barplot", *args, **kwargs):
         """
-        Sends a barplot to a chat using an existing Telegram bot.
+        Sends a barplot to a chat using an existing slack bot.
 
         Args:
             array: array of shape NxM where N is the number of rows and M is the number of elements in the row.
@@ -220,11 +220,11 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
         try:
             self.send_message(message=caption, file=buf)
         except:
-            print("Could not send plot to telegram")
+            print("Could not send plot to slack")
 
     def show_lineplot(self, y_vals, x_vals=None, name="lineplot", *args, **kwargs):
         """
-        Sends a lineplot to a chat using an existing Telegram bot.
+        Sends a lineplot to a chat using an existing slack bot.
 
         Args:
             y_vals: Array of shape MxN , where M is the number of points and N is the number of different line
@@ -245,11 +245,11 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
         try:
             self.send_message(message=caption, file=buf)
         except:
-            print("Could not send plot to telegram")
+            print("Could not send plot to slack")
 
     def show_scatterplot(self, array, name="scatterplot", *args, **kwargs):
         """
-        Sends a scatterplot to a chat using an existing Telegram bot.
+        Sends a scatterplot to a chat using an existing slack bot.
 
         Args:
             array: A 2d array with size N x dim, where each element i \in N at X[i] results in a a 2d (if dim = 2)/
@@ -270,11 +270,11 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
         try:
             self.send_message(message=caption, file=buf)
         except:
-            print("Could not send plot to telegram")
+            print("Could not send plot to slack")
 
     def show_piechart(self, array, name="piechart", *args, **kwargs):
         """
-        Sends a piechart to a chat using an existing Telegram bot.
+        Sends a piechart to a chat using an existing slack bot.
 
         Args:
             array: Array of positive integers. Each integer will be presented as a part of the pie (with the total
@@ -295,7 +295,7 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
         try:
             self.send_message(message=caption, file=buf)
         except:
-            print("Could not send plot to telegram")
+            print("Could not send plot to slack")
 
     def print(self, text, *args, **kwargs):
         """Just calls show_text()"""

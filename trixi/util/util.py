@@ -484,7 +484,7 @@ def chw_to_hwc(np_array):
 
 
 def np_make_grid(np_array, nrow=8, padding=2,
-                 normalize=False, range_=None, scale_each=False, pad_value=0):
+                 normalize=False, range_=None, scale_each=False, pad_value=0, to_int=False):
     """Make a grid of images.
 
     Args:
@@ -501,6 +501,7 @@ def np_make_grid(np_array, nrow=8, padding=2,
         scale_each (bool, optional): If True, scale each image in the batch of
             images separately rather than the (min, max) over all images.
         pad_value (float, optional): Value for the padded pixels.
+        to_int (bool): Transforms the np array to a unit8 array with min 0 and max 255
 
     Example:
         See this notebook `here <https://gist.github.com/anonymous/bf16430f7750c023141c562f3e9f2a91>`_
@@ -567,4 +568,9 @@ def np_make_grid(np_array, nrow=8, padding=2,
             y * height + padding: y * height + padding + height - padding,
             x * width + padding: x * width + padding + width - padding] = np_array[k]
             k = k + 1
+
+    if to_int:
+        grid = np.clip(grid * 255, a_min=0, a_max=255)
+        grid = grid.astype(np.uint8)
+
     return grid

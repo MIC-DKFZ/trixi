@@ -127,7 +127,7 @@ class TestPytorchVisdomLogger(unittest.TestCase):
 
     def test_plot_model_structure(self):
         net = Net()
-        self.visdomLogger.plot_model_structure(net, (1, 1, 28, 28))
+        self.visdomLogger.plot_model_structure(net, [(1, 1, 28, 28)])
 
 
     def test_plot_model_statistics(self):
