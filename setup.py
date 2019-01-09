@@ -30,7 +30,8 @@ def find_version(file):
     raise RuntimeError("Unable to find version string.")
 
 
-required = resolve_requirements(os.path.join(os.path.dirname(__file__), 'requirements_full.txt'))
+required = resolve_requirements(os.path.join(os.path.dirname(__file__), 'requirements.txt'))
+extras = resolve_requirements(os.path.join(os.path.dirname(__file__), 'requirements_extras.txt'))
 readme = read_file(os.path.join(os.path.dirname(__file__), "Readme.md"))
 license = read_file(os.path.join(os.path.dirname(__file__), "LICENSE"))
 version = find_version(os.path.join(os.path.dirname(__file__), "trixi", "__init__.py"))
@@ -46,6 +47,7 @@ setup(name='trixi',
       license=license,
       packages=find_packages(),
       install_requires=required,
+      extras_require={"full": extras},
       zip_safe=True,
       entry_points={
           'console_scripts': ['trixi-browser=trixi.experiment_browser.browser:start_browser'],
