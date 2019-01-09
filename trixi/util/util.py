@@ -1,5 +1,6 @@
 import ast
 import importlib
+import io
 import json
 import logging
 import math
@@ -230,6 +231,21 @@ class Singleton:
     def __instancecheck__(self, inst):
         return isinstance(inst, self._decorated)
 
+def get_image_as_buffered_file(image_array):
+    """
+    Returns a images as file pointer in a buffer
+
+    Args:
+        image_array: (C,W,H) To be returned as a file pointer
+
+    Returns:
+        Buffer file-pointer object containing the image file
+    """
+    buf = io.BytesIO()
+    imsave(name=buf, arr=image_array.transpose((1, 2, 0)), format="png")
+    buf.seek(0)
+
+    return buf
 
 def figure_to_image(figures, close=True):
     """Render matplotlib figure to numpy format.
