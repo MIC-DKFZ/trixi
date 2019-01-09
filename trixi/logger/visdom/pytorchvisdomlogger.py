@@ -5,12 +5,10 @@ from multiprocessing import Process
 
 import numpy as np
 import torch
-from cv2 import cv2
-from graphviz import Digraph
 from torch.autograd import Variable
 from torchvision.utils import make_grid
-from trixi.util.util import np_make_grid
 
+from trixi.util.util import np_make_grid
 from trixi.logger.experiment.pytorchexperimentlogger import PytorchExperimentLogger
 from trixi.logger.visdom.numpyvisdomlogger import NumpyVisdomLogger
 from trixi.logger.abstractlogger import convert_params
@@ -151,6 +149,8 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                 output_var: output Variable
                 state_dict: dict of (name, parameter) to add names to node that require grad
             """
+            from graphviz import Digraph
+
             if state_dict is not None:
                 # assert isinstance(params.values()[0], Variable)
                 param_map = {id(v): k for k, v in state_dict.items()}
@@ -280,9 +280,6 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             image = np.clip(grid * 255, a_min=0, a_max=255)
             image = image.astype(np.uint8)
 
-            image = cv2.applyColorMap(image.transpose(1, 2, 0), cv2.COLORMAP_JET)
-            image = image.transpose(2, 0, 1)
-
         else:
             raise ValueError("Tensor has to be a torch tensor or a numpy array")
 
@@ -304,7 +301,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
     NumpyVisdomLogger.show_funcs["image_grid"] = __show_image_grid
 
     @convert_params
-    def show_image_grid_heatmap(self, heatmap, background=None, ratio=0.3, normalize=True, colormap=cv2.COLORMAP_JET,
+    def show_image_grid_heatmap(self, heatmap, background=None, ratio=0.3, normalize=True, colormap=2,
                                 name=None, caption=None, env_appendix="", opts=None,
                                 image_args=None, **kwargs):
         """
@@ -341,13 +338,14 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         }
         self._queue.put_nowait(viz_task)
 
-    def __show_image_grid_heatmap(self, heatmap, tensor=None, ratio=0.3, colormap=cv2.COLORMAP_JET,
+    def __show_image_grid_heatmap(self, heatmap, tensor=None, ratio=0.3, colormap=2,
                                   normalize=True, name=None, caption=None,
                                   env_appendix="", opts=None, image_args=None, **kwargs):
         """
           Internal show_image_grid_heatmap method, called by the internal process.
           This function does all the magic.
         """
+        from cv2 import cv2
 
         if opts is None: opts = {}
         if image_args is None: image_args = {}
