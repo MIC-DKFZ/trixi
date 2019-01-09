@@ -6,17 +6,17 @@ import telegram
 import torch
 import torchvision
 from PIL import Image
-from trixi.util.util import figure_to_image
+from trixi.util.util import figure_to_image, get_image_as_buffered_file
 
-from trixi.logger.plt.numpyseabornplotlogger import NumpySeabornImagePlotLogger
+from trixi.logger.plt.numpyseabornimageplotlogger import NumpySeabornImagePlotLogger
 
 
 class TelegramMessageLogger(NumpySeabornImagePlotLogger):
     """
-    Telegram logger, inherits the AbstractLogger and sends plots/logs to a chat via a Telegram bot.
+    Telegram logger, inherits the NumpySeabornImagePlotLogger and sends plots/logs to a chat via a Telegram bot.
     """
 
-    def __init__(self, token, chat_id, exp_name=None, **kwargs):
+    def __init__(self, token, chat_id, exp_name=None, *args, **kwargs):
         """
         Creates a new TelegramMessageLogger object.
 
@@ -46,7 +46,7 @@ class TelegramMessageLogger(NumpySeabornImagePlotLogger):
 
         return f(self, *args, **kwargs)
 
-    def show_text(self, text, **kwargs):
+    def show_text(self, text, *args, **kwargs):
         """
         Sends a text to a chat using an existing Telegram bot.
 
@@ -60,7 +60,7 @@ class TelegramMessageLogger(NumpySeabornImagePlotLogger):
         except:
             print("Could not send text to telegram")
 
-    def show_image(self, image, **kwargs):
+    def show_image(self, image, *args, **kwargs):
         """
         Sends an image file to a chat using an existing Telegram bot.
 
@@ -69,19 +69,18 @@ class TelegramMessageLogger(NumpySeabornImagePlotLogger):
         """
         try:
             if isinstance(image, str):
-                self.bot.send_photo(chat_id=self.chat_id, photo=open(image, 'rb'))
+                with open(image, 'rb') as img_file:
+                    self.bot.send_photo(chat_id=self.chat_id, photo=img_file)
             elif isinstance(image, np.ndarray):
-                buf = io.BytesIO()
-                im = Image.fromarray(image)
-                im.save(buf, format="png")
-                buf.seek(0)
+                buf = get_image_as_buffered_file(image)
+
                 self.bot.send_photo(chat_id=self.chat_id, photo=buf)
 
         except:
             print("Could not send image to telegram")
 
     def show_image_grid(self, image_array, name=None, nrow=8, padding=2,
-                        normalize=False, range=None, scale_each=False, pad_value=0, **kwargs):
+                        normalize=False, range=None, scale_each=False, pad_value=0, *args, **kwargs):
         """
         Sends an array of images to a chat using  an existing Telegram bot. (Requires torch and torchvision)
 
@@ -100,20 +99,18 @@ class TelegramMessageLogger(NumpySeabornImagePlotLogger):
         if isinstance(image_array, np.ndarray):
             image_array = torch.from_numpy(image_array)
 
-        buf = io.BytesIO()
         image_array = image_array.cpu()
         grid = torchvision.utils.make_grid(image_array, nrow=nrow, padding=padding, pad_value=pad_value,
                                            normalize=normalize, range=range, scale_each=scale_each)
         ndarr = grid.mul(255).clamp(0, 255).byte().permute(1, 2, 0).numpy()
-        im = Image.fromarray(ndarr)
-        im.save(buf, format="png")
-        buf.seek(0)
+        buf = get_image_as_buffered_file(ndarr)
+
         try:
             self.bot.send_photo(chat_id=self.chat_id, photo=buf, caption=caption)
         except:
             print("Could not send image_grid to telegram")
 
-    def show_value(self, value, name, counter=None, tag=None, **kwargs):
+    def show_value(self, value, name, counter=None, tag=None, *args, **kwargs):
         """
         Sends a value to a chat using an existing Telegram bot.
 
@@ -130,17 +127,15 @@ class TelegramMessageLogger(NumpySeabornImagePlotLogger):
         if name is not None:
             caption += name + "  "
 
-        figure = super().show_value(self, value, name, counter, tag, show=False)
-        buf = io.BytesIO()
-        im = Image.fromarray(figure)
-        im.save(buf, format="png")
-        buf.seek(0)
+        figure = super().show_value(value, name, counter, tag, show=False)
+        buf = get_image_as_buffered_file(figure)
+
         try:
             self.bot.send_photo(chat_id=self.chat_id, photo=buf, caption=caption)
         except:
             print("Could not send plot to telegram")
 
-    def show_barplot(self, array, name, *args, **kwargs):
+    def show_barplot(self, array, name=None, *args, **kwargs):
         """
         Sends a barplot to a chat using an existing Telegram bot.
 
@@ -157,16 +152,14 @@ class TelegramMessageLogger(NumpySeabornImagePlotLogger):
             caption += name + "  "
 
         figure = super().show_barplot(array, name, *args, **kwargs)
-        buf = io.BytesIO()
-        im = Image.fromarray(figure)
-        im.save(buf, format="png")
-        buf.seek(0)
+        buf = get_image_as_buffered_file(figure)
+
         try:
             self.bot.send_photo(chat_id=self.chat_id, photo=buf, caption=caption)
         except:
             print("Could not send plot to telegram")
 
-    def show_lineplot(self, y_vals, x_vals=None, name="lineplot", *args, **kwargs):
+    def show_lineplot(self, y_vals, x_vals=None, name=None, *args, **kwargs):
         """
         Sends a lineplot to a chat using an existing Telegram bot.
 
@@ -184,17 +177,15 @@ class TelegramMessageLogger(NumpySeabornImagePlotLogger):
         if name is not None:
             caption += name + "  "
 
-        figure = super().show_lineplot(x_vals, y_vals, name, show=False, *args, **kwargs)
-        buf = io.BytesIO()
-        im = Image.fromarray(figure)
-        im.save(buf, format="png")
-        buf.seek(0)
+        figure = super().show_lineplot(y_vals, x_vals, name, show=False, *args, **kwargs)
+        buf = get_image_as_buffered_file(figure)
+
         try:
             self.bot.send_photo(chat_id=self.chat_id, photo=buf, caption=caption)
         except:
             print("Could not send plot to telegram")
 
-    def show_scatterplot(self, array, name, *args, **kwargs):
+    def show_scatterplot(self, array, name=None, *args, **kwargs):
         """
         Sends a scatterplot to a chat using an existing Telegram bot.
 
@@ -212,16 +203,14 @@ class TelegramMessageLogger(NumpySeabornImagePlotLogger):
             caption += name + "  "
 
         figure = super().show_scatterplot(array, name, *args, **kwargs)
-        buf = io.BytesIO()
-        im = Image.fromarray(figure)
-        im.save(buf, format="png")
-        buf.seek(0)
+        buf = get_image_as_buffered_file(figure)
+
         try:
             self.bot.send_photo(chat_id=self.chat_id, photo=buf, caption=caption)
         except:
             print("Could not send plot to telegram")
 
-    def show_piechart(self, array, name, *args, **kwargs):
+    def show_piechart(self, array, name=None, *args, **kwargs):
         """
         Sends a piechart to a chat using an existing Telegram bot.
 
@@ -238,16 +227,14 @@ class TelegramMessageLogger(NumpySeabornImagePlotLogger):
         if name is not None:
             caption += name + "  "
 
-        figure = super().show_piechart(array, name * args, **kwargs)
-        buf = io.BytesIO()
-        im = Image.fromarray(figure)
-        im.save(buf, format="png")
-        buf.seek(0)
+        figure = super().show_piechart(array, name,  *args, **kwargs)
+        buf = get_image_as_buffered_file(figure)
+
         try:
             self.bot.send_photo(chat_id=self.chat_id, photo=buf, caption=caption)
         except:
             print("Could not send plot to telegram")
 
-    def print(self, text, **kwargs):
+    def print(self, text, *args, **kwargs):
         """Just calls show_text()"""
-        self.show_text(text, **kwargs)
+        self.show_text(text, *args, **kwargs)
