@@ -231,6 +231,7 @@ class Singleton:
     def __instancecheck__(self, inst):
         return isinstance(inst, self._decorated)
 
+
 def get_image_as_buffered_file(image_array):
     """
     Returns a images as file pointer in a buffer
@@ -246,6 +247,7 @@ def get_image_as_buffered_file(image_array):
     buf.seek(0)
 
     return buf
+
 
 def figure_to_image(figures, close=True):
     """Render matplotlib figure to numpy format.
@@ -287,7 +289,7 @@ def figure_to_image(figures, close=True):
 
 def savefig_and_close(figure, filename, close=True):
     fig_img = figure_to_image(figure, close=close)
-    imsave(filename, np.transpose(fig_img, (1,2,0)))
+    imsave(filename, np.transpose(fig_img, (1, 2, 0)))
 
 
 def random_string(length):
@@ -574,3 +576,54 @@ def np_make_grid(np_array, nrow=8, padding=2,
         grid = grid.astype(np.uint8)
 
     return grid
+
+
+def get_tensor_embedding(tensor, method="tsne", n_dims=2, n_neigh=30, **meth_args):
+    """
+    Return a embedding of a tensor (in a lower dimensional space, e.g. t-SNE)
+
+    Args:
+       tensor: Tensor to be embedded
+       method: Method used for embedding, options are: tsne, standard, ltsa, hessian, modified, isomap, mds,
+       spectral, umap
+       n_dims: dimensions to embed the data into
+       n_neigh: Neighbour parameter to kind of determin the embedding (see t-SNE for more information)
+       **meth_args: Further arguments which can be passed to the embedding method
+
+    Returns:
+        The embedded tensor
+
+    """
+    from sklearn import manifold
+    import umap
+
+    linears = ['standard', 'ltsa', 'hessian', 'modified']
+    if method in linears:
+
+        loclin = manifold.LocallyLinearEmbedding(n_neigh, n_dims, method=method, **meth_args)
+        emb_data = loclin.fit_transform(tensor)
+
+    elif method == "isomap":
+        iso = manifold.Isomap(n_neigh, n_dims, **meth_args)
+        emb_data = iso.fit_transform(tensor)
+
+    elif method == "mds":
+        mds = manifold.MDS(n_dims, **meth_args)
+        emb_data = mds.fit_transform(tensor)
+
+    elif method == "spectral":
+        se = manifold.SpectralEmbedding(n_components=n_dims, n_neighbors=n_neigh, **meth_args)
+        emb_data = se.fit_transform(tensor)
+
+    elif method == "tsne":
+        tsne = manifold.TSNE(n_components=n_dims, perplexity=n_neigh, **meth_args)
+        emb_data = tsne.fit_transform(tensor)
+
+    elif method == "umap":
+        um = umap.UMAP(n_components=n_dims, n_neighbors=n_neigh, **meth_args)
+        emb_data = um.fit_transform(tensor)
+
+    else:
+        emb_data = tensor
+
+    return emb_data
