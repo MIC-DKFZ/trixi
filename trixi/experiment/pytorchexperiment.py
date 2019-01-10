@@ -16,8 +16,17 @@ import torch
 
 from trixi.experiment.experiment import Experiment
 from trixi.logger import CombinedLogger, PytorchExperimentLogger, PytorchVisdomLogger, TelegramMessageLogger
+from trixi.logger.message.slackmessagelogger import SlackMessageLogger
+from trixi.logger.tensorboard.pytorchtensorboardxlogger import PytorchTensorboardXLogger
 from trixi.util import Config, ResultElement, ResultLogDict, SourcePacker, name_and_iter_to_filename
 from trixi.util.pytorchutils import set_seed
+
+logger_lookup_dict = dict(
+    visdom=PytorchVisdomLogger,
+    tensorboard=PytorchTensorboardXLogger,
+    telegram=TelegramMessageLogger,
+    slack=SlackMessageLogger,
+)
 
 
 class PytorchExperiment(Experiment):
@@ -186,10 +195,14 @@ class PytorchExperiment(Experiment):
                  use_telegrammessagelogger=False,
                  telegrammessagelogger_kwargs=None,
                  telegrammessagelogger_c_freq=1000,
+                 loggers=None,
                  append_rnd_to_name=False):
 
         # super(PytorchExperiment, self).__init__()
         Experiment.__init__(self)
+
+        if loggers is None:
+            loggers = {}
 
         if parse_sys_argv:
             config_path, resume_path = get_vars_from_sys_argv()
@@ -239,33 +252,71 @@ class PytorchExperiment(Experiment):
         self.results = dict()
 
         # Init loggers
+        self.loggers = {}
         logger_list = []
-        self.vlog = None
-        if use_visdomlogger:
-            if visdomlogger_kwargs is None:
-                visdomlogger_kwargs = {}
-            self.vlog = PytorchVisdomLogger(name=self.exp_name, **visdomlogger_kwargs)
-            if visdomlogger_c_freq is not None and visdomlogger_c_freq > 0:
-                logger_list.append((self.vlog, visdomlogger_c_freq))
-        self.elog = None
-        if use_explogger:
+
+        if base_dir is not None:
             if explogger_kwargs is None:
                 explogger_kwargs = {}
             self.elog = PytorchExperimentLogger(base_dir=base_dir,
-                                                experiment_name=self.exp_name,
+                                                exp_name=self.exp_name,
                                                 **explogger_kwargs)
             if explogger_c_freq is not None and explogger_c_freq > 0:
                 logger_list.append((self.elog, explogger_c_freq))
 
-            # Set results log dict to the right path
             self.results = ResultLogDict("results-log.json", base_dir=self.elog.result_dir)
-        self.tlog = None
-        if use_telegrammessagelogger:
-            if telegrammessagelogger_kwargs is None:
-                telegrammessagelogger_kwargs = {}
-            self.tlog = TelegramMessageLogger(**telegrammessagelogger_kwargs, exp_name=self.exp_name)
-            if telegrammessagelogger_c_freq is not None and telegrammessagelogger_c_freq > 0:
-                logger_list.append((self.tlog, telegrammessagelogger_c_freq))
+
+        for logger_name, logger_cfg in loggers.items():
+            if isinstance(logger_cfg, (list, tuple)):
+                log_name = logger_cfg[0]
+                log_params = logger_cfg[1] if len(logger_cfg) > 1 else {}
+                clog_freq = logger_cfg[2] if len(logger_cfg) > 2 else 10
+            else:
+                assert isinstance(logger_cfg, str), "The specified logger has to either be a string or a list with " \
+                                                    "name, parameters, clog_frequency"
+                log_name = logger_cfg
+                log_params = {}
+                clog_freq = 10
+
+            if "exp_name" not in log_params:
+                log_params["exp_name"] = self.exp_name
+
+            if logger_name == "tensorboard" and "target_dir" not in log_params:
+                log_params["target_dir"] = os.path.join(self.elog.save_dir, "tensorboard")
+
+            log_cls = logger_lookup_dict[log_name]
+            _logger = log_cls(**log_params)
+            self.loggers[logger_name] = _logger
+            if clog_freq is not None and clog_freq > 0:
+                logger_list.append((_logger, clog_freq))
+
+
+
+        # self.vlog = None
+        # if use_visdomlogger:
+        #     if visdomlogger_kwargs is None:
+        #         visdomlogger_kwargs = {}
+        #     self.vlog = PytorchVisdomLogger(name=self.exp_name, **visdomlogger_kwargs)
+        #     if visdomlogger_c_freq is not None and visdomlogger_c_freq > 0:
+        #         logger_list.append((self.vlog, visdomlogger_c_freq))
+        # self.elog = None
+        # if use_explogger:
+        #     if explogger_kwargs is None:
+        #         explogger_kwargs = {}
+        #     self.elog = PytorchExperimentLogger(base_dir=base_dir,
+        #                                         experiment_name=self.exp_name,
+        #                                         **explogger_kwargs)
+        #     if explogger_c_freq is not None and explogger_c_freq > 0:
+        #         logger_list.append((self.elog, explogger_c_freq))
+        #
+        #     # Set results log dict to the right path
+        # self.tlog = None
+        # if use_telegrammessagelogger:
+        #     if telegrammessagelogger_kwargs is None:
+        #         telegrammessagelogger_kwargs = {}
+        #     self.tlog = TelegramMessageLogger(**telegrammessagelogger_kwargs, exp_name=self.exp_name)
+        #     if telegrammessagelogger_c_freq is not None and telegrammessagelogger_c_freq > 0:
+        #         logger_list.append((self.tlog, telegrammessagelogger_c_freq))
 
         self.clog = CombinedLogger(*logger_list)
 

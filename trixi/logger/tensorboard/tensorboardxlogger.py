@@ -1,4 +1,5 @@
 import atexit
+import os
 from collections import defaultdict
 
 from tensorboardX import SummaryWriter
@@ -14,6 +15,8 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
     def __init__(self, target_dir, *args, **kwargs):
 
         super(TensorboardXLogger, self).__init__(*args, **kwargs)
+
+        os.makedirs(target_dir, exist_ok=True)
 
         self.writer = SummaryWriter(target_dir)
         self.val_dict = defaultdict(int)

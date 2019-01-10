@@ -45,7 +45,7 @@ class ExperimentLogger(AbstractLogger):
     """
 
     def __init__(self,
-                 experiment_name,
+                 exp_name,
                  base_dir,
                  folder_format="%Y%m%d-%H%M%S_{experiment_name}",
                  resume=False,
@@ -56,7 +56,7 @@ class ExperimentLogger(AbstractLogger):
         Initializes the Experiment logger and creates the experiment folder structure
 
         Args:
-            experiment_name (str): The name of the experiment
+            exp_name (str): The name of the experiment
             base_dir (str): The base directory in which the experiment folder will be created
             folder_format (str): The format for the naming of the experiment folder
             resume (bool): if True use the given folder and do not create new ones
@@ -66,7 +66,7 @@ class ExperimentLogger(AbstractLogger):
 
         super(ExperimentLogger, self).__init__(**kwargs)
 
-        self.experiment_name = experiment_name
+        self.experiment_name = exp_name
         self.base_dir = base_dir
         self.folder_format = folder_format
 

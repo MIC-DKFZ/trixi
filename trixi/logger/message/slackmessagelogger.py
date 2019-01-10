@@ -168,7 +168,7 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
         image_array = image_array.cpu()
         grid = torchvision.utils.make_grid(image_array, nrow=nrow, padding=padding, pad_value=pad_value,
                                            normalize=normalize, range=range, scale_each=scale_each)
-        ndarr = grid.mul(255).clamp(0, 255).byte().permute(1, 2, 0).numpy()
+        ndarr = grid.mul(255).clamp(0, 255).byte().numpy()
         buf = get_image_as_buffered_file(ndarr)
         try:
             self.send_message(message=caption, file=buf)

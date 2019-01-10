@@ -8,7 +8,7 @@ import torch
 from torch.autograd import Variable
 from torchvision.utils import make_grid
 
-from trixi.util.util import np_make_grid
+from trixi.util.util import np_make_grid, get_tensor_embedding
 from trixi.logger.experiment.pytorchexperimentlogger import PytorchExperimentLogger
 from trixi.logger.visdom.numpyvisdomlogger import NumpyVisdomLogger
 from trixi.logger.abstractlogger import convert_params
@@ -41,19 +41,16 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         return f(self, *args, **kwargs)
 
-    def plot_model_statistics(self, model, env_appendix=None, model_name="", plot_grad=False, **kwargs):
+    def plot_model_statistics(self, model, env_appendix="", model_name="", plot_grad=False, **kwargs):
         """
         Plots statstics (mean, std, abs(max)) of the weights or the corresponding gradients of a model as a barplot.
 
         Args:
             model: Model with the weights.
-            env_appendix: Visdom environment name appendix, if none is given, it uses "-histogram".
+            env_appendix: Visdom environment name appendix
             model_name: Name of the model (is used as window name).
             plot_grad: If false plots weight statistics, if true plot the gradients of the weights.
         """
-
-        if env_appendix is None:
-            env_appendix = "-histogram"
 
         means = []
         stds = []
@@ -80,46 +77,46 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         self.show_barplot(name=win_name, array=np.asarray([means, stds, maxmin]), legend=legendary,
                           rownames=["mean", "std", "max"], env_appendix=env_appendix)
 
-    def plot_model_statistics_weights(self, model, env_appendix=None, model_name="", **kwargs):
+    def plot_model_statistics_weights(self, model, env_appendix="", model_name="", **kwargs):
         """
         Plots statstics (mean, std, abs(max)) of the weights of a model as a barplot (uses plot model statistics with plot_grad=False).
 
         Args:
             model: Model with the weights.
-            env_appendix: Visdom environment name appendix, if none is given, it uses "-histogram".
+            env_appendix: Visdom environment name appendix
             model_name: Name of the model (is used as window name).
         """
         self.plot_model_statistics(model=model, env_appendix=env_appendix, model_name=model_name, plot_grad=False)
 
-    def plot_model_statistics_grads(self, model, env_appendix=None, model_name="", **kwargs):
+    def plot_model_statistics_grads(self, model, env_appendix="", model_name="", **kwargs):
         """
         Plots statstics (mean, std, abs(max)) of the gradients of a model as a barplot (uses plot model statistics with plot_grad=True).
 
         Args:
             model: Model with the weights and the corresponding gradients (have to calculated previously).
-            env_appendix: Visdom environment name appendix, if none is given, it uses "-histogram".
+            env_appendix: Visdom environment name appendix
             model_name: Name of the model (is used as window name).
         """
         self.plot_model_statistics(model=model, env_appendix=env_appendix, model_name=model_name, plot_grad=True)
 
-    def plot_mutliple_models_statistics_weights(self, model_dict, env_appendix=None, **kwargs):
+    def plot_mutliple_models_statistics_weights(self, model_dict, env_appendix="", **kwargs):
         """
         Given models in a dict, plots the weight statistics of the models.
 
         Args:
             model_dict: Dict with models, the key is assumed to be the name, while the value is the model.
-            env_appendix: visdom environment name appendix, if none is given, it uses "-histogram".
+            env_appendix: Visdom environment name appendix
         """
         for model_name, model in model_dict.items():
             self.plot_model_statistics_weights(model=model, env_appendix=env_appendix, model_name=model_name)
 
-    def plot_mutliple_models_statistics_grads(self, model_dict, env_appendix=None, **kwargs):
+    def plot_mutliple_models_statistics_grads(self, model_dict, env_appendix="", **kwargs):
         """
         Given models in a dict, plots the gradient statistics of the models.
 
         Args:
             model_dict: Dict with models, the key is assumed to be the name, while the value is the model.
-            env_appendix: Visdom environment name appendix, if none is given, it uses "-histogram".
+            env_appendix: Visdom environment name appendix
         """
         for model_name, model in model_dict.items():
             self.plot_model_statistics_grads(model=model, env_appendix=env_appendix, model_name=model_name)
@@ -402,41 +399,11 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         """
 
-
-        from sklearn import manifold
-        import umap
-
         if meth_args is None:
             meth_args = {}
 
         def __show_embedding(queue, tensor, labels=None, name=None, method="tsne", n_dims=2, n_neigh=30, **meth_args):
-            emb_data = []
-
-            linears = ['standard', 'ltsa', 'hessian', 'modified']
-            if method in linears:
-
-                loclin = manifold.LocallyLinearEmbedding(n_neigh, n_dims, method=method, **meth_args)
-                emb_data = loclin.fit_transform(tensor)
-
-            elif method == "isomap":
-                iso = manifold.Isomap(n_neigh, n_dims, **meth_args)
-                emb_data = iso.fit_transform(tensor)
-
-            elif method == "mds":
-                mds = manifold.MDS(n_dims, **meth_args)
-                emb_data = mds.fit_transform(tensor)
-
-            elif method == "spectral":
-                se = manifold.SpectralEmbedding(n_components=n_dims, n_neighbors=n_neigh, **meth_args)
-                emb_data = se.fit_transform(tensor)
-
-            elif method == "tsne":
-                tsne = manifold.TSNE(n_components=n_dims, perplexity=n_neigh, **meth_args)
-                emb_data = tsne.fit_transform(tensor)
-
-            elif method == "umap":
-                um = umap.UMAP(n_components=n_dims, n_neighbors=n_neigh, **meth_args)
-                emb_data = um.fit_transform(tensor)
+            emb_data = get_tensor_embedding(tensor, method=method, n_dims=n_dims, n_neigh=n_neigh, **meth_args)
 
             vis_task = {
                 "type": "scatterplot",
