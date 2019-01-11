@@ -16,7 +16,7 @@ class TestPytorchExperimentLogger(unittest.TestCase):
 
     def setUp(self):
         self.test_dir = tempfile.gettempdir()
-        self.experimentLogger = PytorchExperimentLogger(experiment_name="test",
+        self.experimentLogger = PytorchExperimentLogger(exp_name="test",
                                                         base_dir=self.test_dir,
                                                         folder_format="{experiment_name}")
 

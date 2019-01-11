@@ -21,7 +21,7 @@ class TestExperimentLogger(unittest.TestCase):
 
     def setUp(self):
         self.test_dir = tempfile.gettempdir()
-        self.experimentLogger = ExperimentLogger(experiment_name="test",
+        self.experimentLogger = ExperimentLogger(exp_name="test",
                                                  base_dir=self.test_dir,
                                                  folder_format="{experiment_name}")
 
@@ -42,7 +42,7 @@ class TestExperimentLogger(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(exp_dir, "save")), "Config dir not created")
 
     def test_two_experiment_loggers_same_test_dir_no_run_number_throws_error(self):
-        logger = ExperimentLogger(experiment_name="test",
+        logger = ExperimentLogger(exp_name="test",
                                   base_dir=self.test_dir,
                                   folder_format="{experiment_name}")
         self.assertTrue(os.path.isdir(logger.base_dir), "Experiment directory not created")
