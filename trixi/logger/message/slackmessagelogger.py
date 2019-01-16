@@ -81,6 +81,8 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
         self.cid = self.find_cid_for_user(self.slack_client, self.uid)
         self.exp_name = exp_name
 
+        self.ts_dict = {}
+
     def process_params(self, f, *args, **kwargs):
         """
         Inherited "decorator": convert PyTorch variables and Tensors to numpy arrays
@@ -97,6 +99,17 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
         return f(self, *args, **kwargs)
 
     def send_message(self, message="", file=None):
+        """
+        Sends a message and a file if one is given
+
+        Args:
+            message: Message to be send
+            file:  File to be send
+
+        Returns:
+            The timestamp (ts) of the message
+
+        """
         if file is None:
             ret_val = self.slack_client.api_call(
                 "chat.postMessage",
@@ -111,7 +124,26 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
                 file=file,
                 title=message
             )
-            return ret_val.get('ts', '')
+            try:
+                ts = list(ret_val['file']['shares']['private'].values())[0][0]['ts']
+            except:
+                ts = ""
+            return ts
+
+    def delete_message(self, ts):
+        """
+        Deletes a direct message from the bot with the given timestamp (ts)
+
+        Args:
+            ts: Time stamp the message was send
+
+        """
+        self.slack_client.api_call(
+          "chat.delete",
+          channel=self.cid,
+          ts=ts
+        )
+
 
     def show_text(self, text, *args, **kwargs):
         """
@@ -146,7 +178,8 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
             print("Could not send image to slack")
 
     def show_image_grid(self, image_array, name=None, nrow=8, padding=2,
-                        normalize=False, range=None, scale_each=False, pad_value=0, *args, **kwargs):
+                        normalize=False, range=None, scale_each=False, pad_value=0, delete_last=True,
+                        *args, **kwargs):
         """
         Sends an array of images to a chat using  an existing Slack bot. (Requires torch and torchvision)
 
@@ -154,6 +187,7 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
         Args:
             image_array (np.narray / torch.tensor): Image array/ tensor which will be sent as an image grid
             make_grid_kargs: Key word arguments for the torchvision make grid method
+            delete_last: If a message with the same name was send, delete it beforehand
         """
 
         caption = ""
@@ -161,6 +195,9 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
             caption += self.exp_name + "  "
         if name is not None:
             caption += name + "  "
+
+        if delete_last and name in self.ts_dict:
+            self.delete_message(self.ts_dict[name])
 
         if isinstance(image_array, np.ndarray):
             image_array = torch.from_numpy(image_array)
@@ -171,11 +208,12 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
         ndarr = grid.mul(255).clamp(0, 255).byte().numpy()
         buf = get_image_as_buffered_file(ndarr)
         try:
-            self.send_message(message=caption, file=buf)
+            ts = self.send_message(message=caption, file=buf)
+            self.ts_dict[name] = ts
         except:
             print("Could not send image_grid to slack")
 
-    def show_value(self, value, name, counter=None, tag=None, *args, **kwargs):
+    def show_value(self, value, name, counter=None, tag=None, delete_last=True, *args, **kwargs):
         """
         Sends a value to a chat using an existing slack bot.
 
@@ -184,6 +222,7 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
             name: Name for the plot.
             counter: Optional counter to be sent in conjunction with the value.
             tag: Tag to be used as a label for the plot.
+            delete_last: If a message with the same name was send, delete it beforehand
         """
 
         caption = ""
@@ -192,20 +231,25 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
         if name is not None:
             caption += name + "  "
 
+        if delete_last and name in self.ts_dict:
+            self.delete_message(self.ts_dict[name])
+
         figure = super().show_value(value=value, name=name, counter=counter, tag=tag)
         buf = get_image_as_buffered_file(figure)
         try:
-            self.send_message(message=caption, file=buf)
+            ts = self.send_message(message=caption, file=buf)
+            self.ts_dict[name] = ts
         except:
             print("Could not send plot to slack")
 
-    def show_barplot(self, array, name="barplot", *args, **kwargs):
+    def show_barplot(self, array, name="barplot", delete_last=True, *args, **kwargs):
         """
         Sends a barplot to a chat using an existing slack bot.
 
         Args:
             array: array of shape NxM where N is the number of rows and M is the number of elements in the row.
             name: The name of the figure
+            delete_last: If a message with the same name was send, delete it beforehand
 
         """
 
@@ -215,14 +259,18 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
         if name is not None:
             caption += name + "  "
 
+        if delete_last and name in self.ts_dict:
+            self.delete_message(self.ts_dict[name])
+
         figure = super().show_barplot(array, name, *args, **kwargs)
         buf = get_image_as_buffered_file(figure)
         try:
-            self.send_message(message=caption, file=buf)
+            ts = self.send_message(message=caption, file=buf)
+            self.ts_dict[name] = ts
         except:
             print("Could not send plot to slack")
 
-    def show_lineplot(self, y_vals, x_vals=None, name="lineplot", *args, **kwargs):
+    def show_lineplot(self, y_vals, x_vals=None, name="lineplot", delete_last=True, *args, **kwargs):
         """
         Sends a lineplot to a chat using an existing slack bot.
 
@@ -231,6 +279,7 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
             x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if
             not set the points are assumed to be equally distributed in the interval [0, 1] )
             name: The name of the figure
+            delete_last: If a message with the same name was send, delete it beforehand
 
         """
 
@@ -240,14 +289,18 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
         if name is not None:
             caption += name + "  "
 
+        if delete_last and name in self.ts_dict:
+            self.delete_message(self.ts_dict[name])
+
         figure = super().show_lineplot(y_vals, x_vals, name, *args, **kwargs)
         buf = get_image_as_buffered_file(figure)
         try:
-            self.send_message(message=caption, file=buf)
+            ts = self.send_message(message=caption, file=buf)
+            self.ts_dict[name] = ts
         except:
             print("Could not send plot to slack")
 
-    def show_scatterplot(self, array, name="scatterplot", *args, **kwargs):
+    def show_scatterplot(self, array, name="scatterplot", delete_last=True, *args, **kwargs):
         """
         Sends a scatterplot to a chat using an existing slack bot.
 
@@ -255,6 +308,7 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
             array: A 2d array with size N x dim, where each element i \in N at X[i] results in a a 2d (if dim = 2)/
             3d (if dim = 3) point.
             name: The name of the figure
+            delete_last: If a message with the same name was send, delete it beforehand
 
         """
 
@@ -264,15 +318,19 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
         if name is not None:
             caption += name + "  "
 
+        if delete_last and name in self.ts_dict:
+            self.delete_message(self.ts_dict[name])
+
         figure = super().show_scatterplot(array, name, *args, **kwargs)
         buf = get_image_as_buffered_file(figure)
 
         try:
-            self.send_message(message=caption, file=buf)
+            ts = self.send_message(message=caption, file=buf)
+            self.ts_dict[name] = ts
         except:
             print("Could not send plot to slack")
 
-    def show_piechart(self, array, name="piechart", *args, **kwargs):
+    def show_piechart(self, array, name="piechart", delete_last=True, *args, **kwargs):
         """
         Sends a piechart to a chat using an existing slack bot.
 
@@ -280,6 +338,7 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
             array: Array of positive integers. Each integer will be presented as a part of the pie (with the total
             as the sum of all integers)
             name: The name of the figure
+            delete_last: If a message with the same name was send, delete it beforehand
 
         """
 
@@ -289,11 +348,15 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
         if name is not None:
             caption += name + "  "
 
+        if delete_last and name in self.ts_dict:
+            self.delete_message(self.ts_dict[name])
+
         figure = super().show_piechart(array, name, *args, **kwargs)
         buf = get_image_as_buffered_file(figure)
 
         try:
-            self.send_message(message=caption, file=buf)
+            ts = self.send_message(message=caption, file=buf)
+            self.ts_dict[name] = ts
         except:
             print("Could not send plot to slack")
 
