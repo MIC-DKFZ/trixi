@@ -19,6 +19,7 @@ from trixi.logger import CombinedLogger, PytorchExperimentLogger, PytorchVisdomL
 from trixi.logger.message.slackmessagelogger import SlackMessageLogger
 from trixi.logger.tensorboard.pytorchtensorboardxlogger import PytorchTensorboardXLogger
 from trixi.util import Config, ResultElement, ResultLogDict, SourcePacker, name_and_iter_to_filename
+from trixi.util.config import update_from_sys_argv
 from trixi.util.pytorchutils import set_seed
 
 logger_lookup_dict = dict(
@@ -204,47 +205,61 @@ class PytorchExperiment(Experiment):
         if loggers is None:
             loggers = {}
 
+        config_args_path = None
         if parse_sys_argv:
-            config_path, resume_path = get_vars_from_sys_argv()
-            if config_path:
-                config = config_path
+            config_args_path, resume_path = get_vars_from_sys_argv()
             if resume_path:
                 resume = resume_path
 
-        self._config_raw = None
-        if isinstance(config, str):
-            self._config_raw = Config(file_=config, update_from_argv=parse_config_sys_argv)
-        elif isinstance(config, Config):
-            self._config_raw = Config(config=config, update_from_argv=parse_config_sys_argv)
-        elif isinstance(config, dict):
-            self._config_raw = Config(config=config, update_from_argv=parse_config_sys_argv)
-        else:
-            self._config_raw = Config(update_from_argv=parse_config_sys_argv)
+        if config_args_path is None:
+            self._config_raw = None
+            if isinstance(config, str):
+                self._config_raw = Config(file_=config)
+            elif isinstance(config, Config):
+                self._config_raw = Config(config=config)
+            elif isinstance(config, dict):
+                self._config_raw = Config(config=config)
+            else:
+                self._config_raw = Config()
 
-        self.n_epochs = n_epochs
-        if 'n_epochs' in self._config_raw:
-            self.n_epochs = self._config_raw["n_epochs"]
-        if self.n_epochs is None:
-            self.n_epochs = 0
+            self.n_epochs = n_epochs
+            if self.n_epochs is None and self._config_raw.get("n_epochs") is not None:
+                n_epochs = self._config_raw["n_epochs"]
+            elif self.n_epochs is None and self._config_raw.get("n_epochs") is None:
+                self.n_epochs = 0
+            self._config_raw["n_epochs"] = n_epochs
 
-        self._seed = seed
-        if 'seed' in self._config_raw:
-            self._seed = self._config_raw.seed
-        if self._seed is None:
-            random_data = os.urandom(4)
-            seed = int.from_bytes(random_data, byteorder="big")
-            self._config_raw.seed = seed
             self._seed = seed
+            if self._seed is None and self._config_raw.get('seed') is not None:
+                self._seed = self._config_raw['seed']
+            elif self._seed is None and self._config_raw.get('seed') is None:
+                random_data = os.urandom(4)
+                seed = int.from_bytes(random_data, byteorder="big")
+                self._seed = seed
+            self._config_raw['seed'] = self._seed
 
-        self.exp_name = name
-        if 'name' in self._config_raw:
-            self.exp_name = self._config_raw["name"]
-        if append_rnd_to_name:
-            rnd_str = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(5))
-            self.exp_name += "_" + rnd_str
+            self.exp_name = name
+            if self.exp_name is None and self._config_raw.get("name") is not None:
+                self.exp_name = self._config_raw["name"]
+            elif self.exp_name is None and self._config_raw.get("name") is None:
+                self.exp_name = "experiment"
+            if append_rnd_to_name:
+                rnd_str = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(5))
+                self.exp_name += "_" + rnd_str
+            self._config_raw["name"] = self.exp_name
 
-        if 'base_dir' in self._config_raw:
-            base_dir = self._config_raw["base_dir"]
+            if base_dir is not None:
+                self._config_raw["base_dir"] = base_dir
+
+        else:
+            self._config_raw = Config(config_args_path)
+
+        update_from_sys_argv(self._config_raw)
+
+        self.n_epochs = self._config_raw["n_epochs"]
+        self._seed = self._config_raw['seed']
+        self.exp_name = self._config_raw["name"]
+        base_dir = self._config_raw["base_dir"]
 
         self._checkpoint_to_cpu = checkpoint_to_cpu
         self._safe_checkpoint_every_epoch = safe_checkpoint_every_epoch
@@ -290,7 +305,8 @@ class PytorchExperiment(Experiment):
             if clog_freq is not None and clog_freq > 0:
                 logger_list.append((_logger, clog_freq))
 
-
+            if logger_name == "visdom":
+                self.vlog = _logger
 
         # self.vlog = None
         # if use_visdomlogger:
