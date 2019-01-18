@@ -23,3 +23,348 @@ label {
   font-family: Georgia, Times, 'Times New Roman', serif;
   line-height: 1.5em;
 }
+
+//////////////////// From Trixi ////////////////////
+
+h1, h2, h3, h4 {
+  margin-top: 0.2em;
+}
+
+* {
+  font-family: 'Roboto', sans-serif;
+}
+
+td {
+  text-overflow: ellipsis;
+  max-width: 0;
+}
+
+.card {
+  margin: 10px;
+}
+
+.card-header-color {
+  color: #4285F4;
+}
+
+.table-diff {
+  background-color: #ffccf5;
+}
+
+.content {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+a.toggle-vis, a.toggle-config, a.toggle-result {
+  margin: 1px;
+}
+
+.plots {
+  box-sizing: border-box;
+}
+
+.plot-box {
+  width: 45%;
+  display: inline-block;
+  vertical-align: top;
+}
+
+/* Slideshow container */
+.slideshow-container {
+  max-width: 1000px;
+  position: relative;
+  margin: auto;
+}
+
+/* Hide the images by default */
+.slideshow-container .mySlides {
+  display: none;
+}
+
+/* Next & previous buttons */
+.slideshow-container .prev, .slideshow-container .next {
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  width: auto;
+  margin-top: -22px;
+  padding: 16px;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+  transition: 0.6s ease;
+  border-radius: 0 3px 3px 0;
+}
+
+/* Position the "next button" to the right */
+.next {
+  right: 0;
+  border-radius: 3px 0 0 3px;
+}
+
+
+/* On hover, add a black background color with a little bit see-through */
+.prev:hover, .next:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* Caption text */
+.text {
+  color: #f2f2f2;
+  font-size: 15px;
+  padding: 8px 12px;
+  position: absolute;
+  bottom: 8px;
+  width: 100%;
+  text-align: center;
+}
+
+/* Number text (1/3 etc) */
+.numbertext {
+  color: #f2f2f2;
+  font-size: 12px;
+  padding: 8px 12px;
+  position: absolute;
+  top: 0;
+}
+
+/* The dots/bullets/indicators */
+.dot {
+  cursor: pointer;
+  height: 15px;
+  width: 15px;
+  margin: 0 2px;
+  background-color: #bbb;
+  color: #fff;
+  text-align: center;
+  font-size: 0.7em;
+  border-radius: 50%;
+  display: inline-block;
+  transition: background-color 0.6s ease;
+}
+
+.b_active, .dot:hover {
+  background-color: #717171;
+}
+
+
+.ctable table {
+  width: 100%;
+  text-align: left;
+  border-spacing: 0;
+  border-collapse: collapse;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.ctable th, .ctable td {
+  font-family: inherit;
+  font-size: .875em;
+  line-height: 1.45;
+  color: #444;
+  vertical-align: middle;
+  padding: 1em;
+}
+
+.ctable th {
+  font-weight: 600;
+}
+
+.ctable .cgroupstart {
+  width: 20%;
+}
+
+.ctable .cgroup {
+  border: 1px solid #ccc;
+}
+
+/* Tablehead */
+
+.ctable thead .ctable th {
+  background: #def4fe;
+  background: -moz-linear-gradient(top, #ffffff 0%, #f5f5f5 100%);
+  background: -webkit-linear-gradient(top, #ffffff 0%, #f5f5f5 100%);
+  background: -o-linear-gradient(top, #ffffff 0%, #f5f5f5 100%);
+  background: -ms-linear-gradient(top, #ffffff 0%, #f5f5f5 100%);
+  background: linear-gradient(to bottom, #ffffff 0%, #f5f5f5 100%);
+  text-align: center;
+  position: relative;
+  border-bottom: 1px solid #ccc;
+  font-weight: 400;
+  color: #999;
+}
+
+.ctable thead th:nth-child(1) {
+  border-bottom: 0px solid #ccc;
+
+  background: transparent;
+}
+
+.ctable thead th h2 {
+  font-weight: 300;
+  font-size: 2.4em;
+  line-height: 1.2;
+  color: #59c7fb;
+}
+
+/* Tablebody */
+
+.ctable tbody th span {
+  font-weight: normal;
+  font-size: 87.5%;
+  color: #999;
+  display: block;
+}
+
+.ctable tbody td {
+  text-align: center;
+}
+
+.ctable tbody tr:hover {
+  background-color: #e3f2fd;
+  /*font-weight: bold;*/
+}
+
+tr.ctable-diff {
+  background-color: #ffccbc;
+}
+
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+  z-index: 1;
+}
+
+.switch input {
+  display: none;
+  z-index: 1;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+  z-index: 1;
+}
+
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+  z-index: 1;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+#overviewTable tbody tr td {
+  text-align: center;
+}
+
+.center-elem {
+  text-align: center;
+}
+
+/* ----------------------------------------End -------------------------------------- */
+
+#wrapper {
+  display: flex;
+  align-items: stretch;
+}
+
+#sidebar-wrapper {
+  width: 80px;
+  background: #4285F4;
+  color: #fff;
+  position: fixed;
+  height: 100%;
+  overflow-y: auto;
+  z-index: 999;
+}
+
+#page-content-wrapper {
+  margin-left: 80px;
+  width: calc(100% - 80px);
+}
+
+.sidebar-nav {
+  width: 80px;
+  list-style: none;
+  text-align: center;
+}
+
+.sidebar-nav span, .sidebar-nav i {
+  color: white;
+}
+
+.sidebar-nav li a {
+  width: 80px;
+}
+
+.sidebar-nav li a:hover {
+  background: rgba(255, 255, 255, 0.2);
+  text-decoration: none;
+}
+
+
+.nav-link.active {
+  background-color: #f26e00;
+}
