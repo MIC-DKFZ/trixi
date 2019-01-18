@@ -35,6 +35,7 @@ readme = read_file(os.path.join(os.path.dirname(__file__), "Readme.md"))
 license = read_file(os.path.join(os.path.dirname(__file__), "LICENSE"))
 version = find_version(os.path.join(os.path.dirname(__file__), "trixi", "__init__.py"))
 
+
 setup(name='trixi',
       version=version,
       description='Manage your machine learning experiments with trixi - modular, reproducible, high fashion',
@@ -49,5 +50,6 @@ setup(name='trixi',
       zip_safe=True,
       entry_points={
           'console_scripts': ['trixi-browser=trixi.experiment_browser.browser:start_browser'],
-      }
+      },
+      include_package_data=True
       )
