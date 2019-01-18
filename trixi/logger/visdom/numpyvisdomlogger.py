@@ -1007,9 +1007,9 @@ def start_visdom(port_list=(8080, 8000)):
         return True
 
     def _start_visdom(port):
-        p = Process(target=visdom.server.start_server, kwargs={"port": port})
-        atexit.register(p.terminate)
+        p = Process(target=visdom.server.start_server, kwargs={"port": port, "base_url": ''})
         p.start()
+        atexit.register(p.terminate)
         time.sleep(20)
         return True
 
