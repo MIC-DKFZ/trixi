@@ -25,6 +25,8 @@ import App from 'containers/App';
 import '!file-loader?name=[name].[ext]!./images/favicon.ico';
 /* eslint-enable import/no-webpack-loader-syntax */
 
+import history from "./history"
+
 // Import CSS reset and Global Styles
 import 'styles/theme.scss';
 
@@ -43,7 +45,7 @@ openSansObserver.load().then(() => {
 
 // Create redux store with history
 const initialState = {};
-const history = createHistory();
+// const history = createHistory();
 const store = configureStore(initialState, history);
 const MOUNT_NODE = document.getElementById('app');
 
