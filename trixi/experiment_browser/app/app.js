@@ -30,6 +30,10 @@ import history from "./history"
 // Import CSS reset and Global Styles
 import 'styles/theme.scss';
 
+// Import bootstrap CSS
+import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
+// import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
+
 import configureStore from './configureStore';
 
 // Observe loading of Open Sans (to remove open sans, remove the <link> tag in

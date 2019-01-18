@@ -32,6 +32,7 @@
   "dependencies": {
     "@trendmicro/react-sidenav": "^0.4.5",
     "babel-polyfill": "6.26.0",
+    "bootstrap": "^4.2.1",
     "chalk": "^2.3.2",
     "compression": "1.7.2",
     "cross-env": "^5.1.6",
@@ -46,6 +47,8 @@
     "minimist": "1.2.0",
     "prop-types": "15.6.1",
     "react": "^16.4.0",
+    "react-bootstrap": "^1.0.0-beta.3",
+    "react-bootstrap-table-next": "^2.0.1",
     "react-dom": "^16.4.0",
     "react-helmet": "5.2.0",
     "react-loadable": "^5.4.0",
