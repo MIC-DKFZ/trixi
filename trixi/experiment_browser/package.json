@@ -48,6 +48,7 @@
     "react": "^16.4.0",
     "react-bootstrap": "^1.0.0-beta.3",
     "react-bootstrap-table-next": "^2.0.1",
+    "react-bootstrap-table2-filter": "^1.1.1",
     "react-dom": "^16.4.0",
     "react-helmet": "5.2.0",
     "react-loadable": "^5.4.0",
