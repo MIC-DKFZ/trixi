@@ -20,6 +20,6 @@ deploy:
     on:
       tags: true
   - provider: script
-    script: "./deploy_slim.sh"
+    script: /bin/sh deploy_slim.sh
     on:
       branch: trixi-slim-publish
