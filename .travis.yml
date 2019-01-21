@@ -20,6 +20,6 @@ deploy:
     on:
       tags: true
   - provider: script
-    script: ./deploy_slim.sh
+    script: ./deploy_slim.sh $PYPI_USER $PYPI_PASSWORD
     on:
-      tags: true
+      branch: master
