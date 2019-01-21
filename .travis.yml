@@ -22,7 +22,6 @@ deploy:
   - provider: script
     script:
     - |
-      cd $TRAVIS_BUILD_DIR
       ls -la
       ./deploy_slim.sh $PYPI_USER $PYPI_PASSWORD
     on:
