@@ -8,6 +8,7 @@ matrix:
 before_install:
 - sudo apt-get install -qq graphviz
 - pip install $PYTORCH_URL
+- pip install twine
 install:
 - pip install .
 script:
