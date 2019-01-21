@@ -23,4 +23,4 @@ deploy:
   - provider: script
     script: /bin/sh deploy_slim.sh
     on:
-      branch: trixi-slim-publish
+      tags: true
