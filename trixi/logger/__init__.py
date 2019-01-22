@@ -11,11 +11,13 @@ try:
     from trixi.logger.file.pytorchplotfilelogger import PytorchPlotFileLogger
     from trixi.logger.visdom.pytorchvisdomlogger import PytorchVisdomLogger
 except ImportError as e:
-    print("Could not import Pytorch related modules.")
-    print(e)
+    import warnings
+    warnings.warn(ImportWarning("Could not import Pytorch related modules:\n%s"
+        % e.msg))
 
 try:
     from trixi.logger.message.telegrammessagelogger import TelegramMessageLogger
 except ImportError as e:
-    print("Could not import Telegram related modules.")
-    print(e)
+    import warnings
+    warnings.warn(ImportWarning("Could not import Telegram related modules:\n%s"
+        % e.msg))

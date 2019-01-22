@@ -25,8 +25,9 @@ from scipy.misc import imsave
 try:
     import torch
 except ImportError as e:
-    print("Could not import Pytorch related modules.")
-    print(e)
+    import warnings
+    warnings.warn(ImportWarning("Could not import Pytorch related modules:\n%s"
+        % e.msg))
 
 
     class torch:
