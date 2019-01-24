@@ -1,0 +1,6 @@
+include LICENSE
+include Makefile
+include Readme.md
+include requirements_full.txt
+include requirements.txt
+recursive-include trixi/experiment_browser *
