@@ -84,7 +84,22 @@ class NumpyPlotFileLogger(NumpySeabornPlotLogger):
         threaded(savefig_and_close)(figure, outname)
 
     @convert_params
-    def show_lineplot(self, y_vals, x_vals=None, name="lineplot", file_format=".png", *args, **kwargs):
+    def show_boxplot(self, array, name, file_format=".png", *args, **kwargs):
+        """
+        Method which creates and stores a boxplot
+
+        Args:
+            array: Array of values you want to plot
+            name: file-name
+            file_format: output-image (plot) file format
+        """
+        figure = NumpySeabornPlotLogger.show_boxplot(self, array, name, show=False, **kwargs)
+        outname = os.path.join(self.plot_dir, name) + file_format
+        os.makedirs(os.path.dirname(outname), exist_ok=True)
+        threaded(savefig_and_close)(figure, outname)
+
+    @convert_params
+    def show_lineplot(self, y_vals, x_vals, name, file_format=".png", *args, **kwargs):
         """
         Method which creates and stores a lineplot
 

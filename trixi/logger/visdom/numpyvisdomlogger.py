@@ -2,6 +2,7 @@ from __future__ import division, print_function
 
 import atexit
 from collections import defaultdict
+import inspect
 
 import os
 
@@ -179,6 +180,11 @@ class NumpyVisdomLogger(AbstractLogger):
         """
         if opts is None:
             opts = {}
+        else:
+            if 'nrow' in opts.keys():
+                nrow=opts['nrow']
+            else:
+                nrow=8 # as defined in function
         opts = opts.copy()
         opts.update(dict(
             title=title,
@@ -189,7 +195,8 @@ class NumpyVisdomLogger(AbstractLogger):
             tensor=images,
             win=name,
             env=self.name + env_appendix,
-            opts=opts
+            opts=opts,
+            #nrow=nrow
         )
 
         return win
@@ -604,6 +611,159 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
+    def show_boxplot(self, x_vals=None, name=None, env_appendix="", opts=None, **kwargs):
+        """
+        Displays (multiple) lines plot, given values Y (and optional the corresponding X values)
+
+        Args:
+            y_vals: Array of shape MxN , where M is the number of points and N is the number of different line
+            x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if
+            not set the points are assumed to be equally distributed in the interval [0, 1] )
+            name: The name of the window
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        """
+
+        if opts is None:
+            opts = {}
+        vis_task = {
+            "type": "boxplot",
+            "x_vals": x_vals,
+            "name": name,
+            "env_appendix": env_appendix,
+            "opts": opts
+        }
+        self._queue.put_nowait(vis_task)
+
+    def __show_boxplot(self, x_vals, name=None, env_appendix="", opts=None, **kwargs):
+        """
+       Internal show_lineplot method, called by the internal process.
+       This function does all the magic.
+        """
+
+        if opts is None:
+            opts = {}
+        opts = opts.copy()
+        opts.update(dict(
+            title=name,
+        ))
+
+        win = self.vis.boxplot(
+            X=x_vals,
+            win=name,
+            env=self.name + env_appendix,
+            opts=opts
+        )
+
+        return win
+
+    @convert_params
+    def show_surfaceplot(self, x_vals=None, name=None, env_appendix="", opts=None, **kwargs):
+        """
+        Displays (multiple) lines plot, given values Y (and optional the corresponding X values)
+
+        Args:
+            y_vals: Array of shape MxN , where M is the number of points and N is the number of different line
+            x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if
+            not set the points are assumed to be equally distributed in the interval [0, 1] )
+            name: The name of the window
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        """
+
+        if opts is None:
+            opts = {}
+        vis_task = {
+            "type": "surfaceplot",
+            "x_vals": x_vals,
+            "name": name,
+            "env_appendix": env_appendix,
+            "opts": opts
+        }
+        self._queue.put_nowait(vis_task)
+
+    def __show_surfaceplot(self, x_vals, name=None, env_appendix="", opts=None, **kwargs):
+        """
+       Internal show_lineplot method, called by the internal process.
+       This function does all the magic.
+        """
+
+        if opts is None:
+            opts = {}
+        opts = opts.copy()
+        opts.update(dict(
+            title=name,
+            colormap='Viridis',
+            xlabel='feature',
+            ylabel='batch'
+        ))
+        win = self.vis.surf(X=x_vals.astype('float'),
+                              win=name,
+                              env=self.name + env_appendix,
+                              opts=opts,)
+        # win = self.vis.surf(
+        #     X=x_vals,
+        #     win=name,
+        #     env=self.name + env_appendix,
+        #     opts=opts
+        # )
+
+        return win
+
+    @convert_params
+    def show_contourplot(self, x_vals=None, name=None, env_appendix="", opts=None, **kwargs):
+        """
+        Displays (multiple) lines plot, given values Y (and optional the corresponding X values)
+
+        Args:
+            y_vals: Array of shape MxN , where M is the number of points and N is the number of different line
+            x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if
+            not set the points are assumed to be equally distributed in the interval [0, 1] )
+            name: The name of the window
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        """
+
+        if opts is None:
+            opts = {}
+        vis_task = {
+            "type": "contourplot",
+            "x_vals": x_vals,
+            "name": name,
+            "env_appendix": env_appendix,
+            "opts": opts
+        }
+        self._queue.put_nowait(vis_task)
+
+    def __show_contourplot(self, x_vals, name=None, env_appendix="", opts=None, **kwargs):
+        """
+       Internal show_lineplot method, called by the internal process.
+       This function does all the magic.
+        """
+
+        if opts is None:
+            opts = {}
+        opts = opts.copy()
+        opts.update(dict(
+            title=name,
+            colormap='Viridis',
+            xlabel='feature',
+            ylabel='batch'
+        ))
+        win = self.vis.contour(X=x_vals.astype('float'),
+                              win=name,
+                              env=self.name + env_appendix,
+                              opts=opts,)
+        # win = self.vis.surf(
+        #     X=x_vals,
+        #     win=name,
+        #     env=self.name + env_appendix,
+        #     opts=opts
+        # )
+
+        return win
+
+    @convert_params
     def show_scatterplot(self, array, labels=None, name=None, env_appendix="", opts=None, **kwargs):
         """
         Displays a scatter plots, with the points given in array
@@ -961,6 +1121,9 @@ class NumpyVisdomLogger(AbstractLogger):
         "histogram": __show_histogram,
         "histogram_3d": __show_histogram_3d,
         "barplot": __show_barplot,
+        "boxplot": __show_boxplot,
+        "surfaceplot": __show_surfaceplot,
+        "contourplot": __show_contourplot,
         "lineplot": __show_lineplot,
         "scatterplot": __show_scatterplot,
         "piechart": __show_piechart,

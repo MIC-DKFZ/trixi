@@ -263,6 +263,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         if image_args is None: image_args = {}
 
         if isinstance(tensor, Variable):
+
             tensor = tensor.detach()
 
         if torch.is_tensor(tensor):
