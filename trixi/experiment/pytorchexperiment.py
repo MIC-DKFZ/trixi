@@ -334,10 +334,18 @@ class PytorchExperiment(Experiment):
 
         """
 
+        def parse_torchmodules_recursive(input, output):
+            for key, value in input.items():
+                if isinstance(value, dict):
+                    parse_torchmodules_recursive(value, output)
+                elif isinstance(value, torch.nn.Module):
+                    output[key] = value
+
         pyth_modules = dict()
-        for key, val in self.__dict__.items():
-            if isinstance(val, torch.nn.Module):
-                pyth_modules[key] = val
+        parse_torchmodules_recursive(self.__dict__, pyth_modules)
+        # for key, val in self.__dict__.items():
+        #     if isinstance(val, torch.nn.Module):
+        #         pyth_modules[key] = val
         if from_config:
             for key, val in self.config.items():
                 if isinstance(val, torch.nn.Module):
