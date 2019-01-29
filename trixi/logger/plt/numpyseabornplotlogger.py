@@ -155,7 +155,7 @@ class NumpySeabornPlotLogger(AbstractLogger):
         return figure
 
     @convert_params
-    def show_lineplot(self, y_vals, x_vals, name, show=True, *args, **kwargs):
+    def show_lineplot(self, y_vals, x_vals=None, name=None, show=True, *args, **kwargs):
         """
         Creates a line plot figure with (multiple) lines plot, given values Y (and optional the corresponding X values)
 

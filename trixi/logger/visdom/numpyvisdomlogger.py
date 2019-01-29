@@ -14,6 +14,7 @@ else:
     IS_WINDOWS = False
     try:
         from torch.multiprocessing import Queue, Process
+
         print("Using torch multi processing")
     except ImportError:
         from multiprocessing import Queue, Process
@@ -182,9 +183,9 @@ class NumpyVisdomLogger(AbstractLogger):
             opts = {}
         else:
             if 'nrow' in opts.keys():
-                nrow=opts['nrow']
+                nrow = opts['nrow']
             else:
-                nrow=8 # as defined in function
+                nrow = 8  # as defined in function
         opts = opts.copy()
         opts.update(dict(
             title=title,
@@ -196,7 +197,7 @@ class NumpyVisdomLogger(AbstractLogger):
             win=name,
             env=self.name + env_appendix,
             opts=opts,
-            #nrow=nrow
+            # nrow=nrow
         )
 
         return win
@@ -611,12 +612,11 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
-    def show_boxplot(self, x_vals=None, name=None, env_appendix="", opts=None, **kwargs):
+    def show_boxplot(self, x_vals, name=None, env_appendix="", opts=None, **kwargs):
         """
-        Displays (multiple) lines plot, given values Y (and optional the corresponding X values)
+        Displays a boxplot
 
         Args:
-            y_vals: Array of shape MxN , where M is the number of points and N is the number of different line
             x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if
             not set the points are assumed to be equally distributed in the interval [0, 1] )
             name: The name of the window
@@ -658,12 +658,11 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
-    def show_surfaceplot(self, x_vals=None, name=None, env_appendix="", opts=None, **kwargs):
+    def show_surfaceplot(self, x_vals, name=None, env_appendix="", opts=None, **kwargs):
         """
-        Displays (multiple) lines plot, given values Y (and optional the corresponding X values)
+        Displays a surface plot
 
         Args:
-            y_vals: Array of shape MxN , where M is the number of points and N is the number of different line
             x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if
             not set the points are assumed to be equally distributed in the interval [0, 1] )
             name: The name of the window
@@ -684,40 +683,34 @@ class NumpyVisdomLogger(AbstractLogger):
 
     def __show_surfaceplot(self, x_vals, name=None, env_appendix="", opts=None, **kwargs):
         """
-       Internal show_lineplot method, called by the internal process.
+       Internal show_surfaceplot method, called by the internal process.
        This function does all the magic.
         """
 
         if opts is None:
             opts = {}
+            opts.update(dict(
+                title=name,
+                colormap='Viridis',
+                xlabel='feature',
+                ylabel='batch'
+            ))
         opts = opts.copy()
-        opts.update(dict(
-            title=name,
-            colormap='Viridis',
-            xlabel='feature',
-            ylabel='batch'
-        ))
+
         win = self.vis.surf(X=x_vals.astype('float'),
-                              win=name,
-                              env=self.name + env_appendix,
-                              opts=opts,)
-        # win = self.vis.surf(
-        #     X=x_vals,
-        #     win=name,
-        #     env=self.name + env_appendix,
-        #     opts=opts
-        # )
+                            win=name,
+                            env=self.name + env_appendix,
+                            opts=opts, )
 
         return win
 
     @convert_params
-    def show_contourplot(self, x_vals=None, name=None, env_appendix="", opts=None, **kwargs):
+    def show_contourplot(self, x_vals, name=None, env_appendix="", opts=None, **kwargs):
         """
-        Displays (multiple) lines plot, given values Y (and optional the corresponding X values)
+        Displays a contour plot
 
         Args:
-            y_vals: Array of shape MxN , where M is the number of points and N is the number of different line
-            x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if
+            x_vals: Array of shape MxN , where M is the number of points and N is the number of different line
             not set the points are assumed to be equally distributed in the interval [0, 1] )
             name: The name of the window
             env_appendix: appendix to the environment name, if used the new env is env+env_appendix
@@ -737,29 +730,24 @@ class NumpyVisdomLogger(AbstractLogger):
 
     def __show_contourplot(self, x_vals, name=None, env_appendix="", opts=None, **kwargs):
         """
-       Internal show_lineplot method, called by the internal process.
+       Internal show_contourplot method, called by the internal process.
        This function does all the magic.
         """
 
         if opts is None:
             opts = {}
+            opts.update(dict(
+                title=name,
+                colormap='Viridis',
+                xlabel='feature',
+                ylabel='batch'
+            ))
         opts = opts.copy()
-        opts.update(dict(
-            title=name,
-            colormap='Viridis',
-            xlabel='feature',
-            ylabel='batch'
-        ))
+
         win = self.vis.contour(X=x_vals.astype('float'),
-                              win=name,
-                              env=self.name + env_appendix,
-                              opts=opts,)
-        # win = self.vis.surf(
-        #     X=x_vals,
-        #     win=name,
-        #     env=self.name + env_appendix,
-        #     opts=opts
-        # )
+                               win=name,
+                               env=self.name + env_appendix,
+                               opts=opts, )
 
         return win
 
@@ -1018,9 +1006,8 @@ class NumpyVisdomLogger(AbstractLogger):
 
         return win
 
-
     @convert_params
-    def show_plotly_plt(self, figure, name=None, env_appendix="",**kwargs):
+    def show_plotly_plt(self, figure, name=None, env_appendix="", **kwargs):
         """
         Displays an plotly figure in a window/pane at the visdom server
 
@@ -1054,7 +1041,6 @@ class NumpyVisdomLogger(AbstractLogger):
         )
 
         return win
-
 
     @convert_params
     def send_data(self, data, name=None, layout=None, endpoint='events', append=False, **kwargs):
