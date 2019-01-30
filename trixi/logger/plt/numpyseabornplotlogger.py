@@ -126,10 +126,10 @@ class NumpySeabornPlotLogger(AbstractLogger):
     @convert_params
     def show_boxplot(self, array, name, show=True, *args, **kwargs):
         """
-        Creates a bar plot figure from an array
+        Creates a box plot figure from an array
 
         Args:
-            array: array of shape NxM where N is the nomber of rows and M is the number of elements in the row.
+            array: array of shape NxM where N is the number of rows and M is the number of elements in the row.
             name: The name of the figure
             show: Flag if it should also display the figure (result might also depend on the matplotlib backend )
 

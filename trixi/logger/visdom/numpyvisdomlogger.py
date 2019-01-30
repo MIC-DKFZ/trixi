@@ -614,11 +614,10 @@ class NumpyVisdomLogger(AbstractLogger):
     @convert_params
     def show_boxplot(self, x_vals, name=None, env_appendix="", opts=None, **kwargs):
         """
-        Displays a boxplot
+        Displays a box plot, given values X
 
         Args:
-            x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if
-            not set the points are assumed to be equally distributed in the interval [0, 1] )
+            x_vals: Array of shape MxN , where M is the number of points and N are the number of groups
             name: The name of the window
             env_appendix: appendix to the environment name, if used the new env is env+env_appendix
             opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
@@ -660,11 +659,10 @@ class NumpyVisdomLogger(AbstractLogger):
     @convert_params
     def show_surfaceplot(self, x_vals, name=None, env_appendix="", opts=None, **kwargs):
         """
-        Displays a surface plot
+        Displays a surface plot given values X
 
         Args:
-            x_vals: Has to have the same shape as Y: MxN. For each point in Y it gives the corresponding X value (if
-            not set the points are assumed to be equally distributed in the interval [0, 1] )
+            x_vals: Array of shape MxN
             name: The name of the window
             env_appendix: appendix to the environment name, if used the new env is env+env_appendix
             opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
@@ -692,8 +690,8 @@ class NumpyVisdomLogger(AbstractLogger):
             opts.update(dict(
                 title=name,
                 colormap='Viridis',
-                xlabel='feature',
-                ylabel='batch'
+                xlabel='X',
+                ylabel='Y'
             ))
         opts = opts.copy()
 
@@ -710,8 +708,7 @@ class NumpyVisdomLogger(AbstractLogger):
         Displays a contour plot
 
         Args:
-            x_vals: Array of shape MxN , where M is the number of points and N is the number of different line
-            not set the points are assumed to be equally distributed in the interval [0, 1] )
+            x_vals: Array of shape MxN
             name: The name of the window
             env_appendix: appendix to the environment name, if used the new env is env+env_appendix
             opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...

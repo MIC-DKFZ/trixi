@@ -324,7 +324,7 @@ class PytorchExperiment(Experiment):
 
     def get_pytorch_modules(self, from_config=True):
         """
-        Returns all torch.nn.Modules stored in the experiment in a dict.
+        Returns all torch.nn.Modules stored in the experiment in a dict (even child dicts are stored).
 
         Args:
             from_config (bool): Also get modules that are stored in the :attr:`.config` attribute.
@@ -335,11 +335,12 @@ class PytorchExperiment(Experiment):
         """
 
         def parse_torchmodules_recursive(input, output):
-            for key, value in input.items():
-                if isinstance(value, dict):
-                    parse_torchmodules_recursive(value, output)
-                elif isinstance(value, torch.nn.Module):
-                    output[key] = value
+            if isinstance(input, dict):
+	            for key, value in input.items():
+	                if isinstance(value, dict):
+	                    parse_torchmodules_recursive(value, output)
+	                elif isinstance(value, torch.nn.Module):
+	                    output[key] = value
 
         pyth_modules = dict()
         parse_torchmodules_recursive(self.__dict__, pyth_modules)
