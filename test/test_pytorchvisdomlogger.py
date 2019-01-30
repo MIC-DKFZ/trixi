@@ -61,6 +61,11 @@ class TestPytorchVisdomLogger(unittest.TestCase):
         self.visdomLogger.show_piechart(array, name="piechart")
         self.visdomLogger._NumpyVisdomLogger__show_piechart(array, name="piechart")
 
+    def test_show_boxplot(self):
+        array = torch.from_numpy(np.random.random_sample(5))
+        self.visdomLogger.show_boxplot(array, name="boxplot")
+        self.visdomLogger._NumpyVisdomLogger__show_boxplot(array, name="boxplot")
+
     def test_show_scatterplot(self):
         array = torch.from_numpy(np.random.random_sample((5, 2)))
         self.visdomLogger.show_scatterplot(array, name="scatterplot")
