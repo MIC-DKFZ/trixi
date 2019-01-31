@@ -296,7 +296,7 @@ class PytorchExperiment(Experiment):
             if "exp_name" not in log_params:
                 log_params["exp_name"] = self.exp_name
 
-            if logger_name == "tensorboard" and "target_dir" not in log_params:
+            if log_name == "tensorboard" and "target_dir" not in log_params:
                 log_params["target_dir"] = os.path.join(self.elog.save_dir, "tensorboard")
 
             log_cls = logger_lookup_dict[log_name]
@@ -305,7 +305,7 @@ class PytorchExperiment(Experiment):
             if clog_freq is not None and clog_freq > 0:
                 logger_list.append((_logger, clog_freq))
 
-            if logger_name == "visdom":
+            if log_name == "visdom":
                 self.vlog = _logger
 
         # self.vlog = None
