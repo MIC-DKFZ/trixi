@@ -297,17 +297,6 @@ class PytorchExperiment(Experiment):
             if clog_freq is not None and clog_freq > 0:
                 logger_list.append((_logger, clog_freq))
 
-            if log_name == "visdom":
-                self.vlog = _logger
-            elif log_name == "tensorboard":
-                self.txlog = _logger
-            elif log_name == "telegram":
-                self.tlog = _logger
-            elif log_name == "slack":
-                self.slog = _logger
-            else:
-                pass
-
         self.clog = CombinedLogger(*logger_list)
 
         set_seed(self._seed)
@@ -339,6 +328,44 @@ class PytorchExperiment(Experiment):
         self.config = Config.init_objects(self._config_raw)
 
         atexit.register(self.at_exit_func)
+
+    @property
+    def vlog(self):
+        if "visdom" in self.loggers:
+            return self.loggers["visdom"]
+        elif "v" in self.loggers:
+            return self.loggers["v"]
+        else:
+            return None
+
+    @property
+    def tlog(self):
+        if "telegram" in self.loggers:
+            return self.loggers["telegram"]
+        elif "t" in self.loggers:
+            return self.loggers["t"]
+        else:
+            return None
+
+    @property
+    def txlog(self):
+        if "tensorboard" in self.loggers:
+            return self.loggers["tensorboard"]
+        if "tensorboardx" in self.loggers:
+            return self.loggers["tensorboardx"]
+        elif "tx" in self.loggers:
+            return self.loggers["tx"]
+        else:
+            return None
+
+    @property
+    def slog(self):
+        if "slack" in self.loggers:
+            return self.loggers["slack"]
+        elif "s" in self.loggers:
+            return self.loggers["s"]
+        else:
+            return None
 
     def process_err(self, e):
         if self.elog is not None:
