@@ -288,8 +288,11 @@ class PytorchExperiment(Experiment):
             if "exp_name" not in log_params:
                 log_params["exp_name"] = self.exp_name
 
-            if log_name == "tensorboard" and "target_dir" not in log_params:
-                log_params["target_dir"] = os.path.join(self.elog.save_dir, "tensorboard")
+            if log_name == "tensorboard":
+                if "target_dir" not in log_params or log_params["target_dir"] is None:
+                    log_params["target_dir"] = os.path.join(self.elog.save_dir, "tensorboard")
+                else:
+                    log_params["target_dir"] = os.path.join(log_params["target_dir"], self.elog.folder_name)
 
             log_cls = logger_lookup_dict[log_name]
             _logger = log_cls(**log_params)
