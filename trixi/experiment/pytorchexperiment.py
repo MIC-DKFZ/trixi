@@ -299,6 +299,14 @@ class PytorchExperiment(Experiment):
 
             if log_name == "visdom":
                 self.vlog = _logger
+            elif log_name == "tensorboard":
+                self.txlog = _logger
+            elif log_name == "telegram":
+                self.tlog = _logger
+            elif log_name == "slack":
+                self.slog = _logger
+            else:
+                pass
 
         self.clog = CombinedLogger(*logger_list)
 
