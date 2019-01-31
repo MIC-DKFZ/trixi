@@ -146,7 +146,7 @@ class PytorchExperiment(Experiment):
             (if the keys match).
         checkpoint_to_cpu (bool): When checkpointing, transfer all tensors to
             the CPU beforehand.
-        safe_checkpoint_every_epoch (int): Determines after how many epochs a
+        save_checkpoint_every_epoch (int): Determines after how many epochs a
             checkpoint is stored.
         use_visdomlogger (bool): Use a :class:`.PytorchVisdomLogger`. Is
             accessible via the :attr:`vlog` attribute.
@@ -185,7 +185,7 @@ class PytorchExperiment(Experiment):
                  resume_reset_epochs=True,
                  parse_sys_argv=False,
                  checkpoint_to_cpu=True,
-                 safe_checkpoint_every_epoch=1,
+                 save_checkpoint_every_epoch=1,
                  explogger_kwargs=None,
                  explogger_c_freq=100,
                  loggers=None,
@@ -254,7 +254,7 @@ class PytorchExperiment(Experiment):
         base_dir = self._config_raw["base_dir"]
 
         self._checkpoint_to_cpu = checkpoint_to_cpu
-        self._safe_checkpoint_every_epoch = safe_checkpoint_every_epoch
+        self._save_checkpoint_every_epoch = save_checkpoint_every_epoch
 
         self.results = dict()
 
@@ -726,7 +726,7 @@ class PytorchExperiment(Experiment):
 
     def _end_epoch_internal(self, epoch):
         self.save_results()
-        if epoch % self._safe_checkpoint_every_epoch == 0:
+        if epoch % self._save_checkpoint_every_epoch == 0:
             self.save_temp_checkpoint()
         self._save_exp_config()
 
