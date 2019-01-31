@@ -71,6 +71,16 @@ class TestPytorchVisdomLogger(unittest.TestCase):
         self.visdomLogger.show_scatterplot(array, name="scatterplot")
         self.visdomLogger._NumpyVisdomLogger__show_scatterplot(array.numpy(), name="scatterplot")
 
+    def test_show_surfaceplot(self):
+        array = torch.from_numpy(np.random.random_sample(5))
+        self.visdomLogger.show_surfaceplot(array, name="surfaceplot")
+        self.visdomLogger._NumpyVisdomLogger__show_surfaceplot(array, name="surfaceplot")
+
+    def test_show_boxplot(self):
+        array = torch.from_numpy(np.random.random_sample(5))
+        self.visdomLogger.show_contourplot(array, name="contourplot")
+        self.visdomLogger._NumpyVisdomLogger__show_contourplot(array, name="contourplot")
+
     def test_show_value(self):
         val = torch.from_numpy(np.random.random_sample(1))
         self.visdomLogger.show_value(val, "value")
