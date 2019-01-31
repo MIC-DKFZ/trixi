@@ -3,8 +3,10 @@ import tempfile
 import warnings
 from multiprocessing import Process
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
+
 from torch.autograd import Variable
 from torchvision.utils import make_grid
 
@@ -99,7 +101,38 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         """
         self.plot_model_statistics(model=model, env_appendix=env_appendix, model_name=model_name, plot_grad=True)
 
-    def plot_mutliple_models_statistics_weights(self, model_dict, env_appendix="", **kwargs):
+    def plot_model_gradient_flow(self, model, name="model", title=None):
+        """
+        Plots statstics (mean, std, abs(max)) of the weights or the corresponding gradients of a model as a barplot.
+
+        Args:
+            model: Model with the weights.
+            env_appendix: Visdom environment name appendix, if none is given, it uses "-histogram".
+            model_name: Name of the model (is used as window name).
+            plot_grad: If false plots weight statistics, if true plot the gradients of the weights.
+        """
+        ave_grads = []
+        layers = []
+
+        named_parameters = model.named_parameters()
+        for n, p in named_parameters:
+            if (p.requires_grad) and ("bias" not in n):
+                layers.append(n)
+                ave_grads.append(p.grad.abs().mean())
+
+        plt.figure()
+        plt.plot(ave_grads, alpha=0.3, color="b")
+        plt.hlines(0, 0, len(ave_grads) + 1, linewidth=1, color="k")
+        plt.xticks(range(0, len(ave_grads), 1), layers, rotation="vertical")
+        plt.xlim(xmin=0, xmax=len(ave_grads))
+        plt.xlabel("Layers")
+        plt.ylabel("average gradient {}".format(name))
+        plt.title("Gradient flow")
+        plt.grid(True)
+
+        self.show_matplot_plt(plt.gcf(), name=name, title=title)
+
+    def plot_mutliple_models_statistics_weights(self, model_dict, env_appendix=None, **kwargs):
         """
         Given models in a dict, plots the weight statistics of the models.
 
@@ -260,6 +293,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         if image_args is None: image_args = {}
 
         if isinstance(tensor, Variable):
+
             tensor = tensor.detach()
 
         if torch.is_tensor(tensor):

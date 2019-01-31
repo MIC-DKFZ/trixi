@@ -184,18 +184,10 @@ class PytorchExperiment(Experiment):
                  resume_save_types=("model", "optimizer", "simple", "th_vars", "results"),
                  resume_reset_epochs=True,
                  parse_sys_argv=False,
-                 parse_config_sys_argv=True,
                  checkpoint_to_cpu=True,
                  safe_checkpoint_every_epoch=1,
-                 use_visdomlogger=True,
-                 visdomlogger_kwargs=None,
-                 visdomlogger_c_freq=1,
-                 use_explogger=True,
                  explogger_kwargs=None,
                  explogger_c_freq=100,
-                 use_telegrammessagelogger=False,
-                 telegrammessagelogger_kwargs=None,
-                 telegrammessagelogger_c_freq=1000,
                  loggers=None,
                  append_rnd_to_name=False):
 
@@ -308,32 +300,6 @@ class PytorchExperiment(Experiment):
             if log_name == "visdom":
                 self.vlog = _logger
 
-        # self.vlog = None
-        # if use_visdomlogger:
-        #     if visdomlogger_kwargs is None:
-        #         visdomlogger_kwargs = {}
-        #     self.vlog = PytorchVisdomLogger(name=self.exp_name, **visdomlogger_kwargs)
-        #     if visdomlogger_c_freq is not None and visdomlogger_c_freq > 0:
-        #         logger_list.append((self.vlog, visdomlogger_c_freq))
-        # self.elog = None
-        # if use_explogger:
-        #     if explogger_kwargs is None:
-        #         explogger_kwargs = {}
-        #     self.elog = PytorchExperimentLogger(base_dir=base_dir,
-        #                                         experiment_name=self.exp_name,
-        #                                         **explogger_kwargs)
-        #     if explogger_c_freq is not None and explogger_c_freq > 0:
-        #         logger_list.append((self.elog, explogger_c_freq))
-        #
-        #     # Set results log dict to the right path
-        # self.tlog = None
-        # if use_telegrammessagelogger:
-        #     if telegrammessagelogger_kwargs is None:
-        #         telegrammessagelogger_kwargs = {}
-        #     self.tlog = TelegramMessageLogger(**telegrammessagelogger_kwargs, exp_name=self.exp_name)
-        #     if telegrammessagelogger_c_freq is not None and telegrammessagelogger_c_freq > 0:
-        #         logger_list.append((self.tlog, telegrammessagelogger_c_freq))
-
         self.clog = CombinedLogger(*logger_list)
 
         set_seed(self._seed)
@@ -391,7 +357,7 @@ class PytorchExperiment(Experiment):
 
     def get_pytorch_modules(self, from_config=True):
         """
-        Returns all torch.nn.Modules stored in the experiment in a dict.
+        Returns all torch.nn.Modules stored in the experiment in a dict (even child dicts are stored).
 
         Args:
             from_config (bool): Also get modules that are stored in the :attr:`.config` attribute.
@@ -401,10 +367,19 @@ class PytorchExperiment(Experiment):
 
         """
 
+        def parse_torchmodules_recursive(input, output):
+            if isinstance(input, dict):
+	            for key, value in input.items():
+	                if isinstance(value, dict):
+	                    parse_torchmodules_recursive(value, output)
+	                elif isinstance(value, torch.nn.Module):
+	                    output[key] = value
+
         pyth_modules = dict()
-        for key, val in self.__dict__.items():
-            if isinstance(val, torch.nn.Module):
-                pyth_modules[key] = val
+        parse_torchmodules_recursive(self.__dict__, pyth_modules)
+        # for key, val in self.__dict__.items():
+        #     if isinstance(val, torch.nn.Module):
+        #         pyth_modules[key] = val
         if from_config:
             for key, val in self.config.items():
                 if isinstance(val, torch.nn.Module):
@@ -736,6 +711,8 @@ class PytorchExperiment(Experiment):
                 self._config_raw = load_config
                 self.config = Config.init_objects(self._config_raw)
                 self.print("Loaded existing config from:", base_dir)
+                if self.n_epochs is None:
+                    self.n_epochs = self._config_raw.get("n_epochs")
 
         if checkpoint_file:
             self.load_checkpoint(name="", path=checkpoint_file, save_types=self._resume_save_types)

@@ -8,14 +8,19 @@ matrix:
 before_install:
 - sudo apt-get install -qq graphviz
 - pip install $PYTORCH_URL
+- pip install twine
 install:
 - pip install .
 script:
 - pytest
 deploy:
-  provider: pypi
-  user: d.zimmerer
-  password:
-    secure: YFjzOaYZiFmoW/1yHjLearH7FJ10jdt8q7GJGGYQBiDp3kniC/Ap/wB9AOpKuf3gmTsTU1KSI0pp4SQmEn7oID1JXpHTErFaQewck1wZ9kQ5zjoOKONzZQ/Y3wtGj4m8Grn2sWqxAvmhCpjsz0qSCxZ+QyLh+Ths1VBbXrmnADQitqm3R0J6gHIwedgRp62ensF2WqIs9RWu1dbz2B1FD4KEf+FeWO4i8c+pv3XFcOi9VcYBls0voPBGAMRHSppmUuvghkxu/LrI+SkyaodAPX0GAjWaLeMCqpplKzChkRjKXRQLRwaBCnAxOVeTg70pnYemK6G8G6i6UKsPPXyI92twiP6NRkz4VS4XkvjvBYSeTcukIJlC6ghdPr9G1b8jdLqGI1ZTovkCLrJEdkxk9FCe9AJMxdD727PAwnguFRvwernCFKi/J96ycrcCeRWATdNPZRJWocOSP70xWOsC6/IeCj29eJjEowQhC5HPM4OpBcGjzVzPgBD2U1HFhkLOCqHuTix04XoBGK1Cz128ku0tXQZkjBQ/zYxDR+etPLRK8M0YNLtHJLxnQOOMiWpyEJ+0Asu1sPDrPhmrGCXaMUwbPi8bObIKOjp23LWRGVDnE+rD0diPqHEix9tyaCRqf2DX7ZYbYH6qOpKVmCRZMFyMeKadA3EKwD6i0R7AHEI=
-  on:
-     tags: true
+  - provider: pypi
+    user: d.zimmerer
+    password:
+      secure: YFjzOaYZiFmoW/1yHjLearH7FJ10jdt8q7GJGGYQBiDp3kniC/Ap/wB9AOpKuf3gmTsTU1KSI0pp4SQmEn7oID1JXpHTErFaQewck1wZ9kQ5zjoOKONzZQ/Y3wtGj4m8Grn2sWqxAvmhCpjsz0qSCxZ+QyLh+Ths1VBbXrmnADQitqm3R0J6gHIwedgRp62ensF2WqIs9RWu1dbz2B1FD4KEf+FeWO4i8c+pv3XFcOi9VcYBls0voPBGAMRHSppmUuvghkxu/LrI+SkyaodAPX0GAjWaLeMCqpplKzChkRjKXRQLRwaBCnAxOVeTg70pnYemK6G8G6i6UKsPPXyI92twiP6NRkz4VS4XkvjvBYSeTcukIJlC6ghdPr9G1b8jdLqGI1ZTovkCLrJEdkxk9FCe9AJMxdD727PAwnguFRvwernCFKi/J96ycrcCeRWATdNPZRJWocOSP70xWOsC6/IeCj29eJjEowQhC5HPM4OpBcGjzVzPgBD2U1HFhkLOCqHuTix04XoBGK1Cz128ku0tXQZkjBQ/zYxDR+etPLRK8M0YNLtHJLxnQOOMiWpyEJ+0Asu1sPDrPhmrGCXaMUwbPi8bObIKOjp23LWRGVDnE+rD0diPqHEix9tyaCRqf2DX7ZYbYH6qOpKVmCRZMFyMeKadA3EKwD6i0R7AHEI=
+    on:
+      tags: true
+  - provider: script
+    script: /bin/sh deploy_slim.sh
+    on:
+      tags: true

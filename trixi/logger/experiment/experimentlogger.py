@@ -206,6 +206,18 @@ class ExperimentLogger(AbstractLogger):
         """
         self.text_logger.show_text(text, name, logger, **kwargs)
 
+    def show_boxplot(self, array, name, file_format=".png", **kwargs):
+        """
+        This function saves a boxplot in the experiment plot folder.
+
+        Args:
+            array(np.ndarray): array to be plotted
+            name(str): image title
+            file_format (str): file format of the image
+        """
+        self.plot_logger.show_boxplot(
+            array, name, file_format=".png", **kwargs)
+
     def save_model(self):
         raise NotImplementedError
 

@@ -124,6 +124,37 @@ class NumpySeabornPlotLogger(AbstractLogger):
         return figure
 
     @convert_params
+    def show_boxplot(self, array, name, show=True, *args, **kwargs):
+        """
+        Creates a box plot figure from an array
+
+        Args:
+            array: array of shape NxM where N is the number of rows and M is the number of elements in the row.
+            name: The name of the figure
+            show: Flag if it should also display the figure (result might also depend on the matplotlib backend )
+
+        Returns:
+            A matplotlib figure
+        """
+
+        figure = self.get_figure(name)
+        seaborn.set_style("whitegrid")
+
+        ax = seaborn.boxplot(data=array)
+
+        handles, _ = ax.get_legend_handles_labels()
+        try:
+            legend = kwargs['opts']['legend']
+            ax.legend(handles, legend)
+        except KeyError: # if no legend is defined
+            pass
+        if show:
+            plt.show(block=False)
+            plt.pause(0.01)
+
+        return figure
+
+    @convert_params
     def show_lineplot(self, y_vals, x_vals=None, name=None, show=True, *args, **kwargs):
         """
         Creates a line plot figure with (multiple) lines plot, given values Y (and optional the corresponding X values)

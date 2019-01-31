@@ -2,6 +2,7 @@ from __future__ import division, print_function
 
 import atexit
 from collections import defaultdict
+import inspect
 
 import os
 
@@ -13,6 +14,7 @@ else:
     IS_WINDOWS = False
     try:
         from torch.multiprocessing import Queue, Process
+
         print("Using torch multi processing")
     except ImportError:
         from multiprocessing import Queue, Process
@@ -179,6 +181,11 @@ class NumpyVisdomLogger(AbstractLogger):
         """
         if opts is None:
             opts = {}
+        else:
+            if 'nrow' in opts.keys():
+                nrow = opts['nrow']
+            else:
+                nrow = 8  # as defined in function
         opts = opts.copy()
         opts.update(dict(
             title=title,
@@ -189,7 +196,8 @@ class NumpyVisdomLogger(AbstractLogger):
             tensor=images,
             win=name,
             env=self.name + env_appendix,
-            opts=opts
+            opts=opts,
+            # nrow=nrow
         )
 
         return win
@@ -604,6 +612,143 @@ class NumpyVisdomLogger(AbstractLogger):
         return win
 
     @convert_params
+    def show_boxplot(self, x_vals, name=None, env_appendix="", opts=None, **kwargs):
+        """
+        Displays a box plot, given values X
+
+        Args:
+            x_vals: Array of shape MxN , where M is the number of points and N are the number of groups
+            name: The name of the window
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        """
+
+        if opts is None:
+            opts = {}
+        vis_task = {
+            "type": "boxplot",
+            "x_vals": x_vals,
+            "name": name,
+            "env_appendix": env_appendix,
+            "opts": opts
+        }
+        self._queue.put_nowait(vis_task)
+
+    def __show_boxplot(self, x_vals, name=None, env_appendix="", opts=None, **kwargs):
+        """
+       Internal show_lineplot method, called by the internal process.
+       This function does all the magic.
+        """
+
+        if opts is None:
+            opts = {}
+        opts = opts.copy()
+        opts.update(dict(
+            title=name,
+        ))
+
+        win = self.vis.boxplot(
+            X=x_vals,
+            win=name,
+            env=self.name + env_appendix,
+            opts=opts
+        )
+
+        return win
+
+    @convert_params
+    def show_surfaceplot(self, x_vals, name=None, env_appendix="", opts=None, **kwargs):
+        """
+        Displays a surface plot given values X
+
+        Args:
+            x_vals: Array of shape MxN
+            name: The name of the window
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        """
+
+        if opts is None:
+            opts = {}
+        vis_task = {
+            "type": "surfaceplot",
+            "x_vals": x_vals,
+            "name": name,
+            "env_appendix": env_appendix,
+            "opts": opts
+        }
+        self._queue.put_nowait(vis_task)
+
+    def __show_surfaceplot(self, x_vals, name=None, env_appendix="", opts=None, **kwargs):
+        """
+       Internal show_surfaceplot method, called by the internal process.
+       This function does all the magic.
+        """
+
+        if opts is None:
+            opts = {}
+            opts.update(dict(
+                title=name,
+                colormap='Viridis',
+                xlabel='X',
+                ylabel='Y'
+            ))
+        opts = opts.copy()
+
+        win = self.vis.surf(X=x_vals,
+                            win=name,
+                            env=self.name + env_appendix,
+                            opts=opts, )
+
+        return win
+
+    @convert_params
+    def show_contourplot(self, x_vals, name=None, env_appendix="", opts=None, **kwargs):
+        """
+        Displays a contour plot
+
+        Args:
+            x_vals: Array of shape MxN
+            name: The name of the window
+            env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+        """
+
+        if opts is None:
+            opts = {}
+        vis_task = {
+            "type": "contourplot",
+            "x_vals": x_vals,
+            "name": name,
+            "env_appendix": env_appendix,
+            "opts": opts
+        }
+        self._queue.put_nowait(vis_task)
+
+    def __show_contourplot(self, x_vals, name=None, env_appendix="", opts=None, **kwargs):
+        """
+       Internal show_contourplot method, called by the internal process.
+       This function does all the magic.
+        """
+
+        if opts is None:
+            opts = {}
+            opts.update(dict(
+                title=name,
+                colormap='Viridis',
+                xlabel='feature',
+                ylabel='batch'
+            ))
+        opts = opts.copy()
+
+        win = self.vis.contour(X=x_vals,
+                               win=name,
+                               env=self.name + env_appendix,
+                               opts=opts, )
+
+        return win
+
+    @convert_params
     def show_scatterplot(self, array, labels=None, name=None, env_appendix="", opts=None, **kwargs):
         """
         Displays a scatter plots, with the points given in array
@@ -858,9 +1003,8 @@ class NumpyVisdomLogger(AbstractLogger):
 
         return win
 
-
     @convert_params
-    def show_plotly_plt(self, figure, name=None, env_appendix="",**kwargs):
+    def show_plotly_plt(self, figure, name=None, env_appendix="", **kwargs):
         """
         Displays an plotly figure in a window/pane at the visdom server
 
@@ -894,7 +1038,6 @@ class NumpyVisdomLogger(AbstractLogger):
         )
 
         return win
-
 
     @convert_params
     def send_data(self, data, name=None, layout=None, endpoint='events', append=False, **kwargs):
@@ -961,6 +1104,9 @@ class NumpyVisdomLogger(AbstractLogger):
         "histogram": __show_histogram,
         "histogram_3d": __show_histogram_3d,
         "barplot": __show_barplot,
+        "boxplot": __show_boxplot,
+        "surfaceplot": __show_surfaceplot,
+        "contourplot": __show_contourplot,
         "lineplot": __show_lineplot,
         "scatterplot": __show_scatterplot,
         "piechart": __show_piechart,
@@ -1007,9 +1153,9 @@ def start_visdom(port_list=(8080, 8000)):
         return True
 
     def _start_visdom(port):
-        p = Process(target=visdom.server.start_server, kwargs={"port": port})
-        atexit.register(p.terminate)
+        p = Process(target=visdom.server.start_server, kwargs={"port": port, "base_url": ''})
         p.start()
+        atexit.register(p.terminate)
         time.sleep(20)
         return True
 

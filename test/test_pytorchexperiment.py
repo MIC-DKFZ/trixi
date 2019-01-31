@@ -19,8 +19,7 @@ class TestPytorchExperiment(unittest.TestCase):
 
     def setUp(self):
         self.test_dir = tempfile.gettempdir()
-        self.experiment = PytorchExperiment(name="test_experiment", base_dir=self.test_dir, n_epochs=10,
-                                            use_visdomlogger=False)
+        self.experiment = PytorchExperiment(name="test_experiment", base_dir=self.test_dir, n_epochs=10)
 
     def tearDown(self):
         self.experiment._exp_state = "Ended"
@@ -209,10 +208,9 @@ class TestPytorchExperiment(unittest.TestCase):
         self.experiment.run()
         self.assertTrue(len(self.cntr) == 10, "Did not call train for the right number of epochs")
 
-        exp2 = PytorchExperiment(name="test-exp2", base_dir=self.test_dir, resume=self.experiment.elog.work_dir,
-                                 use_visdomlogger=False)
+        exp2 = PytorchExperiment(name="test-exp2", base_dir=self.test_dir, resume=self.experiment.elog.work_dir)
         exp3 = PytorchExperiment(name="test-exp2", base_dir=self.test_dir, resume=self.experiment.elog.work_dir,
-                                 resume_reset_epochs=False, use_visdomlogger=False)
+                                 resume_reset_epochs=False)
 
         exp2.prepare_resume()
         exp3.prepare_resume()
