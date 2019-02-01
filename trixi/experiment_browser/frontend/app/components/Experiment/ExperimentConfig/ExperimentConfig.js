@@ -42,6 +42,25 @@ class ExperimentConfig extends React.Component { // eslint-disable-line react/pr
           "auc": 0.07968243956565857,
           "exp2val": 0.999999999,
         }
+      },
+      {
+        config: {
+          "name": "test_experiment3",
+          "description": "This is only to test the experiment browser",
+          "time": "20180221-163831",
+          "state": "Error",
+          "patch_size": "__tuple__((128, 128, 128))",
+          "batch_size": 3,
+          "num_epochs": 2000,
+          "another_entry": "something something"
+        },
+        results: {
+          "train": 0.051016926765441895,
+          "val": 0.35155946016311646,
+          "dice": 0.22086010873317719,
+          "auc": 0.07968243956565857,
+          "exp3val": 0.999999999,
+        }
       }
     ];
     this.data = experiments
@@ -104,7 +123,6 @@ class ExperimentConfig extends React.Component { // eslint-disable-line react/pr
     }
     return table_body;
   }
-
 
   render() {
     this.generate_dummy_data();
