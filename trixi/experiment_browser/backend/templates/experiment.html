@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TRIXI - Comparing experiments</title>
+
+    <meta charset="utf-8">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/custom.css') }}"/>
+    <link href="https://use.fontawesome.com/releases/v5.0.8/css/all.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <meta charset="utf-8">
+
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='assets/trixi-icon.png') }}"/>
+
+
+</head>
+
+<body data-spy="scroll" data-target="#spy" data-offset="20">
+
+
+<div id="wrapper">
+
+    <!-- Sidebar -->
+    <div id="sidebar-wrapper">
+        <nav id="spy">
+            <ul class="sidebar-nav nav">
+                <li>
+                    <a href="#section1" class="nav-link">
+                        <i class="material-icons">settings</i>
+                        <span>Config</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#section2" class="nav-link">
+                        <i class="material-icons">photo</i>
+                        <span>Images</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#section3" class="nav-link">
+                        <i class="material-icons">timeline</i>
+                        <span style="width: 80px;">Plots</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#section4" class="nav-link">
+                        <i class="material-icons">library_books</i>
+                        <span>Results</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#section5" class="nav-link">
+                        <i class="material-icons">business_center</i>
+                        <span>Logs</span>
+                    </a>
+                </li>
+            </ul>
+            </ul>
+        </nav>
+
+        <div style="position: absolute; bottom: 0; width: 80px; padding-bottom: 10px; padding-left: 3px">
+            <a href="/" style="color: white">
+                <i class="material-icons" style="vertical-align: middle">chevron_left</i>
+                <span style="vertical-align: middle">Back</span>
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Page content -->
+    <div id="page-content-wrapper">
+
+        <div id="section1" class="card border-primary">
+
+            <div class="card-header card-header-color">
+                <h3>Config</h3>
+            </div>
+
+            <div class="card-body">
+
+                {% set exps = config["exps"] %}
+                {% set configs = config["configs"] %}
+                {% set ckeys = config["keys"] %}
+                {% set dkeys = config["diff_keys"] %}
+
+                <div class="table-responsive">
+                    <table class="ctable table-hover">
+
+                        <colgroup class="cgroupstart"></colgroup>
+                        {% for exp in exps %}
+                        <colgroup class="cgroup"></colgroup>
+                        {% endfor %}
+
+                        <thead class="ctable">
+                        <tr class="ctable">
+                            <th>&nbsp;</th>
+
+                            {% for exp in exps %}
+                            <th class="ctable">
+                                <h4 style="white-space: nowrap; display: inline;">{{exp.exp_name}}</h4>
+                                {% if exp.star %}
+                                <a class="star_element" href="" style="color:black; float:right;"
+                                   dir_name="{{ exp.exp_dir }}">
+                                    <i class="material-icons">star</i>
+                                </a>
+                                {% else %}
+                                <a class="star_element" href="" style="color:black; float:right;"
+                                   dir_name="{{ exp.exp_dir }}">
+                                    <i class="material-icons">star_border</i>
+                                </a>
+                                {% endif %}
+
+                            </th>
+                            {% endfor %}
+
+                        </tr>
+                        </thead>
+
+                        <tbody class="ctable">
+
+                        {% for k in ckeys %}
+                        <tr {% if k in dkeys %}class="ctable ctable-diff" {% else %}class="ctable" {% endif %}>
+
+                            <th class="ctable">{{k}}</th>
+
+                            {% for val in configs[k] %}
+                            <td class="ctable">{{val}}</td>
+                            {% endfor %}
+
+                        </tr>
+                        {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+        <hr>
+
+        <div id="section2" class="card border-primary" style="margin: 10px;">
+            <div class="card-header" style="color: #4285F4">
+                <div style="float: left">
+                    <h3>Images</h3>
+                </div>
+                <div style="float: right;">
+                    <label class="switch">
+                        <input type="checkbox" onchange="alignImages()" id="imageAlignButton" style="z-index: 1;">
+                        <span class="slider round"></span>
+                    </label>
+                    <div>Align</div>
+                </div>
+            </div>
+
+            <div class="card-body">
+
+                <div id="theallimagediv" style="overflow-x: visible">
+
+                    {% set imgs = images["imgs"] %}
+                    {% set img_keys = images["img_keys"] %}
+
+                    {% for exps in imgs %}
+
+                    {% set img_path = images["img_path"][exps] %}
+                    {% set exp_imgs = imgs[exps] %}
+
+
+                    <h4 style="text-align: center">{{ exps }}</h4>
+
+                    <div style="overflow-x: auto; white-space:nowrap;" class="theimagecontentdiv">
+                        {% for group_key in img_keys %}
+                        {% if group_key in exp_imgs %}
+
+                        {% set group = group_key %}
+                        {% set img_group = exp_imgs[group_key]%}
+
+
+                        <div style="width:25%; display: inline-block; margin: 20px;" id="{{exps}}-{{group}}">
+                            <div class="slideshow-container">
+
+                                {% for img in img_group %}
+                                <div class="mySlides">
+                                    <div class="numbertext">{{ loop.index }} / {{ loop.length }}</div>
+                                    <a href="{{img_path}}/{{ img }}" target="_blank" class="image_link">
+                                        <img class="lazyimg" src="" lazysrc="{{img_path}}/{{ img }}" style="width:100%"
+                                             alt="{{ img }}"
+                                             title="{{ img }}">
+                                    </a>
+                                    <div class="text">{{ img }}</div>
+                                </div>
+                                {% endfor %}
+
+
+                                <!-- Next and previous buttons -->
+                                <a class="prev" onclick="plusSlides('{{exps}}-{{group}}' ,-1)">&#10094;</a>
+                                <a class="next" onclick="plusSlides('{{exps}}-{{group}}' , 1)">&#10095;</a>
+                            </div>
+                            <div>
+                                <p style="text-align:center;">
+                                    <input class="number" type="number" value="1" min="1" max="{{img_group|length}}"
+                                           onchange="numberChange('{{exps}}-{{group}}')"
+                                           style="width:25%"> /
+                                    {{img_group|length}}
+                                </p>
+                            </div>
+                            <!--&lt;!&ndash; The dots/circles &ndash;&gt;-->
+                            <div style="text-align:center; overflow-x: scroll; white-space:nowrap;">
+                                {% for img in img_group %}
+                                <span class="dot" onclick="currentSlide('{{exps}}-{{group}}', '{{ loop.index0 }}')"
+                                      title="{{ loop.index }}">{{ loop.index}}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <script>
+                            showSlides("{{exps}}-{{group}}")
+                        </script>
+                        {% else %}
+                        <div style="width:25%; display: none; margin: 20px;" class="imageSpace">
+                        </div>
+                        {% endif %}
+
+                        {% endfor %}
+                    </div>
+                    <hr>
+                    <br>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div id="section3" class="card border-primary" style="margin: 10px;">
+            <div class="card-header" style="color: #4285F4">
+                <div style="float: left">
+                    <h3>Plots</h3>
+                </div>
+                <div style="float: right;">
+                    <label class="switch">
+                        <input type="checkbox" onchange="toggleliveplots()" id="toggleliveplots" style="z-index: 1;"
+                               checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <div>Live</div>
+                </div>
+            </div>
+
+            <div class="card-body" id="liveplots">
+
+                <div style="text-align: center;" class="plots" id="plotlyplots">
+                    <i class="fa fa-circle-o-notch fa-spin" style="font-size:24px"></i>
+                </div>
+
+                <br>
+            </div>
+            <div class="card-body" id="imgplots" style="display:none;">
+
+                {% set plot_imgs = plots["plots"] %}
+                {% for exps in plot_imgs %}
+
+                {% set plot_pathes = plot_imgs[exps] %}
+
+
+                <h4 style="text-align: center">{{ exps }}</h4>
+
+                <div style="overflow-x: auto; white-space:nowrap;" class="theimagecontentdiv">
+
+                    {% for plot_path in plot_pathes %}
+
+                    <a href="{{plot_path}}" target="_blank" class="image_link">
+                        <img src="{{plot_path}}" alt="{{plot_path}}"
+                             title="{{plot_path}}">
+                    </a>
+
+                    {% endfor %}
+                </div>
+
+                {% endfor %}
+
+                <br>
+            </div>
+        </div>
+
+
+        <hr>
+
+
+        <div id="section4" class="card border-primary" style="margin: 10px;">
+            <div class="card-header" style="color: #4285F4">
+                <h3>Results</h3>
+            </div>
+
+            <div class="card-body">
+
+                {% set exps = results["exps"] %}
+                {% set res = results["results"] %}
+                {% set rkeys = results["keys"] %}
+
+                <div>
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>&nbsp;</th>
+
+                            {% for exp in exps %}
+                            <th>{{exp}}</th>
+                            {% endfor %}
+
+                        </tr>
+                        </thead>
+
+                        <tbody>
+
+                        {% for k in rkeys %}
+                        <tr>
+                            <th>{{k}}</th>
+
+                            {% for val in res[k] %}
+                            <td>{{val}}</td>
+                            {% endfor %}
+
+                        </tr>
+                        {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+
+        <hr>
+
+        <div id="section5" class="card border-primary" style="margin: 10px;">
+            <div class="card-header" style="color: #4285F4">
+                <h3>Logs</h3>
+            </div>
+
+            <div class="card-body">
+
+
+                <div>
+
+                    {% for exp in logs["logs_dict"] %}
+                    <h4 style="text-align: center">{{ exp }}</h4>
+
+                    <div class="card text-center">
+
+                        <div class="card-header">
+                            <ul class="nav nav-tabs card-header-tabs">
+
+                                {% for log_file, exp_dir in logs["logs_dict"][exp] %}
+                                <!--<p>{{ log_file }}</p>-->
+
+                                <li class="nav-item">
+                                    <a class="nav-link log-file-link log-file-link-{{exp}}" href="#"
+                                       expname="{{ exp }}"
+                                       expdir="{{ exp_dir }}"
+                                       logfile="{{ log_file }}">
+                                        {{log_file}}</a>
+                                </li>
+
+                                {% endfor %}
+
+                                <li class="nav-item ml-auto">
+                                    <a class="nav-link log-file-close float-right" href="#"
+                                       expname="{{ exp }}">Close</a>
+                                </li>
+
+                            </ul>
+                        </div>
+                        <div class="card-body" style="max-height: 40em; overflow-y: scroll;">
+                            <p class="card-text" id="{{ exp }}-log-content" style="text-align: left; white-space:
+                                 pre"></p>
+                        </div>
+                    </div>
+                    <hr>
+                    <br>
+                    {% endfor %}
+
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+
+<script>
+
+    var log_dict = {};
+
+    $(document).ready(function () {
+
+        $('a.log-file-link').on('click', function (e) {
+            e.preventDefault();
+
+            var th = $(this);
+
+            var expname = $(this)[0].attributes.expname.value;
+            var expdir = $(this)[0].attributes.expdir.value;
+            var logfile = $(this)[0].attributes.logfile.value;
+
+            $(".nav").find(".log-file-link-" + expname).removeClass("active");
+
+            var target_elem = document.getElementById(expname + "-log-content");
+
+
+            var dict_key = expname + "-" + logfile;
+            if (dict_key in log_dict) {
+                target_elem.innerHTML = log_dict[dict_key];
+                th.addClass("active");
+
+            }
+            else {
+                $.get(
+                    "experiment_log",
+                    {exp: expdir, log: logfile},
+                    function (data) {
+                        console.log("request");
+                        log_dict[dict_key] = [data];
+                        target_elem.innerHTML = data;
+                        th.addClass("active");
+                    }
+                );
+            }
+            // toggle($(this));
+        });
+
+        $('a.log-file-close').on('click', function (e) {
+            e.preventDefault();
+
+
+            var expname = $(this)[0].attributes.expname.value;
+            var target_elem = document.getElementById(expname + "-log-content");
+            target_elem.innerHTML = "";
+
+            $(".nav").find(".log-file-link-" + expname).removeClass("active");
+
+        });
+
+        $('a.star_element').on('click', function (e) {
+            e.preventDefault();
+
+            console.log("xD");
+
+            var dir_name = $(this)[0].getAttribute("dir_name");
+            var url_exp_star = "experiment_star?" + "exp=" + dir_name;
+            var text = $.trim($(this)[0].text);
+            var th = $(this);
+
+            console.log(text);
+            console.log(th);
+
+            if (text === "star_border") {
+                url_exp_star = url_exp_star + "&star=" + 1;
+                $.get(
+                    url_exp_star,
+                    {},
+                    function () {
+
+                        th[0].innerHTML = '<i class="material-icons">star</i>';
+                    }
+                );
+            }
+            else if (text === "star") {
+                url_exp_star = url_exp_star + "&star=" + 0;
+                $.get(
+                    url_exp_star,
+                    {},
+                    function () {
+                        th[0].innerHTML = '<i class="material-icons">star_border</i>';
+                    }
+                );
+            }
+
+        });
+
+        $('a.image_link').on('click', function (e) {
+            e.preventDefault();
+            console.log("Image clicked");
+        });
+
+        $('a.image_link').on('dblclick', function (e) {
+            e.preventDefault();
+            window.open($(this)[0].href, '_blank')
+        });
+
+        function findGetParameter(parameterName) {
+            var result = null,
+                tmp = [];
+            location.search
+                .substr(1)
+                .split("&")
+                .forEach(function (item) {
+                    tmp = item.split("=");
+                    if (tmp[0] === parameterName) result = decodeURIComponent(tmp[1]);
+                });
+            return result;
+        }
+
+        $.get(
+            "experiment_plots?" + window.location.search.substr(1),
+            {},
+            function (data) {
+                console.log("request");
+                var graph = JSON.parse(data);
+                var plothtml = "";
+
+                var target_elem = document.getElementById("plotlyplots");
+
+                $.each(graph["graphs"], function (index, value) {
+
+                    var height = 450 + 40 * graph["traces"][index];
+
+                    plothtml += '<div class="plot-box" style="height: ';
+                    plothtml += '' + height;
+                    plothtml += 'px">';
+                    plothtml += value;
+                    plothtml += '</div>';
+
+                });
+
+                target_elem.innerHTML = plothtml;
+
+
+                $.each(graph["graphs"], function (index, value) {
+                    var js_strng = value.split('<script type="text/javascript">')[1];
+                    js_strng = js_strng.substring(0, js_strng.length - 9);
+                    eval(js_strng);
+                });
+
+            }
+        );
+
+    });
+</script>
+
+</body>
+</html>
