@@ -1,1 +1,1 @@
-from trixi.experiment_browser.experimentreader import ExperimentReader
+from trixi.experiment_browser.backend.experimentreader import ExperimentReader
