@@ -7,9 +7,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import ReposList from 'components/ReposList';
 
-import './style.scss';
 import ExperimentConfig from "../../components/Experiment/ExperimentConfig/ExperimentConfig";
 import ExperimentImages from "../../components/Experiment/ExperimentImages/ExperimentImages";
 import ExperimentLogs from "../../components/Experiment/ExperimentLogs/ExperimentLogs";
