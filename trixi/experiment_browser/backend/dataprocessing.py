@@ -9,7 +9,7 @@ from flask import Markup
 from plotly.offline import plot
 from scipy.signal import savgol_filter
 
-from trixi.experiment_browser.experimentreader import ExperimentReader
+from trixi.experiment_browser.backend.experimentreader import ExperimentReader
 
 # These keys will be ignored when in a config file
 from trixi.util import Config
