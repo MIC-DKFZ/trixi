@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+colorlover = ">=0.2.1"
+graphviz = ">=0.8.4"
+matplotlib = ">=2.2.2"
+numpy = ">=1.14.5"
+seaborn = ">=0.8.1"
+scipy = ">=0.19.1"
+portalocker = ">=1.2.1"
+plotly = ">=2.5.1"
+visdom = ">=0.1.8.4"
+torch = ">=0.4.0"
+torchvision = ">=0.2.1"
+Flask = ">=0.12.2"
+Pillow = ">=5.1.0"
+
+[dev-packages]
+
+[requires]
+python_version = "3.6"
