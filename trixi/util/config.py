@@ -210,7 +210,7 @@ class Config(dict):
         return False
 
     def contains(self, dict_like):
-        """Check whether all items in a dictionary-like object match the ones in this Config."""
+        """Check whether all items in a dictionary-like object match the ones in this ExperimentLogs."""
 
         dict_like_config = Config(config=dict_like)
 
@@ -230,9 +230,9 @@ class Config(dict):
 
     @staticmethod
     def init_objects(config):
-        """Returns a new Config with types converted to instances.
+        """Returns a new ExperimentLogs with types converted to instances.
 
-        Any value that is a Config and contains a type key will be converted to
+        Any value that is a ExperimentLogs and contains a type key will be converted to
         an instance of that type::
 
             {
@@ -256,7 +256,7 @@ class Config(dict):
         Note that additional entries can be lost as shown above.
 
         Args:
-            config (Config): New Config will be built from this one
+            config (Config): New ExperimentLogs will be built from this one
 
         Returns:
             Config: A new config with instances made from type entries.
@@ -298,9 +298,9 @@ class Config(dict):
 
     @staticmethod
     def difference_config_static(*configs, only_set=False):
-        """Make a Config of all elements that differ between N configs.
+        """Make a ExperimentLogs of all elements that differ between N configs.
 
-        The resulting Config looks like this::
+        The resulting ExperimentLogs looks like this::
 
             {
                 key: (config1[key], config2[key], ...)
@@ -360,7 +360,7 @@ class Config(dict):
         return difference
 
     def flat(self, keep_lists=True, max_split_size=10):
-        """Returns a flattened version of the Config as dict.
+        """Returns a flattened version of the ExperimentLogs as dict.
 
         Nested Configs and lists will be replaced by concatenated keys like so::
 
@@ -388,7 +388,7 @@ class Config(dict):
                 "d": (6, 7)
             }
 
-        We return a dict because dots are disallowed within Config keys.
+        We return a dict because dots are disallowed within ExperimentLogs keys.
 
         Args:
             keep_lists: Keeps list along with unpacked values

@@ -1,3 +1,4 @@
+// Example: https://trendmicro-frontend.github.io/react-sidenav/
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Switch, Route, Router} from 'react-router-dom';
@@ -38,6 +39,46 @@ class Sidebar extends React.Component { // eslint-disable-line react/prefer-stat
             <NavText>
               Experiment
             </NavText>
+            <NavItem eventKey="experiment">
+              <NavIcon>
+                <i className="fa fa-fw fa-home" style={{ fontSize: '1.75em' }} />
+              </NavIcon>
+              <NavText>
+                Config
+              </NavText>
+            </NavItem>
+            <NavItem eventKey="experiment">
+              <NavIcon>
+                <i className="fa fa-fw fa-home" style={{ fontSize: '1.75em' }} />
+              </NavIcon>
+              <NavText>
+                Images
+              </NavText>
+            </NavItem>
+            <NavItem eventKey="experiment">
+              <NavIcon>
+                <i className="fa fa-fw fa-home" style={{ fontSize: '1.75em' }} />
+              </NavIcon>
+              <NavText>
+                Plots
+              </NavText>
+            </NavItem>
+            <NavItem eventKey="experiment">
+              <NavIcon>
+                <i className="fa fa-fw fa-home" style={{ fontSize: '1.75em' }} />
+              </NavIcon>
+              <NavText>
+                Results
+              </NavText>
+            </NavItem>
+            <NavItem eventKey="experiment">
+              <NavIcon>
+                <i className="fa fa-fw fa-home" style={{ fontSize: '1.75em' }} />
+              </NavIcon>
+              <NavText>
+                Logs
+              </NavText>
+            </NavItem>
           </NavItem>
           <NavItem eventKey="overview">
             <NavIcon>
@@ -48,7 +89,8 @@ class Sidebar extends React.Component { // eslint-disable-line react/prefer-stat
             </NavText>
           </NavItem>
         </SideNav.Nav>
-      </SideNav>)
+      </SideNav>
+    )
   }
 }
 

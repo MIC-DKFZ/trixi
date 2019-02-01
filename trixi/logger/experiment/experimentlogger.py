@@ -233,7 +233,7 @@ class ExperimentLogger(AbstractLogger):
         Args:
             name: the name of the config file
 
-        Returns: A Config/ dict filled with the json file content
+        Returns: A ExperimentLogs/ dict filled with the json file content
 
         """
 

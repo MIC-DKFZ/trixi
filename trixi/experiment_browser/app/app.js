@@ -32,7 +32,7 @@ import 'styles/theme.scss';
 
 // Import bootstrap CSS
 import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
-// import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
+import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
 
 import configureStore from './configureStore';
 

@@ -8,7 +8,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import ReposList from 'components/ReposList';
+
 import './style.scss';
+import ExperimentConfig from "../../components/Experiment/ExperimentConfig/ExperimentConfig";
+import ExperimentImages from "../../components/Experiment/ExperimentImages/ExperimentImages";
+import ExperimentLogs from "../../components/Experiment/ExperimentLogs/ExperimentLogs";
+import ExperimentPlots from "../../components/Experiment/ExperimentPlots/ExperimentPlots";
 
 export default class HomePage extends React.PureComponent { // eslint-disable-line react/prefer-stateless-function
   /**
@@ -39,6 +44,10 @@ export default class HomePage extends React.PureComponent { // eslint-disable-li
             <h2>EXPERIMENT PAGE</h2>
             <p>Dummy text for the experiment page</p>
           </section>
+          <ExperimentConfig/>
+          <ExperimentImages/>
+          <ExperimentLogs/>
+          <ExperimentPlots/>
         </div>
       </article>
     );
