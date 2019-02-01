@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@trendmicro/react-sidenav": "^0.4.5",
+    "axios": "^0.18.0",
     "babel-polyfill": "6.26.0",
     "bootstrap": "^4.2.1",
     "chalk": "^2.3.2",
