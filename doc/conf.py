@@ -206,11 +206,15 @@ autodoc_mock_imports = [
     "PIL",
     "umap",
     "visdom",
+    "cv2",
+    "slackclient",
+    "tensorboardX"
 ]
 
 # We use the following to automatically run sphinx-apidoc, whenever we run make html.
 # The output is ignored (see exclude_patterns above) and just created for convenience,
 # so that we can compare _build with the existing rst files and see what we need to update.
+
 
 def run_apidoc(_):
     from sphinx.apidoc import main

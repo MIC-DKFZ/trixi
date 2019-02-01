@@ -248,8 +248,8 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
             # Display model graph in visdom
             self.show_svg(svg=x, name=name)
-        except:
-            warnings.warn("Could not remder model, make sure the Graphviz executables are on your systems")
+        except Exception as e:
+            warnings.warn("Could not render model, make sure the Graphviz executables are on your system.")
 
     def show_image_grid(self, images, name=None, caption=None, env_appendix="", opts=None,
                         image_args=None, **kwargs):
@@ -376,6 +376,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
           Internal show_image_grid_heatmap method, called by the internal process.
           This function does all the magic.
         """
+
         from cv2 import cv2
 
         if opts is None: opts = {}

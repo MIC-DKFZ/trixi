@@ -3,11 +3,11 @@ import warnings
 
 import torch
 from PIL import Image
+import numpy as np
 from cv2 import cv2
 from scipy.misc import imsave
 from torch.autograd import Variable
 from torchvision.utils import save_image as tv_save_image
-import numpy as np
 from trixi.util.util import np_make_grid
 
 from trixi.logger.abstractlogger import threaded, convert_params

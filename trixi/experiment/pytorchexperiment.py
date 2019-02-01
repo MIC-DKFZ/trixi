@@ -75,20 +75,15 @@ class PytorchExperiment(Experiment):
             :class:`.ResultLogDict` that directly automatically writes to a file
             and also stores the N last entries for each key for quick access
             (e.g. to quickly get the running mean).
-        - vlog (if use_visdomlogger is True)
-            A :class:`.PytorchVisdomLogger` instance which can log your results
-            to a running visdom server. Start the server via
-            :code:`python -m visdom.server` or pass :data:`auto_start=True` in
-            the :attr:`visdomlogger_kwargs`.
-        - elog (if use_explogger is True)
+        - elog (if base_dir is given)
             A :class:`.PytorchExperimentLogger` instance which can log your
-            results to a given folder.
-        - tlog (if use_telegrammessagelogger is True)
-            A :class:`.TelegramMessageLogger` instance which can send the results to
-            your telegram account
+            results to a given folder. Will automatically be created if a base_dir is available.
+        - loggers
+            Contains all loggers you provide, including the experiment logger, accessible by the
+            names you provide.
         - clog
             A :class:`.CombinedLogger` instance which logs to all loggers with
-            different frequencies (specified with the :attr:`_c_freq` for each
+            different frequencies (specified with the last entry in the tuple you provide for each
             logger where 1 means every time and N means every Nth time,
             e.g. if you only want to send stuff to Visdom every 10th time).
 
@@ -122,7 +117,8 @@ class PytorchExperiment(Experiment):
         seed (int): A random seed (which will set the random, numpy and
             torch seed).
         base_dir (str): A base directory in which the experiment result folder
-            will be created.
+            will be created. A :class:`.PytorchExperimentLogger` instance will be created if
+            this is given.
         globs: The :func:`globals` of the script which is run. This is necessary
             to get and save the executed files in the experiment folder.
         resume (str or PytorchExperiment): Another PytorchExperiment or path to
@@ -140,6 +136,7 @@ class PytorchExperiment(Experiment):
                 - "th_vars" <-- torch tensors/variables
                 - "results" <-- The result dict
 
+        resume_reset_epochs (bool): Set epoch to zero if you resume an existing experiment.
         parse_sys_argv (bool): Parsing the console arguments (argv) to get a
             :attr:`config path` and/or :attr:`resume_path`.
         parse_config_sys_argv (bool): Parse argv to update the config
@@ -148,25 +145,17 @@ class PytorchExperiment(Experiment):
             the CPU beforehand.
         save_checkpoint_every_epoch (int): Determines after how many epochs a
             checkpoint is stored.
-        use_visdomlogger (bool): Use a :class:`.PytorchVisdomLogger`. Is
-            accessible via the :attr:`vlog` attribute.
-        visdomlogger_kwargs (dict): Keyword arguments for :attr:`vlog`
-            instantiation.
-        visdomlogger_c_freq (int): The frequency x (meaning one in x) with which
-            the :attr:`clog` will call the :attr:`vlog`.
-        use_explogger (bool): Use a :class:`.PytorchExperimentLogger`. Is
-            accessible via the :attr:`elog` attribute. This will create the
-            experiment folder structure.
         explogger_kwargs (dict): Keyword arguments for :attr:`elog`
             instantiation.
-        explogger_c_freq (int): The frequency x (meaning one in x) with which
+        explogger_freq (int): The frequency x (meaning one in x) with which
             the :attr:`clog` will call the :attr:`elog`.
-        use_telegrammessagelogger (bool): Use a :class:`.TelegramMessageLogger`. Is
-            accessible via the :attr:`tlog` attribute.
-        telegrammessagelogger_kwargs (dict): Keyword arguments for :attr:`tlog`
-            instantiation.
-        telegrammessagelogger_c_freq (int): The frequency x (meaning one in x) with which
-            the :attr:`clog` will call the :attr:`tlog`.
+        loggers (dict): Specify additional loggers.
+            Entries should have one of these formats::
+
+                "name": "identifier" (will default to a frequency of 10)
+                "name": ("identifier"(, kwargs, frequency)) (last two are optional)
+
+            "identifier" is one of "telegram", "tensorboard", "visdom", "slack".
         append_rnd_to_name (bool): If :obj:`True`, will append a random six
             digit string to the experiment name.
 
@@ -187,7 +176,7 @@ class PytorchExperiment(Experiment):
                  checkpoint_to_cpu=True,
                  save_checkpoint_every_epoch=1,
                  explogger_kwargs=None,
-                 explogger_c_freq=100,
+                 explogger_freq=100,
                  loggers=None,
                  append_rnd_to_name=False):
 
@@ -232,8 +221,8 @@ class PytorchExperiment(Experiment):
             self.elog = PytorchExperimentLogger(base_dir=base_dir,
                                                 exp_name=self.exp_name,
                                                 **explogger_kwargs)
-            if explogger_c_freq is not None and explogger_c_freq > 0:
-                logger_list.append((self.elog, explogger_c_freq))
+            if explogger_freq is not None and explogger_freq > 0:
+                logger_list.append((self.elog, explogger_freq))
             self.results = ResultLogDict("results-log.json", base_dir=self.elog.result_dir)
         else:
             self.elog = None
