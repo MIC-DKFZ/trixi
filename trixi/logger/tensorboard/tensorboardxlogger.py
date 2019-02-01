@@ -66,10 +66,10 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
         """
 
         caption = ""
-
         grid = np_make_grid(image_array, nrow=nrow, padding=padding, pad_value=pad_value,
                             normalize=normalize, scale_each=scale_each)
-        self.writer.add_image(tag=name, img_tensor=grid, global_step=counter)
+        self.writer.add_image(tag=name, img_tensor=grid, global_step=self.val_dict[name])
+        self.val_dict[name] += 1
 
     @convert_params
     def show_barplot(self, array, name="barplot", counter=None, *args, **kwargs):
