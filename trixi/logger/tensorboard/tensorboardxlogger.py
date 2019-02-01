@@ -23,13 +23,25 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
 
         atexit.register(self.writer.close)
 
-    def show_image(self, image, name="Image", **kwargs):
+    def show_image(self, image, name="Image", counter=None, **kwargs):
         """Sends a image to tensorboard."""
-        self.writer.add_image(name, image)
 
-    def show_images(self, images, name="Images", **kwargs):
+        if counter is not None:
+            self.val_dict[f"{name}-image"] = counter
+        else:
+            self.val_dict[f"{name}-image"] += 1
+
+        self.writer.add_image(name, image, global_step=self.val_dict[f"{name}-image"])
+
+    def show_images(self, images, name="Images", counter=None, **kwargs):
         """Sends a list of images to tensorboard."""
-        self.writer.add_images(name, images)
+
+        if counter is not None:
+            self.val_dict[f"{name}-image"] = counter
+        else:
+            self.val_dict[f"{name}-image"] += 1
+
+        self.writer.add_image(name, images, global_step=self.val_dict[f"{name}-image"])
 
     @convert_params
     def show_value(self, value, name="Value", counter=None, tag=None, **kwargs):
@@ -41,23 +53,28 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
             key = tag + "-" + name
 
         if counter is not None:
-            self.val_dict[key] = counter
+            self.val_dict[f"{key}-image"] = counter
+        else:
+            self.val_dict[f"{key}-image"] += 1
 
         if tag is not None:
-            self.writer.add_scalars(tag, {name: value}, global_step=self.val_dict[key])
+            self.writer.add_scalars(tag, {name: value}, global_step=self.val_dict[f"{key}-image"])
             self.writer.scalar_dict = {}
         else:
-            self.writer.add_scalar(name, value, global_step=self.val_dict[key])
+            self.writer.add_scalar(name, value, global_step=self.val_dict[f"{key}-image"])
 
-        self.val_dict[key] += 1
-
-    def show_text(self, text, name="Text", **kwargs):
+    def show_text(self, text, name="Text", counter=None, **kwargs):
         """Sends a text to tensorboard."""
-        self.writer.add_text(name, text)
+
+        if counter is not None:
+            self.val_dict[f"{name}-text"] = counter
+        else:
+            self.val_dict[f"{name}-text"] += 1
+
+        self.writer.add_text(name, text, global_step=self.val_dict[f"{name}-text"])
 
     @convert_params
-    def show_image_grid(self, image_array, name="Image-Grid", nrow=8, padding=2,
-                        normalize=False, scale_each=False, pad_value=0, counter=None, *args, **kwargs):
+    def show_image_grid(self, image_array, name="Image-Grid", counter=None, image_args=None, *args, **kwargs):
         """
         Sends an array of images to tensorboard.
 
@@ -65,10 +82,16 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
             image_array (np.narray / torch.tensor): Image array/ tensor which will be sent as an image grid
         """
 
-        caption = ""
-        grid = np_make_grid(image_array, nrow=nrow, padding=padding, pad_value=pad_value,
-                            normalize=normalize, scale_each=scale_each)
-        self.writer.add_image(tag=name, img_tensor=grid, global_step=self.val_dict[name])
+        if image_args is None:
+            image_args = dict(nrow=8, padding=2, normalize=False, scale_each=False, pad_value=0)
+
+        if counter is not None:
+            self.val_dict[f"{name}-image"] = counter
+        else:
+            self.val_dict[f"{name}-image"] += 1
+
+        grid = np_make_grid(image_array, **image_args)
+        self.writer.add_image(tag=name, img_tensor=grid, global_step=self.val_dict[f"{name}-image"])
         self.val_dict[name] += 1
 
     @convert_params
@@ -83,8 +106,13 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
 
         """
 
+        if counter is not None:
+            self.val_dict[f"{name}-figure"] = counter
+        else:
+            self.val_dict[f"{name}-figure"] += 1
+
         figure = super().show_barplot(array, name, *args, **kwargs)
-        self.writer.add_figure(tag=name, figure=figure, global_step=counter)
+        self.writer.add_figure(tag=name, figure=figure, global_step=self.val_dict[f"{name}-figure"])
 
     @convert_params
     def show_lineplot(self, y_vals, x_vals=None, name="lineplot", counter=None, *args, **kwargs):
@@ -100,8 +128,13 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
 
         """
 
+        if counter is not None:
+            self.val_dict[f"{name}-figure"] = counter
+        else:
+            self.val_dict[f"{name}-figure"] += 1
+
         figure = super().show_lineplot(y_vals, x_vals, name, *args, **kwargs)
-        self.writer.add_figure(tag=name, figure=figure, global_step=counter)
+        self.writer.add_figure(tag=name, figure=figure, global_step=self.val_dict[f"{name}-figure"])
 
     @convert_params
     def show_scatterplot(self, array, name="scatterplot", counter=None, *args, **kwargs):
@@ -116,8 +149,13 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
 
         """
 
+        if counter is not None:
+            self.val_dict[f"{name}-figure"] = counter
+        else:
+            self.val_dict[f"{name}-figure"] += 1
+
         figure = super().show_scatterplot(array, name, *args, **kwargs)
-        self.writer.add_figure(tag=name, figure=figure, global_step=counter)
+        self.writer.add_figure(tag=name, figure=figure, global_step=self.val_dict[f"{name}-figure"])
 
     @convert_params
     def show_piechart(self, array, name="piechart", counter=None, *args, **kwargs):
@@ -132,8 +170,13 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
 
         """
 
+        if counter is not None:
+            self.val_dict[f"{name}-figure"] = counter
+        else:
+            self.val_dict[f"{name}-figure"] += 1
+
         figure = super().show_piechart(array, name, *args, **kwargs)
-        self.writer.add_figure(tag=name, figure=figure, global_step=counter)
+        self.writer.add_figure(tag=name, figure=figure, global_step=self.val_dict[f"{name}-figure"])
 
     def show_embedding(self, tensor, labels=None, name='default', label_img=None, counter=None,
                        *args, **kwargs):
@@ -148,7 +191,13 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
             counter:  Global step value to record
 
         """
-        self.writer.add_embedding(mat=tensor, metadata=labels, label_img=label_img, tag=name, global_step=counter)
+
+        if counter is not None:
+            self.val_dict[f"{name}-embedding"] = counter
+        else:
+            self.val_dict[f"{name}-embedding"] += 1
+
+        self.writer.add_embedding(mat=tensor, metadata=labels, label_img=label_img, tag=name, global_step=self.val_dict[f"{name}-embedding"])
 
     def show_histogram(self, array, name="Histogram", counter=None, *args, **kwargs):
         """
@@ -159,11 +208,16 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
             name: Data identifier
             array  (torch.Tensor, numpy.array) – Values to build histogram
 
-
         """
-        self.writer.add_histogram(tag=name, values=array, global_step=counter)
 
-    def show_pr_curve(self, tensor, labels, name="pr-curve"):
+        if counter is not None:
+            self.val_dict[f"{name}-histogram"] = counter
+        else:
+            self.val_dict[f"{name}-histogram"] += 1
+
+        self.writer.add_histogram(tag=name, values=array, global_step=self.val_dict[f"{name}-histogram"])
+
+    def show_pr_curve(self, tensor, labels, name="pr-curve", counter=None, *args, **kwargs):
         """
         Displays a precision recall curve given a tensor with scores and the coresponding labels
 
@@ -172,7 +226,13 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
             labels: Labels of the samples to which the scores match
             name: The name of the plot
         """
-        self.writer.add_pr_curve(tag=name, labels=labels, predictions=tensor)
+
+        if counter is not None:
+            self.val_dict[f"{name}-pr-curve"] = counter
+        else:
+            self.val_dict[f"{name}-pr-curve"] += 1
+
+        self.writer.add_pr_curve(tag=name, labels=labels, predictions=tensor, global_step=self.val_dict[f"{name}-pr-curve"])
 
     def close(self):
         self.writer.close()

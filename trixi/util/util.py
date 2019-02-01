@@ -487,7 +487,7 @@ def chw_to_hwc(np_array):
 
 
 def np_make_grid(np_array, nrow=8, padding=2,
-                 normalize=False, range_=None, scale_each=False, pad_value=0, to_int=False):
+                 normalize=False, range=None, scale_each=False, pad_value=0, to_int=False):
     """Make a grid of images.
 
     Args:
@@ -498,7 +498,7 @@ def np_make_grid(np_array, nrow=8, padding=2,
         padding (int, optional): amount of padding. Default is 2.
         normalize (bool, optional): If True, shift the image to the range (0, 1),
             by subtracting the minimum and dividing by the maximum pixel value.
-        range_ (tuple, optional): tuple (min, max) where min and max are numbers,
+        range (tuple, optional): tuple (min, max) where min and max are numbers,
             then these numbers are used to normalize the image. By default, min and max
             are computed from the tensor.
         scale_each (bool, optional): If True, scale each image in the batch of
@@ -530,8 +530,8 @@ def np_make_grid(np_array, nrow=8, padding=2,
 
     if normalize is True:
         np_array = np.copy(np_array)  # avoid modifying tensor in-place
-        if range_ is not None:
-            assert isinstance(range_, tuple), \
+        if range is not None:
+            assert isinstance(range, tuple), \
                 "range has to be a tuple (min, max) if specified. min and max are numbers"
 
         def norm_ip(img, min_, max_):
@@ -539,18 +539,18 @@ def np_make_grid(np_array, nrow=8, padding=2,
             img = (img - min_) / (max_ - min_ + 1e-5)
             return img
 
-        def norm_range(t, range__=None):
-            if range__ is not None:
-                t = norm_ip(t, range__[0], range__[1])
+        def norm_range(t, range_=None):
+            if range_ is not None:
+                t = norm_ip(t, range_[0], range_[1])
             else:
                 t = norm_ip(t, float(t.min()), float(t.max()))
             return t
 
         if scale_each is True:
-            for i in range(np_array.shape[0]):  # loop over mini-batch dimension
-                np_array[i] = norm_range(np_array[i], range_)
+            for i in np.arange(np_array.shape[0]):  # loop over mini-batch dimension
+                np_array[i] = norm_range(np_array[i], range)
         else:
-            np_array = norm_range(np_array, range_)
+            np_array = norm_range(np_array, range)
 
     if np_array.shape[0] == 1:
         return np_array.squeeze(0)
@@ -563,8 +563,8 @@ def np_make_grid(np_array, nrow=8, padding=2,
     grid = np.zeros((3, height * ymaps + padding, width * xmaps + padding))
     grid += pad_value
     k = 0
-    for y in range(ymaps):
-        for x in range(xmaps):
+    for y in np.arange(ymaps):
+        for x in np.arange(xmaps):
             if k >= nmaps:
                 break
             grid[:,
