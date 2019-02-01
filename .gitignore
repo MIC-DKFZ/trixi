@@ -108,6 +108,11 @@ trixi/experiment_browser/node_modules/*
 trixi/experiment_browser_old/*
 trixi/experiment_browser (copy)/*
 
+# zip
+*.zip
+trixi_multi/*
+trixi_single/*
+
 ### Except build folder in docs:
 
 doc/api
