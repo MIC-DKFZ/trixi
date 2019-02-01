@@ -194,74 +194,38 @@ class PytorchExperiment(Experiment):
         # super(PytorchExperiment, self).__init__()
         Experiment.__init__(self)
 
-        if loggers is None:
-            loggers = {}
-
-        config_args_path = None
+        # check for command line inputs for config_path and resume_path,
+        # will be prioritized over config and resume!
+        config_path_from_argv = None
         if parse_sys_argv:
-            config_args_path, resume_path = get_vars_from_sys_argv()
-            if resume_path:
-                resume = resume_path
+            config_path_from_argv, resume_path_from_argv = get_vars_from_sys_argv()
+            if resume_path_from_argv:
+                resume = resume_path_from_argv
 
-        if config_args_path is None:
-            self._config_raw = None
-            if isinstance(config, str):
-                self._config_raw = Config(file_=config)
-            elif isinstance(config, Config):
-                self._config_raw = Config(config=config)
-            elif isinstance(config, dict):
-                self._config_raw = Config(config=config)
-            else:
-                self._config_raw = Config()
-
-            self.n_epochs = n_epochs
-            if self.n_epochs is None and self._config_raw.get("n_epochs") is not None:
-                n_epochs = self._config_raw["n_epochs"]
-            elif self.n_epochs is None and self._config_raw.get("n_epochs") is None:
-                self.n_epochs = 0
-            self._config_raw["n_epochs"] = n_epochs
-
-            self._seed = seed
-            if self._seed is None and self._config_raw.get('seed') is not None:
-                self._seed = self._config_raw['seed']
-            elif self._seed is None and self._config_raw.get('seed') is None:
-                random_data = os.urandom(4)
-                seed = int.from_bytes(random_data, byteorder="big")
-                self._seed = seed
-            self._config_raw['seed'] = self._seed
-
-            self.exp_name = name
-            if self.exp_name is None and self._config_raw.get("name") is not None:
-                self.exp_name = self._config_raw["name"]
-            elif self.exp_name is None and self._config_raw.get("name") is None:
-                self.exp_name = "experiment"
-            if append_rnd_to_name:
-                rnd_str = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(5))
-                self.exp_name += "_" + rnd_str
-            self._config_raw["name"] = self.exp_name
-
-            if base_dir is not None:
-                self._config_raw["base_dir"] = base_dir
-
+        # construct _config_raw
+        if config_path_from_argv is None:
+            self._config_raw = self._config_raw_from_input(config, name, n_epochs, seed, append_rnd_to_name)
         else:
-            self._config_raw = Config(config_args_path)
-
+            self._config_raw = Config(file_=config_path_from_argv)
         update_from_sys_argv(self._config_raw)
 
+        # set a few experiment attributes
         self.n_epochs = self._config_raw["n_epochs"]
         self._seed = self._config_raw['seed']
+        set_seed(self._seed)
         self.exp_name = self._config_raw["name"]
-        base_dir = self._config_raw["base_dir"]
-
         self._checkpoint_to_cpu = checkpoint_to_cpu
         self._save_checkpoint_every_epoch = save_checkpoint_every_epoch
-
         self.results = dict()
 
-        # Init loggers
+        # get base_dir from _config_raw or store there
+        if base_dir is not None:
+            self._config_raw["base_dir"] = base_dir
+        base_dir = self._config_raw["base_dir"]
+
+        # Construct experiment logger (automatically activated if base_dir is there)
         self.loggers = {}
         logger_list = []
-
         if base_dir is not None:
             if explogger_kwargs is None:
                 explogger_kwargs = {}
@@ -270,41 +234,21 @@ class PytorchExperiment(Experiment):
                                                 **explogger_kwargs)
             if explogger_c_freq is not None and explogger_c_freq > 0:
                 logger_list.append((self.elog, explogger_c_freq))
-
             self.results = ResultLogDict("results-log.json", base_dir=self.elog.result_dir)
+        else:
+            self.elog = None
 
+        # Construct other loggers
         for logger_name, logger_cfg in loggers.items():
-            if isinstance(logger_cfg, (list, tuple)):
-                log_name = logger_cfg[0]
-                log_params = logger_cfg[1] if len(logger_cfg) > 1 else {}
-                clog_freq = logger_cfg[2] if len(logger_cfg) > 2 else 10
-            else:
-                assert isinstance(logger_cfg, str), "The specified logger has to either be a string or a list with " \
-                                                    "name, parameters, clog_frequency"
-                log_name = logger_cfg
-                log_params = {}
-                clog_freq = 10
-
-            if "exp_name" not in log_params:
-                log_params["exp_name"] = self.exp_name
-
-            if log_name == "tensorboard":
-                if "target_dir" not in log_params or log_params["target_dir"] is None:
-                    log_params["target_dir"] = os.path.join(self.elog.save_dir, "tensorboard")
-                else:
-                    log_params["target_dir"] = os.path.join(log_params["target_dir"], self.elog.folder_name)
-
-            log_cls = logger_lookup_dict[log_name]
-            _logger = log_cls(**log_params)
+            _logger, log_freq = self._make_logger(logger_name, logger_cfg)
             self.loggers[logger_name] = _logger
-            if clog_freq is not None and clog_freq > 0:
-                logger_list.append((_logger, clog_freq))
+            if log_freq is not None and log_freq > 0:
+                logger_list.append((_logger, log_freq))
 
         self.clog = CombinedLogger(*logger_list)
 
-        set_seed(self._seed)
-
-        # Do the resume stuff
+        # Set resume attributes and update _config_raw,
+        # actual resuming is done automatically after setup in _setup_internal
         self._resume_path = None
         self._resume_save_types = resume_save_types
         self._ignore_resume_config = ignore_resume_config
@@ -312,18 +256,19 @@ class PytorchExperiment(Experiment):
         if resume is not None:
             if isinstance(resume, str):
                 if resume == "last":
+                    if base_dir is None:
+                        raise ValueError("resume='last' requires base_dir.")
                     self._resume_path = os.path.join(base_dir, sorted(os.listdir(base_dir))[-1])
                 else:
                     self._resume_path = resume
             elif isinstance(resume, PytorchExperiment):
                 self._resume_path = resume.elog.base_dir
-
         if self._resume_path is not None and not self._ignore_resume_config:
             self._config_raw.update(Config(file_=os.path.join(self._resume_path, "config", "config.json")),
                                     ignore=list(map(lambda x: re.sub("^-+", "", x), sys.argv)))
 
-        # self.elog.save_config(self.config, "config_pre")
-        if globs is not None:
+        # Save everything we need to reproduce experiment
+        if globs is not None and self.elog is not None:
             zip_name = os.path.join(self.elog.save_dir, "sources.zip")
             SourcePacker.zip_sources(globs, zip_name)
 
@@ -331,6 +276,76 @@ class PytorchExperiment(Experiment):
         self.config = Config.init_objects(self._config_raw)
 
         atexit.register(self.at_exit_func)
+
+    def _config_raw_from_input(self,
+                               config=None,
+                               name=None,
+                               n_epochs=None,
+                               seed=None,
+                               append_rnd_to_name=False):
+        """Construct _config_raw from input."""
+
+        _config_raw = None
+        if isinstance(config, str):
+            _config_raw = Config(file_=config)
+        elif isinstance(config, (Config, dict)):
+            _config_raw = Config(config=config)
+        else:
+            _config_raw = Config()
+
+        if n_epochs is None and _config_raw.get("n_epochs") is not None:
+            n_epochs = _config_raw["n_epochs"]
+        elif n_epochs is None and _config_raw.get("n_epochs") is None:
+            n_epochs = 0
+        _config_raw["n_epochs"] = n_epochs
+
+        if seed is None and _config_raw.get('seed') is not None:
+            seed = _config_raw['seed']
+        elif seed is None and _config_raw.get('seed') is None:
+            random_data = os.urandom(4)
+            seed = int.from_bytes(random_data, byteorder="big")
+        _config_raw['seed'] = seed
+
+        if name is None and _config_raw.get("name") is not None:
+            name = _config_raw["name"]
+        elif name is None and _config_raw.get("name") is None:
+            name = "experiment"
+        if append_rnd_to_name:
+            rnd_str = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(5))
+            name += "_" + rnd_str
+        _config_raw["name"] = name
+
+        return _config_raw
+
+    def _make_logger(self, logger_name, logger_cfg):
+
+        if isinstance(logger_cfg, (list, tuple)):
+            log_type = logger_cfg[0]
+            log_params = logger_cfg[1] if len(logger_cfg) > 1 else {}
+            log_freq = logger_cfg[2] if len(logger_cfg) > 2 else 10
+        else:
+            assert isinstance(logger_cfg, str), "The specified logger has to either be a string or a list with " \
+                                                "name, parameters, clog_frequency"
+            log_type = logger_cfg
+            log_params = {}
+            log_freq = 10
+
+        if "exp_name" not in log_params:
+            log_params["exp_name"] = self.exp_name
+
+        if log_type == "tensorboard":
+            if "target_dir" not in log_params or log_params["target_dir"] is None:
+                if self.elog is not None:
+                    log_params["target_dir"] = os.path.join(self.elog.save_dir, "tensorboard")
+                else:
+                    raise AttributeError("TensorboardLogger requires a target_dir or an ExperimentLogger instance.")
+            elif self.elog is not None:
+                log_params["target_dir"] = os.path.join(log_params["target_dir"], self.elog.folder_name)
+
+        log_type = logger_lookup_dict[log_type]
+        _logger = log_type(**log_params)
+
+        return _logger, log_freq
 
     @property
     def vlog(self):
@@ -407,11 +422,11 @@ class PytorchExperiment(Experiment):
 
         def parse_torchmodules_recursive(input, output):
             if isinstance(input, dict):
-	            for key, value in input.items():
-	                if isinstance(value, dict):
-	                    parse_torchmodules_recursive(value, output)
-	                elif isinstance(value, torch.nn.Module):
-	                    output[key] = value
+                for key, value in input.items():
+                    if isinstance(value, dict):
+                        parse_torchmodules_recursive(value, output)
+                    elif isinstance(value, torch.nn.Module):
+                        output[key] = value
 
         pyth_modules = dict()
         parse_torchmodules_recursive(self.__dict__, pyth_modules)
