@@ -2,7 +2,7 @@
 import React from 'react';
 import {Table} from 'react-bootstrap';
 
-
+//TODO give unique identifier to all elements!
 class ExperimentConfig extends React.Component { // eslint-disable-line react/prefer-stateless-function
   generate_dummy_data() {
     var experiments = [
