@@ -228,11 +228,12 @@ class PytorchExperiment(Experiment):
             self.elog = None
 
         # Construct other loggers
-        for logger_name, logger_cfg in loggers.items():
-            _logger, log_freq = self._make_logger(logger_name, logger_cfg)
-            self.loggers[logger_name] = _logger
-            if log_freq is not None and log_freq > 0:
-                logger_list.append((_logger, log_freq))
+        if loggers is not None:
+            for logger_name, logger_cfg in loggers.items():
+                _logger, log_freq = self._make_logger(logger_name, logger_cfg)
+                self.loggers[logger_name] = _logger
+                if log_freq is not None and log_freq > 0:
+                    logger_list.append((_logger, log_freq))
 
         self.clog = CombinedLogger(*logger_list)
 
