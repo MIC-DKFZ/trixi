@@ -540,3 +540,6 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         grad = PytorchExperimentLogger.get_input_gradient(model=model, inpt=inpt, err_fn=err_fn, grad_type=grad_type,
                                                           n_runs=n_runs, eps=eps, abs=abs)
         self.show_image_grid(grad, **image_grid_params)
+
+    def show_video(self, frame_list=None, name="frames", dim="LxHxWxC", scale=1.0, fps=25):
+        self.vis.video(tensor=np.array(frame_list), dim=dim, opts={'fps': fps})
