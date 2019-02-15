@@ -34,11 +34,11 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
         """
 
         if counter is not None:
-            self.val_dict[f"{name}-image"] = counter
+            self.val_dict["{}-image".format(name)] = counter
         else:
-            self.val_dict[f"{name}-image"] += 1
+            self.val_dict["{}-image".format(name)] += 1
 
-        self.writer.add_image(name, image, global_step=self.val_dict[f"{name}-image"])
+        self.writer.add_image(name, image, global_step=self.val_dict["{}-image".format(name)])
 
     def show_images(self, images, name="Images", counter=None, **kwargs):
         """
@@ -51,11 +51,11 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
         """
 
         if counter is not None:
-            self.val_dict[f"{name}-image"] = counter
+            self.val_dict["{}-image".format(name)] = counter
         else:
-            self.val_dict[f"{name}-image"] += 1
+            self.val_dict["{}-image".format(name)] += 1
 
-        self.writer.add_images(name, images, global_step=self.val_dict[f"{name}-image"])
+        self.writer.add_images(name, images, global_step=self.val_dict["{}-image".format(name)])
 
     @convert_params
     def show_value(self, value, name="Value", counter=None, tag=None, **kwargs):
@@ -96,11 +96,11 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
         """
 
         if counter is not None:
-            self.val_dict[f"{name}-text"] = counter
+            self.val_dict["{}-text".format(name)] = counter
         else:
-            self.val_dict[f"{name}-text"] += 1
+            self.val_dict["{}-text".format(name)] += 1
 
-        self.writer.add_text(name, text, global_step=self.val_dict[f"{name}-text"])
+        self.writer.add_text(name, text, global_step=self.val_dict["{}-text".format(name)])
 
     @convert_params
     def show_image_grid(self, image_array, name="Image-Grid", counter=None, nrow=8, padding=2,
@@ -131,12 +131,12 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
                           pad_value=pad_value)
 
         if counter is not None:
-            self.val_dict[f"{name}-image"] = counter
+            self.val_dict["{}-image".format(name)] = counter
         else:
-            self.val_dict[f"{name}-image"] += 1
+            self.val_dict["{}-image".format(name)] += 1
 
         grid = np_make_grid(image_array, **image_args)
-        self.writer.add_image(tag=name, img_tensor=grid, global_step=self.val_dict[f"{name}-image"])
+        self.writer.add_image(tag=name, img_tensor=grid, global_step=self.val_dict["{}-image".format(name)])
         self.val_dict[name] += 1
 
     @convert_params
@@ -152,12 +152,12 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
         """
 
         if counter is not None:
-            self.val_dict[f"{name}-figure"] = counter
+            self.val_dict["{}-figure".format(name)] = counter
         else:
-            self.val_dict[f"{name}-figure"] += 1
+            self.val_dict["{}-figure".format(name)] += 1
 
         figure = super().show_barplot(array, name, *args, **kwargs)
-        self.writer.add_figure(tag=name, figure=figure, global_step=self.val_dict[f"{name}-figure"])
+        self.writer.add_figure(tag=name, figure=figure, global_step=self.val_dict["{}-figure".format(name)])
 
     @convert_params
     def show_lineplot(self, y_vals, x_vals=None, name="lineplot", counter=None, *args, **kwargs):
@@ -174,12 +174,12 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
         """
 
         if counter is not None:
-            self.val_dict[f"{name}-figure"] = counter
+            self.val_dict["{}-figure".format(name)] = counter
         else:
-            self.val_dict[f"{name}-figure"] += 1
+            self.val_dict["{}-figure".format(name)] += 1
 
         figure = super().show_lineplot(y_vals, x_vals, name, *args, **kwargs)
-        self.writer.add_figure(tag=name, figure=figure, global_step=self.val_dict[f"{name}-figure"])
+        self.writer.add_figure(tag=name, figure=figure, global_step=self.val_dict["{}-figure".format(name)])
 
     @convert_params
     def show_scatterplot(self, array, name="scatterplot", counter=None, *args, **kwargs):
@@ -195,12 +195,12 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
         """
 
         if counter is not None:
-            self.val_dict[f"{name}-figure"] = counter
+            self.val_dict["{}-figure".format(name)] = counter
         else:
-            self.val_dict[f"{name}-figure"] += 1
+            self.val_dict["{}-figure".format(name)] += 1
 
         figure = super().show_scatterplot(array, name, *args, **kwargs)
-        self.writer.add_figure(tag=name, figure=figure, global_step=self.val_dict[f"{name}-figure"])
+        self.writer.add_figure(tag=name, figure=figure, global_step=self.val_dict["{}-figure".format(name)])
 
     @convert_params
     def show_piechart(self, array, name="piechart", counter=None, *args, **kwargs):
@@ -216,12 +216,12 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
         """
 
         if counter is not None:
-            self.val_dict[f"{name}-figure"] = counter
+            self.val_dict["{}-figure".format(name)] = counter
         else:
-            self.val_dict[f"{name}-figure"] += 1
+            self.val_dict["{}-figure".format(name)] += 1
 
         figure = super().show_piechart(array, name, *args, **kwargs)
-        self.writer.add_figure(tag=name, figure=figure, global_step=self.val_dict[f"{name}-figure"])
+        self.writer.add_figure(tag=name, figure=figure, global_step=self.val_dict["{}-figure".format(name)])
 
     def show_embedding(self, tensor, labels=None, name='default', label_img=None, counter=None,
                        *args, **kwargs):
@@ -238,11 +238,11 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
         """
 
         if counter is not None:
-            self.val_dict[f"{name}-embedding"] = counter
+            self.val_dict["{}-embedding".format(name)] = counter
         else:
-            self.val_dict[f"{name}-embedding"] += 1
+            self.val_dict["{}-embedding".format(name)] += 1
 
-        self.writer.add_embedding(mat=tensor, metadata=labels, label_img=label_img, tag=name, global_step=self.val_dict[f"{name}-embedding"])
+        self.writer.add_embedding(mat=tensor, metadata=labels, label_img=label_img, tag=name, global_step=self.val_dict["{}-embedding".format(name)])
 
     def show_histogram(self, array, name="Histogram", counter=None, *args, **kwargs):
         """
@@ -256,11 +256,11 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
         """
 
         if counter is not None:
-            self.val_dict[f"{name}-histogram"] = counter
+            self.val_dict["{}-histogram".format(name)] = counter
         else:
-            self.val_dict[f"{name}-histogram"] += 1
+            self.val_dict["{}-histogram".format(name)] += 1
 
-        self.writer.add_histogram(tag=name, values=array, global_step=self.val_dict[f"{name}-histogram"])
+        self.writer.add_histogram(tag=name, values=array, global_step=self.val_dict["{}-histogram".format(name)])
 
     def show_pr_curve(self, tensor, labels, name="pr-curve", counter=None, *args, **kwargs):
         """
@@ -274,11 +274,11 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
         """
 
         if counter is not None:
-            self.val_dict[f"{name}-pr-curve"] = counter
+            self.val_dict["{}-pr-curve".format(name)] = counter
         else:
-            self.val_dict[f"{name}-pr-curve"] += 1
+            self.val_dict["{}-pr-curve".format(name)] += 1
 
-        self.writer.add_pr_curve(tag=name, labels=labels, predictions=tensor, global_step=self.val_dict[f"{name}-pr-curve"])
+        self.writer.add_pr_curve(tag=name, labels=labels, predictions=tensor, global_step=self.val_dict["{}-pr-curve".format(name)])
 
     def close(self):
         self.writer.close()
