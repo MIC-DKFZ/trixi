@@ -311,7 +311,7 @@ def combine(base_dir):
             expc.save()
 
         return "1"
-    except:
+    except Exception as e:
         return "0"
 
     return "0"

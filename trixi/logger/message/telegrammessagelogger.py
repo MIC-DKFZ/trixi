@@ -1,12 +1,8 @@
-import io
-
-import matplotlib.pyplot as plt
 import numpy as np
 import telegram
 import torch
 import torchvision
-from PIL import Image
-from trixi.util.util import figure_to_image, get_image_as_buffered_file
+from trixi.util.util import get_image_as_buffered_file
 
 from trixi.logger.plt.numpyseabornimageplotlogger import NumpySeabornImagePlotLogger
 
@@ -57,7 +53,7 @@ class TelegramMessageLogger(NumpySeabornImagePlotLogger):
             text = self.exp_name + ":\n" + text
         try:
             self.bot.send_message(chat_id=self.chat_id, text=text)
-        except:
+        except Exception as e:
             print("Could not send text to telegram")
 
     def show_image(self, image, *args, **kwargs):
@@ -76,7 +72,7 @@ class TelegramMessageLogger(NumpySeabornImagePlotLogger):
 
                 self.bot.send_photo(chat_id=self.chat_id, photo=buf)
 
-        except:
+        except Exception as e:
             print("Could not send image to telegram")
 
     def show_image_grid(self, image_array, name=None, nrow=8, padding=2,
@@ -107,7 +103,7 @@ class TelegramMessageLogger(NumpySeabornImagePlotLogger):
 
         try:
             self.bot.send_photo(chat_id=self.chat_id, photo=buf, caption=caption)
-        except:
+        except Exception as e:
             print("Could not send image_grid to telegram")
 
     def show_value(self, value, name, counter=None, tag=None, *args, **kwargs):
@@ -132,7 +128,7 @@ class TelegramMessageLogger(NumpySeabornImagePlotLogger):
 
         try:
             self.bot.send_photo(chat_id=self.chat_id, photo=buf, caption=caption)
-        except:
+        except Exception as e:
             print("Could not send plot to telegram")
 
     def show_barplot(self, array, name=None, *args, **kwargs):
@@ -156,7 +152,7 @@ class TelegramMessageLogger(NumpySeabornImagePlotLogger):
 
         try:
             self.bot.send_photo(chat_id=self.chat_id, photo=buf, caption=caption)
-        except:
+        except Exception as e:
             print("Could not send plot to telegram")
 
     def show_lineplot(self, y_vals, x_vals=None, name=None, *args, **kwargs):
@@ -182,7 +178,7 @@ class TelegramMessageLogger(NumpySeabornImagePlotLogger):
 
         try:
             self.bot.send_photo(chat_id=self.chat_id, photo=buf, caption=caption)
-        except:
+        except Exception as e:
             print("Could not send plot to telegram")
 
     def show_scatterplot(self, array, name=None, *args, **kwargs):
@@ -207,7 +203,7 @@ class TelegramMessageLogger(NumpySeabornImagePlotLogger):
 
         try:
             self.bot.send_photo(chat_id=self.chat_id, photo=buf, caption=caption)
-        except:
+        except Exception as e:
             print("Could not send plot to telegram")
 
     def show_piechart(self, array, name=None, *args, **kwargs):
@@ -232,7 +228,7 @@ class TelegramMessageLogger(NumpySeabornImagePlotLogger):
 
         try:
             self.bot.send_photo(chat_id=self.chat_id, photo=buf, caption=caption)
-        except:
+        except Exception as e:
             print("Could not send plot to telegram")
 
     def print(self, text, *args, **kwargs):

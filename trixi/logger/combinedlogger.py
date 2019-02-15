@@ -42,7 +42,7 @@ def create_function(self, sub_methods):
                                                          False):
                     self.log_methods_cntr[sub_method] += 1
 
-            except:
+            except Exception as e:
                 print("a combi logger method failed: ", str(sub_method))
 
     return surrogate_fn

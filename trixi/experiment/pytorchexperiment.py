@@ -176,7 +176,7 @@ class PytorchExperiment(Experiment):
                  checkpoint_to_cpu=True,
                  save_checkpoint_every_epoch=1,
                  explogger_kwargs=None,
-                 explogger_freq=100,
+                 explogger_freq=1,
                  loggers=None,
                  append_rnd_to_name=False):
 

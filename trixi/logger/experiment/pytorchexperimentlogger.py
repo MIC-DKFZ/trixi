@@ -423,7 +423,7 @@ class PytorchExperimentLogger(ExperimentLogger):
                                        reduce_to_n_samples=reduce_to_n_samples,
                                        results_fn=results_fn
                                        )
-            except:
+            except Exception as e:
                 warnings.warn("Sth went wrong with calculating the roc curve")
 
     @staticmethod
@@ -474,7 +474,7 @@ class PytorchExperimentLogger(ExperimentLogger):
                                       reduce_to_n_samples=reduce_to_n_samples,
                                       results_fn=results_fn
                                       )
-            except:
+            except Exception as e:
                 warnings.warn("Sth went wrong with calculating the pr curve")
 
     @staticmethod
@@ -558,7 +558,7 @@ class PytorchExperimentLogger(ExperimentLogger):
                                                     results_fn=results_fn
                                                     )
 
-            except:
+            except Exception as e:
                 warnings.warn("Sth went wrong with calculating the classification metrics")
 
     @staticmethod

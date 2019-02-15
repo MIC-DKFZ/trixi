@@ -43,9 +43,10 @@ The Logging API supports
 
 And offers different Backends, e.g. :
 * Visdom ([visdom-loggers](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.visdom))
+* TensorboardX ([visdom-loggers](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.visdom))
 * Matplotlib / Seaborn ([plt-loggers](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.plt))
 * Local Disk ([file-loggers](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.file))
-* Telegram ([message-loggers](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.message))
+* Telegram & Slack ([message-loggers](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.message))
 
 And an [experiment-logger](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.experiment) for logging your experiments, which uses a file logger to automatically create a structured directory and allows
 storing of config, results, plots, dict, array, images, etc. That way your experiments will always have the same structure on disk.

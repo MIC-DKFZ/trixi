@@ -148,7 +148,7 @@ class ModuleMultiTypeDecoder(MultiTypeDecoder):
                 type_ = str_
                 try:
                     type_ = getattr(importlib.import_module(module_), name_)
-                except:
+                except Exception as e:
                     warnings.warn("Could not load {}".format(str_))
                 return type_
             elif obj.startswith("__function__"):
@@ -158,7 +158,7 @@ class ModuleMultiTypeDecoder(MultiTypeDecoder):
                 type_ = str_
                 try:
                     type_ = getattr(importlib.import_module(module_), name_)
-                except:
+                except Exception as e:
                     warnings.warn("Could not load {}".format(str_))
                 return type_
             elif obj.startswith("__module__"):
@@ -166,7 +166,7 @@ class ModuleMultiTypeDecoder(MultiTypeDecoder):
                 type_ = str_
                 try:
                     type_ = importlib.import_module(str_)
-                except:
+                except Exception as e:
                     warnings.warn("Could not load {}".format(str_))
                 return type_
         return super(ModuleMultiTypeDecoder, self)._decode(obj)
