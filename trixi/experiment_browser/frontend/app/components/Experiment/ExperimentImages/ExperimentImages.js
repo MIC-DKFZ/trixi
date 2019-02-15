@@ -32,7 +32,12 @@ class ExperimentImages extends React.Component {
 
   render() {
     this.generate_dummy_data();
-    return this.generate_image_slider()
+    return (
+      <div>
+        <h1>Images</h1>
+        {this.generate_image_slider()}
+      </div>
+      )
   }
 }
 

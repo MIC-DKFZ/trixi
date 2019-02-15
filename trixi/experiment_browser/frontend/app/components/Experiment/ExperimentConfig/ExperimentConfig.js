@@ -128,6 +128,7 @@ class ExperimentConfig extends React.Component { // eslint-disable-line react/pr
     this.generate_dummy_data();
     return (
       <div>
+        <h1>Configs</h1>
         <Table responsive="sm" striped="true">
           <thead>
           <tr>

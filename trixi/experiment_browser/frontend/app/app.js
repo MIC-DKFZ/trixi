@@ -33,6 +33,8 @@ import 'styles/theme.scss';
 // Import bootstrap CSS
 import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
 import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
+import '@trendmicro/react-sidenav/dist/react-sidenav.min.css'
+// import '@trendmicro/react-sidenav/dist/react-sidenav.css';
 
 import configureStore from './configureStore';
 

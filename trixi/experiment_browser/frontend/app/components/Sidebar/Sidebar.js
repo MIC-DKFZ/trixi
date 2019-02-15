@@ -8,8 +8,6 @@ import history from '../../history'
 
 import SideNav, { Toggle, Nav, NavItem, NavIcon, NavText } from '@trendmicro/react-sidenav';
 
-import '@trendmicro/react-sidenav/dist/react-sidenav.css';
-
 class Sidebar extends React.Component { // eslint-disable-line react/prefer-stateless-function
   render() {
     return (
