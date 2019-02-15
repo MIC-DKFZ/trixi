@@ -30,11 +30,18 @@ import history from "./history"
 // Import CSS reset and Global Styles
 import 'styles/theme.scss';
 
+// Import navibar CSS
+import '@trendmicro/react-sidenav/dist/react-sidenav.min.css'
+
 // Import bootstrap CSS
 import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
 import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
-import '@trendmicro/react-sidenav/dist/react-sidenav.min.css'
-// import '@trendmicro/react-sidenav/dist/react-sidenav.css';
+
+// Import Fortawesome CSS
+import 'font-awesome/css/font-awesome.min.css';
+
+// library.add(faIgloo, FontAwesomeIcon)
+
 
 import configureStore from './configureStore';
 
