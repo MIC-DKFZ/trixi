@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 import colorlover as cl
 from flask import Blueprint, Flask, abort, render_template, request
+from flask_cors import CORS
 
 from trixi.experiment_browser.backend.dataprocessing import group_images, make_graphs, merge_results, process_base_dir
 from trixi.experiment_browser.backend.experimentreader import ExperimentReader, CombiExperimentReader, group_experiments_by
@@ -65,6 +66,7 @@ def create_flask_app(base_dir):
     # to specify an additional static folder and we use that to give access to the
     # experiment files
     app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), "static"))
+    CORS(app)
     blueprint = Blueprint("data", __name__, static_url_path=base_dir, static_folder=base_dir)
     app.register_blueprint(blueprint)
 

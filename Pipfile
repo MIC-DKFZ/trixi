@@ -17,6 +17,7 @@ torch = ">=0.4.0"
 torchvision = ">=0.2.1"
 Flask = ">=0.12.2"
 Pillow = ">=5.1.0"
+flask-cors = "*"
 
 [dev-packages]
 
