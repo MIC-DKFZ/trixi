@@ -90,7 +90,7 @@ class PytorchExperimentLogger(ExperimentLogger):
             fps: FPS of the video
             extension: File extension - should be mp4, ogc, avi or webm
         """
-        # TODO: trixi browser currently can't show videos, so using GIF instead - should be included in new front-end
+        # TODO: trixi browser currently can't show videos, so using GIF instead - work in progress
         self.show_gif(frame_list, name=name, scale=scale, fps=fps)
         """
         tensor = np.array(frame_list)
