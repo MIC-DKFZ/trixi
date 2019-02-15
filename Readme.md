@@ -43,7 +43,7 @@ The Logging API supports
 
 And offers different Backends, e.g. :
 * Visdom ([visdom-loggers](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.visdom))
-* TensorboardX ([visdom-loggers](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.visdom))
+* TensorboardX ([tensorboard-loggers](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.tensorboard))
 * Matplotlib / Seaborn ([plt-loggers](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.plt))
 * Local Disk ([file-loggers](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.file))
 * Telegram & Slack ([message-loggers](https://trixi.readthedocs.io/en/latest/_api/trixi.logger.html#module-trixi.logger.message))
