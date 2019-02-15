@@ -119,10 +119,11 @@ class PytorchExperimentLogger(ExperimentLogger):
             fps: FPS of the gif
         """
         w, h = Image.fromarray(np.uint8(frame_list[0])).size
+        image_list = []
         for i in range(len(frame_list)):
-            frame_list[i] = Image.fromarray(np.uint8(frame_list[i])).resize((w*int(scale), h*int(scale)))
+            image_list.append(Image.fromarray(np.uint8(frame_list[i])).resize((w*int(scale), h*int(scale))))
         filename = os.path.join(self.img_dir, name + ".gif")
-        frame_list[0].save(filename, save_all=True, append_images=frame_list[1:], duration=int(1e3/fps), loop=0)
+        image_list[0].save(filename, save_all=True, append_images=image_list[1:], duration=int(1e3/fps), loop=0)
 
     @staticmethod
     @threaded
