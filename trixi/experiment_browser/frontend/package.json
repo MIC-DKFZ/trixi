@@ -53,6 +53,7 @@
     "react-bootstrap-table2-filter": "^1.1.1",
     "react-dom": "^16.4.0",
     "react-helmet": "5.2.0",
+    "react-image-show": "^0.2.4",
     "react-loadable": "^5.4.0",
     "react-plotly.js": "^2.2.0",
     "react-redux": "5.0.7",

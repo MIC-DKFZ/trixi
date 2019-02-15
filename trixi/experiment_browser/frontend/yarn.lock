@@ -9439,6 +9439,10 @@ react-helmet@5.2.0:
     prop-types "^15.5.4"
     react-side-effect "^1.1.0"
 
+react-image-show@^0.2.4:
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/react-image-show/-/react-image-show-0.2.4.tgz#cffd7b544e64c36424fcce4c7ffaa5e2240dccea"
+
 react-is@^16.3.2, react-is@^16.6.1, react-is@^16.7.0:
   version "16.7.0"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.7.0.tgz#c1bd21c64f1f1364c6f70695ec02d69392f41bfa"
