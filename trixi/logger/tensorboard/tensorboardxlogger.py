@@ -75,15 +75,15 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
             key = tag + "-" + name
 
         if counter is not None:
-            self.val_dict[f"{key}-image"] = counter
+            self.val_dict["{}-image".format(key)] = counter
         else:
-            self.val_dict[f"{key}-image"] += 1
+            self.val_dict["{}-image".format(key)] += 1
 
         if tag is not None:
-            self.writer.add_scalars(tag, {name: value}, global_step=self.val_dict[f"{key}-image"])
+            self.writer.add_scalars(tag, {name: value}, global_step=self.val_dict["{}-image".format(key)])
             self.writer.scalar_dict = {}
         else:
-            self.writer.add_scalar(name, value, global_step=self.val_dict[f"{key}-image"])
+            self.writer.add_scalar(name, value, global_step=self.val_dict["{}-image".format(key)])
 
     def show_text(self, text, name="Text", counter=None, **kwargs):
         """
