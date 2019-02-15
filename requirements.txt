@@ -9,3 +9,4 @@ portalocker>=1.2.1
 plotly>=2.5.1
 Pillow>=5.1.0
 visdom>=0.1.8.4
+tensorboardX>=1.6
