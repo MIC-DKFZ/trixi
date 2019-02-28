@@ -65,8 +65,8 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                 win_name = "%s_grad" % model_name
 
             if m_param is not None:
-                param_mean = m_param.detach().mean()
-                param_std = m_param.detach().std()
+                param_mean = m_param.detach().mean().item()
+                param_std = m_param.detach().std().item()
 
                 if np.isnan(param_std):
                     param_std = 0
