@@ -12,7 +12,7 @@ from torchvision.utils import make_grid
 
 from trixi.util.util import np_make_grid, get_tensor_embedding
 from trixi.logger.experiment.pytorchexperimentlogger import PytorchExperimentLogger
-from trixi.logger.visdom.numpyvisdomlogger import NumpyVisdomLogger
+from trixi.logger.visdom.numpyvisdomlogger import NumpyVisdomLogger, add_to_queue
 from trixi.logger.abstractlogger import convert_params
 from trixi.util.pytorchutils import get_guided_image_gradient, get_smooth_image_gradient, get_vanilla_image_gradient
 
@@ -251,8 +251,9 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         except Exception as e:
             warnings.warn("Could not render model, make sure the Graphviz executables are on your system.")
 
-    def show_image_grid(self, images, name=None, caption=None, env_appendix="", opts=None,
-                        image_args=None, **kwargs):
+    @add_to_queue
+    def show_image_grid(self, tensor, name=None, caption=None, env_appendix="", opts=None,
+                          image_args=None, **kwargs):
         """
         Calls the save image grid method (for abstract logger combatibility)
 
@@ -265,28 +266,6 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
            image_args: Arguments for the tensorvision save image method
 
 
-        """
-
-        if opts is None: opts = {}
-        if image_args is None: image_args = {}
-
-        tensor = images.detach().cpu()
-        viz_task = {
-            "type": "image_grid",
-            "tensor": tensor,
-            "name": name,
-            "caption": caption,
-            "env_appendix": env_appendix,
-            "opts": opts,
-            "image_args": image_args
-        }
-        self._queue.put_nowait(viz_task)
-
-    def __show_image_grid(self, tensor, name=None, caption=None, env_appendix="", opts=None,
-                          image_args=None, **kwargs):
-        """
-          Internal show_image_grid method, called by the internal process.
-          This function does all the magic.
         """
 
         if opts is None: opts = {}
@@ -329,12 +308,12 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         return win
 
-    NumpyVisdomLogger.show_funcs["image_grid"] = __show_image_grid
 
     @convert_params
-    def show_image_grid_heatmap(self, heatmap, background=None, ratio=0.3, normalize=True, colormap=2,
-                                name=None, caption=None, env_appendix="", opts=None,
-                                image_args=None, **kwargs):
+    @add_to_queue
+    def show_image_grid_heatmap(self, heatmap, tensor=None, ratio=0.3, colormap=2,
+                                  normalize=True, name=None, caption=None,
+                                  env_appendix="", opts=None, image_args=None, **kwargs):
         """
         Creates heat map from the given map and if given combines it with the background and then
         displays results with as image grid.
@@ -349,32 +328,6 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
            image_args: Arguments for the tensorvision save image method
 
-        """
-
-        if opts is None: opts = {}
-        if image_args is None: image_args = {}
-
-        viz_task = {
-            "type": "image_grid_heatmap",
-            "tensor": background,
-            "heatmap": heatmap,
-            "ratio": ratio,
-            "normalize": normalize,
-            "colormap": colormap,
-            "name": name,
-            "caption": caption,
-            "env_appendix": env_appendix,
-            "opts": opts,
-            "image_args": image_args
-        }
-        self._queue.put_nowait(viz_task)
-
-    def __show_image_grid_heatmap(self, heatmap, tensor=None, ratio=0.3, colormap=2,
-                                  normalize=True, name=None, caption=None,
-                                  env_appendix="", opts=None, image_args=None, **kwargs):
-        """
-          Internal show_image_grid_heatmap method, called by the internal process.
-          This function does all the magic.
         """
 
         from cv2 import cv2
@@ -414,7 +367,6 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         return win
 
-    NumpyVisdomLogger.show_funcs["image_grid_heatmap"] = __show_image_grid_heatmap
 
     @convert_params
     def show_embedding(self, tensor, labels=None, name=None, method="tsne", n_dims=2, n_neigh=30, meth_args=None,
