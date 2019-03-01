@@ -29,58 +29,52 @@ class TestPytorchVisdomLogger(unittest.TestCase):
     def test_show_image(self):
         image = np.random.random_sample((3, 128, 128))
         tensor = torch.from_numpy(image)
-        self.visdomLogger._NumpyVisdomLogger__show_image(tensor.numpy(), "image")
+        self.visdomLogger.show_image(tensor.numpy(), title='image')
 
     def test_show_images(self):
         images = np.random.random_sample((4, 3, 128, 128))
         tensors = torch.from_numpy(images)
-        self.visdomLogger._NumpyVisdomLogger__show_images(tensors.numpy(), "image")
+        self.visdomLogger.show_images(tensors.numpy(), title='images')
 
     def test_show_image_grid(self):
         images = np.random.random_sample((4, 3, 128, 128))
         tensor = torch.from_numpy(images)
-        self.visdomLogger._PytorchVisdomLogger__show_image_grid(tensor, "image_grid")
+        self.visdomLogger.show_image_grid(tensor, title="image_grid")
 
     def test_show_image_grid_heatmap(self):
         images = np.random.random_sample((4, 3, 128, 128))
-        self.visdomLogger._PytorchVisdomLogger__show_image_grid_heatmap(images, name="image_grid_heatmap")
+        self.visdomLogger.show_image_grid_heatmap(images, title="image_grid_heatmap")
 
     def test_show_barplot(self):
         tensor = torch.from_numpy(np.random.random_sample(5))
-        self.visdomLogger.show_barplot(tensor, name="barplot")
-        self.visdomLogger._NumpyVisdomLogger__show_barplot(tensor.numpy(), name="barplot")
+        self.visdomLogger.show_barplot(tensor, title="barplot")
 
     def test_show_lineplot(self):
         x = [0, 1, 2, 3, 4, 5]
         y = np.random.random_sample(6)
-        self.visdomLogger.show_lineplot(y, x, name="lineplot1")
-        self.visdomLogger._NumpyVisdomLogger__show_lineplot(y, x, name="lineplot1")
+        self.visdomLogger.show_lineplot(y, x, title="lineplot1")
 
     def test_show_piechart(self):
         array = torch.from_numpy(np.random.random_sample(5))
-        self.visdomLogger.show_piechart(array, name="piechart")
-        self.visdomLogger._NumpyVisdomLogger__show_piechart(array, name="piechart")
+        self.visdomLogger.show_piechart(array, title="piechart")
 
     def test_show_scatterplot(self):
         array = torch.from_numpy(np.random.random_sample((5, 2)))
-        self.visdomLogger.show_scatterplot(array, name="scatterplot")
-        self.visdomLogger._NumpyVisdomLogger__show_scatterplot(array.numpy(), name="scatterplot")
+        self.visdomLogger.show_scatterplot(array, title="scatterplot")
 
     def test_show_value(self):
         val = torch.from_numpy(np.random.random_sample(1))
-        self.visdomLogger.show_value(val, "value")
-        self.visdomLogger._NumpyVisdomLogger__show_value(val.numpy(), "value")
+        self.visdomLogger.show_value(val, title="value")
 
         val = torch.from_numpy(np.random.random_sample(1))
-        self.visdomLogger.show_value(val, "value")
+        self.visdomLogger.show_value(val, title="value")
 
         val = torch.from_numpy(np.random.random_sample(1))
-        self.visdomLogger.show_value(val, "value", counter=4)
+        self.visdomLogger.show_value(val, title="value", counter=4)
 
     def test_show_text(self):
         text = "\nTest 4 fun: zD ;-D 0o"
-        self.visdomLogger.show_text(text)
-        self.visdomLogger._NumpyVisdomLogger__show_text(text)
+        self.visdomLogger.show_text(text, title='text')
 
     def test_get_roc_curve(self):
         array = np.random.random_sample(100)
