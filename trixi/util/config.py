@@ -447,7 +447,10 @@ class Config(dict):
         def _deepcopy(source, target):
             for key, val in source.items():
                 if not isinstance(val, dict):
-                    target[key] = deepcopy(val)
+                    try:
+                        target[key] = deepcopy(val)
+                    except TypeError as e:
+                        target[key] = val
                 else:
                     target[key] = Config()
                     _deepcopy(source[key], target[key])
@@ -597,9 +600,9 @@ class Config(dict):
                 else:
                     difference[key] = Config.difference_config_static(*current_values, only_set=only_set)
 
-        return difference
+        return Config(config=difference)
 
-    def flat(self, keep_lists=True, max_split_size=10):
+    def flat(self, keep_lists=True, max_split_size=10, flatten_int=False):
         """Returns a flattened version of the Config as dict.
 
         Nested Configs and lists will be replaced by concatenated keys like so::
@@ -633,6 +636,7 @@ class Config(dict):
         Args:
             keep_lists: Keeps list along with unpacked values
             max_split_size: List longer than this will not be unpacked
+            flatten_int: Integer keys will be treated as strings
 
         Returns:
             dict: A flattened version of self
@@ -641,24 +645,26 @@ class Config(dict):
         def flat_(obj):
             def items():
                 for key, val in obj.items():
-                    if isinstance(val, dict) and type(key) == str:
+                    if isinstance(val, dict) and (isinstance(key, str) or (isinstance(key, int) and flatten_int)):
                         intermediate_dict = {}
                         for subkey, subval in flat_(val).items():
-                            if type(subkey) == str:
-                                yield key + "." + subkey, subval
+                            if isinstance(subkey, str):
+                                yield str(key) + "." + subkey, subval
+                            elif isinstance(subkey, int) and flatten_int:
+                                yield str(key) + "." + str(subkey), subval
                             else:
                                 intermediate_dict[subkey] = subval
                         if len(intermediate_dict) > 0:
-                            yield key, intermediate_dict
+                            yield str(key), intermediate_dict
                     elif isinstance(val, (list, tuple)):
-                        keep_this = keep_lists or type(key) != str
+                        keep_this = keep_lists or not isinstance(key, (str, int)) or (isinstance(key, int) and not flatten_int)
                         if max_split_size not in (None, False) and len(val) > max_split_size:
                             keep_this = True
                         if keep_this:
                             yield key, val
-                        if max_split_size in (None, False) or len(val) <= max_split_size:
+                        else:
                             for i, subval in enumerate(val):
-                                yield key + "." + str(i), subval
+                                yield str(key) + "." + str(i), subval
                     else:
                         yield key, val
 
