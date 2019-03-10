@@ -753,7 +753,7 @@ def update_from_sys_argv(config, warn=False):
             warnings.warn("Called with unknown arguments: {}".format(unknown), RuntimeWarning)
 
         # calc diff between configs
-        diff_keys = list(Config.difference_config_static(param, config_flat).keys())
+        diff_keys = list(Config.difference_config_static(param, config_flat).flat().keys())
 
         # convert type args
         ignore_ = []
