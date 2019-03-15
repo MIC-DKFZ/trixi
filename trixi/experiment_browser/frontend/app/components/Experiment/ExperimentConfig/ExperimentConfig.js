@@ -100,7 +100,7 @@ class ExperimentConfig extends React.Component { // eslint-disable-line react/pr
   generate_table_header() {
     var output = this.data.map((experiment) => {
       var experiment_name = experiment["config"]["name"];
-      var line = <th>{experiment_name}</th>;
+      var line = <th key={experiment_name}>{experiment_name}</th>;
       return line;
     });
     return output;
@@ -114,11 +114,11 @@ class ExperimentConfig extends React.Component { // eslint-disable-line react/pr
       var row_data = [];
       var row_content = table_content[row_key];
 
-      row_data.push(<td>{row_key}</td>);
-      row_content.map((data) => {
-        row_data.push(<td>{data}</td>)
+      row_data.push(<td key={"td_header" +row_key}>{row_key}</td>);
+      row_content.map((data, i) => {
+        row_data.push(<td key={row_key + "_" + i}>{data}</td>)
       });
-      var row = <tr>{row_data}</tr>;
+      var row = <tr key={"td_header" +row_key}>{row_data}</tr>;
       table_body.push(row)
     }
     return table_body;

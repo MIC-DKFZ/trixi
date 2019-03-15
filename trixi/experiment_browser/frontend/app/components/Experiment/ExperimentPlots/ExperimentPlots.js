@@ -42,18 +42,19 @@ class ExperimentPlots extends React.Component { // eslint-disable-line react/pre
 
   create_plots() {
     var data = this.parse_data();
-    var plot_names = Object.keys(data)
+    var plot_names = Object.keys(data);
     var plots = plot_names.map((plot_name) => {
       var plot_data = data[plot_name];
       var line_names = Object.keys(plot_data);
       var lines = [];
       for (var i=0;i<line_names.length;i++) {
-        var line_data = plot_data[line_names[i]]
+        var line_data = plot_data[line_names[i]];
         lines.push(line_data)
       }
 
       return (<Plot
         data={lines}
+        key={"plot_"+plot_name}
         layout={{title: plot_name}}
       />)
 
@@ -63,6 +64,7 @@ class ExperimentPlots extends React.Component { // eslint-disable-line react/pre
 
   render() {
     this.generate_dummy_data();
+    console.log(this.props)
     return (
       <div>
         <h1>Plots</h1>
