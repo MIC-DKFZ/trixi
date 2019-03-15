@@ -3,21 +3,22 @@ import React from 'react';
 import SlideShow from 'react-image-show'
 
 class ExperimentImages extends React.Component {
-  generate_dummy_data() {
-    this.data = [
-      "https://quanlieu.github.io/react-image-show/dd0200001e3a8ab1bb8b43ce1bc91a95.png",
-      "https://quanlieu.github.io/react-image-show/48ac2dcdcafc65d2b710e4bf626bd2a6.png",
-      "https://quanlieu.github.io/react-image-show/6189b61d45aff551635c8c66ce258753.png",
-      "https://quanlieu.github.io/react-image-show/305f030845ad6b159af134e15fe01eaf.png",
-      "https://quanlieu.github.io/react-image-show/0f8e1d1ec9bcbcd8e91a7014a62da202.png",
 
-    ]
-  }
+  generate_image_slider(key, image_path, data) {
+    // parse paths
+    var image_paths = [];
+    for(var i=0; i<data.length;i++) {
+      var path = image_path + "/" + data[i];
+      image_paths.push(path)
+    }
 
-  generate_image_slider() {
+    // Todo: load images from source (maybe backend). Simple display isn't working.
+
+    // get slider
     return (
       <SlideShow
-        images={this.data}
+        key={key}
+        images={image_paths}
         width="200px"
         imagesWidth="200px"
         imagesHeight="200px"
@@ -30,12 +31,35 @@ class ExperimentImages extends React.Component {
     )
   }
 
+  generate_image_views() {
+    var output = "";
+    try {
+      var image_path = this.props.images.img_path.experiments;
+      var experiments = this.props.images.imgs.experiments;
+      console.log(experiments)
+      var sliders = [];
+      for(var key in experiments) {
+        var image_names = experiments[key];
+        var slider = this.generate_image_slider(key, image_path, image_names)
+        sliders.push(slider)
+      }
+      output = sliders
+    }
+    catch (e) {
+      if (e instanceof TypeError) {
+        console.log("not initialized yet...")
+      } else {
+        console.log(e)
+      }
+    }
+    return output;
+  }
+
   render() {
-    this.generate_dummy_data();
     return (
       <div>
         <h1>Images</h1>
-        {this.generate_image_slider()}
+        {this.generate_image_views()}
       </div>
       )
   }
