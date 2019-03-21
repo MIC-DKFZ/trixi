@@ -200,6 +200,15 @@ class Config(dict):
         if type(key) == str and "." in key:
             superkey = key.split(".")[0]
             subkeys = ".".join(key.split(".")[1:])
+            if superkey not in self:
+                # this part enables ints in the access chain, e.g. a.1.b
+                try:
+                    intkey = int(superkey)
+                    if intkey in self:
+                        superkey = intkey
+                except ValueError:
+                    # if we can't convert to int, just continue so a KeyError will be raised
+                    pass
             if type(self[superkey]) in (list, tuple):
                 try:
                     subkeys = int(subkeys)

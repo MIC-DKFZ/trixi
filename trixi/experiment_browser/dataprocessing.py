@@ -71,7 +71,7 @@ def process_base_dir(base_dir, view_dir="", default_val="-", short_len=25, ignor
                 non_exps.append(os.path.join(view_dir, sub_dir))
 
     ### Get not common val keys
-    diff_keys = list(Config.difference_config_static(*[xp.config.flat() for xp in exps]).flat())
+    diff_keys = list(Config.difference_config_static(*[xp.config for xp in exps]).flat())
 
     ### Remove unwanted keys
     config_keys -= set(ignore_keys)
