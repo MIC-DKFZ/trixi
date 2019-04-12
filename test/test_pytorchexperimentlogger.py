@@ -3,6 +3,8 @@ import tempfile
 import unittest
 import shutil
 import time
+import matplotlib
+matplotlib.use("Agg")
 
 import numpy as np
 

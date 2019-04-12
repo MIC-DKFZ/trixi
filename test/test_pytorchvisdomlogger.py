@@ -101,7 +101,9 @@ class TestPytorchVisdomLogger(unittest.TestCase):
         fake_labels = torch.from_numpy(np.array([2])).long()
         criterion = torch.nn.CrossEntropyLoss()
 
-        err_fn = lambda x: criterion(x, fake_labels)
+        def err_fn(x):
+            x = net(x)
+            return criterion(x, fake_labels)
 
         self.visdomLogger.show_image_gradient(name="grads-vanilla", model=net, inpt=random_input, err_fn=err_fn,
                                               grad_type="vanilla")
