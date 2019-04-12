@@ -586,9 +586,9 @@ class PytorchExperimentLogger(ExperimentLogger):
         elif grad_type == "guided":
             grad = get_guided_image_gradient(model, inpt, err_fn, abs)
         elif grad_type == "smooth-vanilla":
-            grad = get_smooth_image_gradient(model, inpt, err_fn, n_runs, eps, grad_type="vanilla")
+            grad = get_smooth_image_gradient(model, inpt, err_fn, abs, n_runs, eps, grad_type="vanilla")
         elif grad_type == "smooth-guided":
-            grad = get_smooth_image_gradient(model, inpt, err_fn, n_runs, eps, grad_type="guided")
+            grad = get_smooth_image_gradient(model, inpt, err_fn, abs, n_runs, eps, grad_type="guided")
         else:
             warnings.warn("This grad_type is not implemented yet")
             grad = torch.zeros_like(inpt)

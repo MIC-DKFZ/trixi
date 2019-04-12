@@ -47,6 +47,7 @@ class Experiment(object):
         self._time_start = ""
         self._time_end = ""
         self._epoch_idx = 0
+        self.__stop = False
 
     def run(self, setup=True):
         """
@@ -76,11 +77,14 @@ class Experiment(object):
             self._start_internal()
             print("Experiment started.")
 
+            self.__stop = False
             for epoch in range(self._epoch_idx, self.n_epochs):
                 self.train(epoch=epoch)
                 self.validate(epoch=epoch)
                 self._end_epoch_internal(epoch=epoch)
                 self._epoch_idx += 1
+                if self.__stop:
+                    break
 
             self._exp_state = "Trained"
             print("Training complete.")
@@ -169,6 +173,10 @@ class Experiment(object):
     def test(self):
         """The testing part of the Experiment"""
         pass
+
+    def stop(self):
+        """If called the Experiment will stop after that epoch and not continue training"""
+        self.__stop = True
 
     def process_err(self, e):
         """

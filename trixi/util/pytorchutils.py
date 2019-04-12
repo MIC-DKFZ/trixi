@@ -13,9 +13,9 @@ def get_vanilla_image_gradient(model, inpt, err_fn, abs=False):
     inpt = inpt.detach()
     inpt.requires_grad = True
 
-    output = model(inpt)
+    # output = model(inpt)
 
-    err = err_fn(output)
+    err = err_fn(inpt)
     err.backward()
 
     grad = inpt.grad.detach()
@@ -45,9 +45,9 @@ def get_guided_image_gradient(model: torch.nn.Module, inpt, err_fn, abs=False):
     inpt = inpt.detach()
     inpt.requires_grad = True
 
-    output = model(inpt)
+    # output = model(inpt)
 
-    err = err_fn(output)
+    err = err_fn(inpt)
     err.backward()
 
     grad = inpt.grad.detach()
@@ -62,18 +62,18 @@ def get_guided_image_gradient(model: torch.nn.Module, inpt, err_fn, abs=False):
 
 
 #@lru_cache(maxsize=32)
-def get_smooth_image_gradient(model, inpt, err_fn, n_runs=20, eps=0.1, grad_type="vanilla"):
+def get_smooth_image_gradient(model, inpt, err_fn, abs=True, n_runs=20, eps=0.1,  grad_type="vanilla"):
     grads = []
     for i in range(n_runs):
         inpt = inpt + torch.randn(inpt.size()).to(inpt.device) * eps
         if grad_type == "vanilla":
-            single_grad = get_vanilla_image_gradient(model, inpt, err_fn)
+            single_grad = get_vanilla_image_gradient(model, inpt, err_fn, abs=abs)
         elif grad_type == "guided":
-            single_grad = get_guided_image_gradient(model, inpt, err_fn)
+            single_grad = get_guided_image_gradient(model, inpt, err_fn, abs=abs)
         else:
             warnings.warn("This grad_type is not implemented yet")
             single_grad = torch.zeros_like(inpt)
-        grads.append(torch.abs(single_grad))
+        grads.append(single_grad)
 
     grad = torch.mean(torch.stack(grads), dim=0)
     return grad.detach()
