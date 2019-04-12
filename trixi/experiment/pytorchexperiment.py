@@ -75,20 +75,15 @@ class PytorchExperiment(Experiment):
             :class:`.ResultLogDict` that directly automatically writes to a file
             and also stores the N last entries for each key for quick access
             (e.g. to quickly get the running mean).
-        - vlog (if use_visdomlogger is True)
-            A :class:`.PytorchVisdomLogger` instance which can log your results
-            to a running visdom server. Start the server via
-            :code:`python -m visdom.server` or pass :data:`auto_start=True` in
-            the :attr:`visdomlogger_kwargs`.
-        - elog (if use_explogger is True)
+        - elog (if base_dir is given)
             A :class:`.PytorchExperimentLogger` instance which can log your
-            results to a given folder.
-        - tlog (if use_telegrammessagelogger is True)
-            A :class:`.TelegramMessageLogger` instance which can send the results to
-            your telegram account
+            results to a given folder. Will automatically be created if a base_dir is available.
+        - loggers
+            Contains all loggers you provide, including the experiment logger, accessible by the
+            names you provide.
         - clog
             A :class:`.CombinedLogger` instance which logs to all loggers with
-            different frequencies (specified with the :attr:`_c_freq` for each
+            different frequencies (specified with the last entry in the tuple you provide for each
             logger where 1 means every time and N means every Nth time,
             e.g. if you only want to send stuff to Visdom every 10th time).
 
@@ -122,7 +117,8 @@ class PytorchExperiment(Experiment):
         seed (int): A random seed (which will set the random, numpy and
             torch seed).
         base_dir (str): A base directory in which the experiment result folder
-            will be created.
+            will be created. A :class:`.PytorchExperimentLogger` instance will be created if
+            this is given.
         globs: The :func:`globals` of the script which is run. This is necessary
             to get and save the executed files in the experiment folder.
         resume (str or PytorchExperiment): Another PytorchExperiment or path to
@@ -140,33 +136,26 @@ class PytorchExperiment(Experiment):
                 - "th_vars" <-- torch tensors/variables
                 - "results" <-- The result dict
 
+        resume_reset_epochs (bool): Set epoch to zero if you resume an existing experiment.
         parse_sys_argv (bool): Parsing the console arguments (argv) to get a
             :attr:`config path` and/or :attr:`resume_path`.
         parse_config_sys_argv (bool): Parse argv to update the config
             (if the keys match).
         checkpoint_to_cpu (bool): When checkpointing, transfer all tensors to
             the CPU beforehand.
-        safe_checkpoint_every_epoch (int): Determines after how many epochs a
+        save_checkpoint_every_epoch (int): Determines after how many epochs a
             checkpoint is stored.
-        use_visdomlogger (bool): Use a :class:`.PytorchVisdomLogger`. Is
-            accessible via the :attr:`vlog` attribute.
-        visdomlogger_kwargs (dict): Keyword arguments for :attr:`vlog`
-            instantiation.
-        visdomlogger_c_freq (int): The frequency x (meaning one in x) with which
-            the :attr:`clog` will call the :attr:`vlog`.
-        use_explogger (bool): Use a :class:`.PytorchExperimentLogger`. Is
-            accessible via the :attr:`elog` attribute. This will create the
-            experiment folder structure.
         explogger_kwargs (dict): Keyword arguments for :attr:`elog`
             instantiation.
-        explogger_c_freq (int): The frequency x (meaning one in x) with which
+        explogger_freq (int): The frequency x (meaning one in x) with which
             the :attr:`clog` will call the :attr:`elog`.
-        use_telegrammessagelogger (bool): Use a :class:`.TelegramMessageLogger`. Is
-            accessible via the :attr:`tlog` attribute.
-        telegrammessagelogger_kwargs (dict): Keyword arguments for :attr:`tlog`
-            instantiation.
-        telegrammessagelogger_c_freq (int): The frequency x (meaning one in x) with which
-            the :attr:`clog` will call the :attr:`tlog`.
+        loggers (dict): Specify additional loggers.
+            Entries should have one of these formats::
+
+                "name": "identifier" (will default to a frequency of 10)
+                "name": ("identifier"(, kwargs, frequency)) (last two are optional)
+
+            "identifier" is one of "telegram", "tensorboard", "visdom", "slack".
         append_rnd_to_name (bool): If :obj:`True`, will append a random six
             digit string to the experiment name.
 
@@ -185,126 +174,71 @@ class PytorchExperiment(Experiment):
                  resume_reset_epochs=True,
                  parse_sys_argv=False,
                  checkpoint_to_cpu=True,
-                 safe_checkpoint_every_epoch=1,
+                 save_checkpoint_every_epoch=1,
                  explogger_kwargs=None,
-                 explogger_c_freq=100,
+                 explogger_freq=1,
                  loggers=None,
                  append_rnd_to_name=False):
 
         # super(PytorchExperiment, self).__init__()
         Experiment.__init__(self)
 
-        if loggers is None:
-            loggers = {}
-
-        config_args_path = None
+        # check for command line inputs for config_path and resume_path,
+        # will be prioritized over config and resume!
+        config_path_from_argv = None
         if parse_sys_argv:
-            config_args_path, resume_path = get_vars_from_sys_argv()
-            if resume_path:
-                resume = resume_path
+            config_path_from_argv, resume_path_from_argv = get_vars_from_sys_argv()
+            if resume_path_from_argv:
+                resume = resume_path_from_argv
 
-        if config_args_path is None:
-            self._config_raw = None
-            if isinstance(config, str):
-                self._config_raw = Config(file_=config)
-            elif isinstance(config, Config):
-                self._config_raw = Config(config=config)
-            elif isinstance(config, dict):
-                self._config_raw = Config(config=config)
-            else:
-                self._config_raw = Config()
-
-            self.n_epochs = n_epochs
-            if self.n_epochs is None and self._config_raw.get("n_epochs") is not None:
-                n_epochs = self._config_raw["n_epochs"]
-            elif self.n_epochs is None and self._config_raw.get("n_epochs") is None:
-                self.n_epochs = 0
-            self._config_raw["n_epochs"] = n_epochs
-
-            self._seed = seed
-            if self._seed is None and self._config_raw.get('seed') is not None:
-                self._seed = self._config_raw['seed']
-            elif self._seed is None and self._config_raw.get('seed') is None:
-                random_data = os.urandom(4)
-                seed = int.from_bytes(random_data, byteorder="big")
-                self._seed = seed
-            self._config_raw['seed'] = self._seed
-
-            self.exp_name = name
-            if self.exp_name is None and self._config_raw.get("name") is not None:
-                self.exp_name = self._config_raw["name"]
-            elif self.exp_name is None and self._config_raw.get("name") is None:
-                self.exp_name = "experiment"
-            if append_rnd_to_name:
-                rnd_str = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(5))
-                self.exp_name += "_" + rnd_str
-            self._config_raw["name"] = self.exp_name
-
-            if base_dir is not None:
-                self._config_raw["base_dir"] = base_dir
-
+        # construct _config_raw
+        if config_path_from_argv is None:
+            self._config_raw = self._config_raw_from_input(config, name, n_epochs, seed, append_rnd_to_name)
         else:
-            self._config_raw = Config(config_args_path)
-
+            self._config_raw = Config(file_=config_path_from_argv)
         update_from_sys_argv(self._config_raw)
 
+        # set a few experiment attributes
         self.n_epochs = self._config_raw["n_epochs"]
         self._seed = self._config_raw['seed']
+        set_seed(self._seed)
         self.exp_name = self._config_raw["name"]
-        base_dir = self._config_raw["base_dir"]
-
         self._checkpoint_to_cpu = checkpoint_to_cpu
-        self._safe_checkpoint_every_epoch = safe_checkpoint_every_epoch
-
+        self._save_checkpoint_every_epoch = save_checkpoint_every_epoch
         self.results = dict()
 
-        # Init loggers
+        # get base_dir from _config_raw or store there
+        if base_dir is not None:
+            self._config_raw["base_dir"] = base_dir
+        base_dir = self._config_raw["base_dir"]
+
+        # Construct experiment logger (automatically activated if base_dir is there)
         self.loggers = {}
         logger_list = []
-
         if base_dir is not None:
             if explogger_kwargs is None:
                 explogger_kwargs = {}
             self.elog = PytorchExperimentLogger(base_dir=base_dir,
                                                 exp_name=self.exp_name,
                                                 **explogger_kwargs)
-            if explogger_c_freq is not None and explogger_c_freq > 0:
-                logger_list.append((self.elog, explogger_c_freq))
-
+            if explogger_freq is not None and explogger_freq > 0:
+                logger_list.append((self.elog, explogger_freq))
             self.results = ResultLogDict("results-log.json", base_dir=self.elog.result_dir)
+        else:
+            self.elog = None
 
-        for logger_name, logger_cfg in loggers.items():
-            if isinstance(logger_cfg, (list, tuple)):
-                log_name = logger_cfg[0]
-                log_params = logger_cfg[1] if len(logger_cfg) > 1 else {}
-                clog_freq = logger_cfg[2] if len(logger_cfg) > 2 else 10
-            else:
-                assert isinstance(logger_cfg, str), "The specified logger has to either be a string or a list with " \
-                                                    "name, parameters, clog_frequency"
-                log_name = logger_cfg
-                log_params = {}
-                clog_freq = 10
-
-            if "exp_name" not in log_params:
-                log_params["exp_name"] = self.exp_name
-
-            if log_name == "tensorboard" and "target_dir" not in log_params:
-                log_params["target_dir"] = os.path.join(self.elog.save_dir, "tensorboard")
-
-            log_cls = logger_lookup_dict[log_name]
-            _logger = log_cls(**log_params)
-            self.loggers[logger_name] = _logger
-            if clog_freq is not None and clog_freq > 0:
-                logger_list.append((_logger, clog_freq))
-
-            if log_name == "visdom":
-                self.vlog = _logger
+        # Construct other loggers
+        if loggers is not None:
+            for logger_name, logger_cfg in loggers.items():
+                _logger, log_freq = self._make_logger(logger_name, logger_cfg)
+                self.loggers[logger_name] = _logger
+                if log_freq is not None and log_freq > 0:
+                    logger_list.append((_logger, log_freq))
 
         self.clog = CombinedLogger(*logger_list)
 
-        set_seed(self._seed)
-
-        # Do the resume stuff
+        # Set resume attributes and update _config_raw,
+        # actual resuming is done automatically after setup in _setup_internal
         self._resume_path = None
         self._resume_save_types = resume_save_types
         self._ignore_resume_config = ignore_resume_config
@@ -312,18 +246,19 @@ class PytorchExperiment(Experiment):
         if resume is not None:
             if isinstance(resume, str):
                 if resume == "last":
+                    if base_dir is None:
+                        raise ValueError("resume='last' requires base_dir.")
                     self._resume_path = os.path.join(base_dir, sorted(os.listdir(base_dir))[-1])
                 else:
                     self._resume_path = resume
             elif isinstance(resume, PytorchExperiment):
                 self._resume_path = resume.elog.base_dir
-
         if self._resume_path is not None and not self._ignore_resume_config:
             self._config_raw.update(Config(file_=os.path.join(self._resume_path, "config", "config.json")),
                                     ignore=list(map(lambda x: re.sub("^-+", "", x), sys.argv)))
 
-        # self.elog.save_config(self.config, "config_pre")
-        if globs is not None:
+        # Save everything we need to reproduce experiment
+        if globs is not None and self.elog is not None:
             zip_name = os.path.join(self.elog.save_dir, "sources.zip")
             SourcePacker.zip_sources(globs, zip_name)
 
@@ -331,6 +266,114 @@ class PytorchExperiment(Experiment):
         self.config = Config.init_objects(self._config_raw)
 
         atexit.register(self.at_exit_func)
+
+    def _config_raw_from_input(self,
+                               config=None,
+                               name=None,
+                               n_epochs=None,
+                               seed=None,
+                               append_rnd_to_name=False):
+        """Construct _config_raw from input."""
+
+        _config_raw = None
+        if isinstance(config, str):
+            _config_raw = Config(file_=config)
+        elif isinstance(config, (Config, dict)):
+            _config_raw = Config(config=config)
+        else:
+            _config_raw = Config()
+
+        if n_epochs is None and _config_raw.get("n_epochs") is not None:
+            n_epochs = _config_raw["n_epochs"]
+        elif n_epochs is None and _config_raw.get("n_epochs") is None:
+            n_epochs = 0
+        _config_raw["n_epochs"] = n_epochs
+
+        if seed is None and _config_raw.get('seed') is not None:
+            seed = _config_raw['seed']
+        elif seed is None and _config_raw.get('seed') is None:
+            random_data = os.urandom(4)
+            seed = int.from_bytes(random_data, byteorder="big")
+        _config_raw['seed'] = seed
+
+        if name is None and _config_raw.get("name") is not None:
+            name = _config_raw["name"]
+        elif name is None and _config_raw.get("name") is None:
+            name = "experiment"
+        if append_rnd_to_name:
+            rnd_str = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(5))
+            name += "_" + rnd_str
+        _config_raw["name"] = name
+
+        return _config_raw
+
+    def _make_logger(self, logger_name, logger_cfg):
+
+        if isinstance(logger_cfg, (list, tuple)):
+            log_type = logger_cfg[0]
+            log_params = logger_cfg[1] if len(logger_cfg) > 1 else {}
+            log_freq = logger_cfg[2] if len(logger_cfg) > 2 else 10
+        else:
+            assert isinstance(logger_cfg, str), "The specified logger has to either be a string or a list with " \
+                                                "name, parameters, clog_frequency"
+            log_type = logger_cfg
+            log_params = {}
+            log_freq = 10
+
+        if "exp_name" not in log_params:
+            log_params["exp_name"] = self.exp_name
+
+        if log_type == "tensorboard":
+            if "target_dir" not in log_params or log_params["target_dir"] is None:
+                if self.elog is not None:
+                    log_params["target_dir"] = os.path.join(self.elog.save_dir, "tensorboard")
+                else:
+                    raise AttributeError("TensorboardLogger requires a target_dir or an ExperimentLogger instance.")
+            elif self.elog is not None:
+                log_params["target_dir"] = os.path.join(log_params["target_dir"], self.elog.folder_name)
+
+        log_type = logger_lookup_dict[log_type]
+        _logger = log_type(**log_params)
+
+        return _logger, log_freq
+
+    @property
+    def vlog(self):
+        if "visdom" in self.loggers:
+            return self.loggers["visdom"]
+        elif "v" in self.loggers:
+            return self.loggers["v"]
+        else:
+            return None
+
+    @property
+    def tlog(self):
+        if "telegram" in self.loggers:
+            return self.loggers["telegram"]
+        elif "t" in self.loggers:
+            return self.loggers["t"]
+        else:
+            return None
+
+    @property
+    def txlog(self):
+        if "tensorboard" in self.loggers:
+            return self.loggers["tensorboard"]
+        if "tensorboardx" in self.loggers:
+            return self.loggers["tensorboardx"]
+        elif "tx" in self.loggers:
+            return self.loggers["tx"]
+        else:
+            return None
+
+    @property
+    def slog(self):
+        if "slack" in self.loggers:
+            return self.loggers["slack"]
+        elif "s" in self.loggers:
+            return self.loggers["s"]
+        else:
+            return None
 
     def process_err(self, e):
         if self.elog is not None:
@@ -369,11 +412,11 @@ class PytorchExperiment(Experiment):
 
         def parse_torchmodules_recursive(input, output):
             if isinstance(input, dict):
-	            for key, value in input.items():
-	                if isinstance(value, dict):
-	                    parse_torchmodules_recursive(value, output)
-	                elif isinstance(value, torch.nn.Module):
-	                    output[key] = value
+                for key, value in input.items():
+                    if isinstance(value, dict):
+                        parse_torchmodules_recursive(value, output)
+                    elif isinstance(value, torch.nn.Module):
+                        output[key] = value
 
         pyth_modules = dict()
         parse_torchmodules_recursive(self.__dict__, pyth_modules)
@@ -726,7 +769,7 @@ class PytorchExperiment(Experiment):
 
     def _end_epoch_internal(self, epoch):
         self.save_results()
-        if epoch % self._safe_checkpoint_every_epoch == 0:
+        if epoch % self._save_checkpoint_every_epoch == 0:
             self.save_temp_checkpoint()
         self._save_exp_config()
 

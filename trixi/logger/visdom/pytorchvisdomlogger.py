@@ -12,7 +12,7 @@ from torchvision.utils import make_grid
 
 from trixi.util.util import np_make_grid, get_tensor_embedding
 from trixi.logger.experiment.pytorchexperimentlogger import PytorchExperimentLogger
-from trixi.logger.visdom.numpyvisdomlogger import NumpyVisdomLogger
+from trixi.logger.visdom.numpyvisdomlogger import NumpyVisdomLogger, add_to_queue
 from trixi.logger.abstractlogger import convert_params
 from trixi.util.pytorchutils import get_guided_image_gradient, get_smooth_image_gradient, get_vanilla_image_gradient
 
@@ -65,8 +65,8 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                 win_name = "%s_grad" % model_name
 
             if m_param is not None:
-                param_mean = m_param.detach().mean()
-                param_std = m_param.detach().std()
+                param_mean = m_param.detach().mean().item()
+                param_std = m_param.detach().std().item()
 
                 if np.isnan(param_std):
                     param_std = 0
@@ -154,7 +154,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         for model_name, model in model_dict.items():
             self.plot_model_statistics_grads(model=model, env_appendix=env_appendix, model_name=model_name)
 
-    def plot_model_structure(self, model, input_size, name=None, use_cuda=True, delete_tmp_on_close=False, **kwargs):
+    def plot_model_structure(self, model, input_size, name="model_structure", use_cuda=True, delete_tmp_on_close=False, forward_kwargs=None, **kwargs):
         """
         Plots the model structure/ model graph of a pytorch module (this only works correctly with pytorch 0.2.0).
 
@@ -166,8 +166,14 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             delete_tmp_on_close: Determines if the tmp file will be deleted on close. If set true, can cause problems due to the multi threadded plotting.
         """
 
+        if not hasattr(input_size[0], "__iter__"):
+            input_size = [input_size, ]
+
         if not torch.cuda.is_available():
             use_cuda = False
+
+        if forward_kwargs is None:
+            forward_kwargs = {}
 
         def make_dot(output_var, state_dict=None):
             """
@@ -231,11 +237,15 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         # Create input
         inpt_vars = [torch.randn(i_s) for i_s in input_size]
         if use_cuda:
-            inpt_vars = [i_v.cuda() for i_v in inpt_vars]
-            model = model.cuda()
+            if next(model.parameters()).is_cuda:
+                device = next(model.parameters()).device.index
+            else:
+                device = None
+            inpt_vars = [i_v.cuda(device) for i_v in inpt_vars]
+            model = model.cuda(device)
 
         # get output
-        output = model(*inpt_vars)
+        output = model(*inpt_vars, **forward_kwargs)
 
         # get temp file to store svg in
         fp = tempfile.NamedTemporaryFile(suffix=".svg", delete=delete_tmp_on_close)
@@ -248,11 +258,12 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
             # Display model graph in visdom
             self.show_svg(svg=x, name=name)
-        except:
-            warnings.warn("Could not remder model, make sure the Graphviz executables are on your systems")
+        except Exception as e:
+            warnings.warn("Could not render model, make sure the Graphviz executables are on your system.")
 
-    def show_image_grid(self, images, name=None, caption=None, env_appendix="", opts=None,
-                        image_args=None, **kwargs):
+    @add_to_queue
+    def show_image_grid(self, tensor, name=None, caption=None, env_appendix="", opts=None,
+                          image_args=None, **kwargs):
         """
         Calls the save image grid method (for abstract logger combatibility)
 
@@ -265,28 +276,6 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
            image_args: Arguments for the tensorvision save image method
 
 
-        """
-
-        if opts is None: opts = {}
-        if image_args is None: image_args = {}
-
-        tensor = images.detach().cpu()
-        viz_task = {
-            "type": "image_grid",
-            "tensor": tensor,
-            "name": name,
-            "caption": caption,
-            "env_appendix": env_appendix,
-            "opts": opts,
-            "image_args": image_args
-        }
-        self._queue.put_nowait(viz_task)
-
-    def __show_image_grid(self, tensor, name=None, caption=None, env_appendix="", opts=None,
-                          image_args=None, **kwargs):
-        """
-          Internal show_image_grid method, called by the internal process.
-          This function does all the magic.
         """
 
         if opts is None: opts = {}
@@ -329,12 +318,12 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         return win
 
-    NumpyVisdomLogger.show_funcs["image_grid"] = __show_image_grid
 
     @convert_params
-    def show_image_grid_heatmap(self, heatmap, background=None, ratio=0.3, normalize=True, colormap=2,
-                                name=None, caption=None, env_appendix="", opts=None,
-                                image_args=None, **kwargs):
+    @add_to_queue
+    def show_image_grid_heatmap(self, heatmap, tensor=None, ratio=0.3, colormap=2,
+                                  normalize=True, name=None, caption=None,
+                                  env_appendix="", opts=None, image_args=None, **kwargs):
         """
         Creates heat map from the given map and if given combines it with the background and then
         displays results with as image grid.
@@ -351,31 +340,6 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         """
 
-        if opts is None: opts = {}
-        if image_args is None: image_args = {}
-
-        viz_task = {
-            "type": "image_grid_heatmap",
-            "tensor": background,
-            "heatmap": heatmap,
-            "ratio": ratio,
-            "normalize": normalize,
-            "colormap": colormap,
-            "name": name,
-            "caption": caption,
-            "env_appendix": env_appendix,
-            "opts": opts,
-            "image_args": image_args
-        }
-        self._queue.put_nowait(viz_task)
-
-    def __show_image_grid_heatmap(self, heatmap, tensor=None, ratio=0.3, colormap=2,
-                                  normalize=True, name=None, caption=None,
-                                  env_appendix="", opts=None, image_args=None, **kwargs):
-        """
-          Internal show_image_grid_heatmap method, called by the internal process.
-          This function does all the magic.
-        """
         from cv2 import cv2
 
         if opts is None: opts = {}
@@ -413,7 +377,6 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         return win
 
-    NumpyVisdomLogger.show_funcs["image_grid_heatmap"] = __show_image_grid_heatmap
 
     @convert_params
     def show_embedding(self, tensor, labels=None, name=None, method="tsne", n_dims=2, n_neigh=30, meth_args=None,
@@ -539,3 +502,6 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         grad = PytorchExperimentLogger.get_input_gradient(model=model, inpt=inpt, err_fn=err_fn, grad_type=grad_type,
                                                           n_runs=n_runs, eps=eps, abs=abs)
         self.show_image_grid(grad, **image_grid_params)
+
+    def show_video(self, frame_list=None, name="frames", dim="LxHxWxC", scale=1.0, fps=25):
+        self.vis.video(tensor=np.array(frame_list), dim=dim, opts={'fps': fps})

@@ -73,6 +73,14 @@ message
     :undoc-members:
     :show-inheritance:
 
+:hidden:`SlackMessageLogger`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: trixi.logger.message.slackmessagelogger
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :hidden:`TelegramMessageLogger`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -93,6 +101,38 @@ plt
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: trixi.logger.plt.numpyseabornplotlogger
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:hidden:`NumpySeabornImagePlotLogger`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: trixi.logger.plt.numpyseabornimageplotlogger
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tensorboard
+-----------
+
+.. automodule:: trixi.logger.tensorboard
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:hidden:`TensorboardXLogger`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: trixi.logger.tensorboard.tensorboardxlogger
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:hidden:`PytorchTensorboardXLogger`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: trixi.logger.tensorboard.pytorchtensorboardxlogger
     :members:
     :undoc-members:
     :show-inheritance:

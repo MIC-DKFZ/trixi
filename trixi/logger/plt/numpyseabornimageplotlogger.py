@@ -11,7 +11,7 @@ from trixi.util.util import chw_to_hwc, figure_to_image
 
 class NumpySeabornImagePlotLogger(NumpySeabornPlotLogger):
     """
-    Visual logger, inherits the AbstractLogger and plots/ logs numpy arrays/ values as matplotlib / seaborn plots.
+    Wrapper around :class:`.NumpySeabornPlotLogger` that renders figures into numpy arrays.
     """
 
     def __init__(self, **kwargs):

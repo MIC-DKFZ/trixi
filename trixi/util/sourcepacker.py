@@ -101,6 +101,7 @@ class SourcePacker(object):
 
         py_str, sources, dependencies = SourcePacker.gather_sources_and_dependencies(globs=globs)
         repo, branch, commit = SourcePacker.git_info(globs.get("__file__"))
+        cmd = " ".join(sys.argv)
 
         with zipfile.ZipFile(filename, mode='w') as zf:
             for source in sources:
@@ -111,3 +112,4 @@ class SourcePacker(object):
             zf.writestr("modules.txt", dep_str)
             git_str = "Repository: {}\nBranch: {}\nCommit: {}".format(repo, branch, commit)
             zf.writestr("git_info.txt", git_str)
+            zf.writestr("command.txt", cmd)

@@ -5,5 +5,10 @@
 #
 # We pin sphinx to 1.7.0 and will need to revisit this from time to time.
 # The error is caused by manually calling sphinx-apidoc in conf.py
-
-sphinx==1.7.0
+#
+# UPDATE: With 1.7.9 this seems to no longer be an issue (didn't try for earlier versions).
+# On the contrary, 1.7.0 together with Python 3.7 produces another issue resulting from importing
+# ExtraVisdom -> "TypeError: __mro_entries__ must return a tuple". Commenting out the sphinx
+# requirement, but leaving this here for now.
+#
+# sphinx==1.7.0

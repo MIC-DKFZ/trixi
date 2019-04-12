@@ -151,7 +151,8 @@ def experiment(base_dir):
     default_val = "-"
     combi_config = {}
     exp_configs = [exp.config.flat(False) for exp in experiments]
-    diff_config_keys = list(Config.difference_config_static(*exp_configs).keys())
+    diff_config_keys = list(Config.difference_config_static(*exp_configs).flat().keys())
+
     config_keys = set([k for c in exp_configs for k in c.keys()])
     for k in sorted(config_keys):
         combi_config[k] = []
@@ -311,7 +312,7 @@ def combine(base_dir):
             expc.save()
 
         return "1"
-    except:
+    except Exception as e:
         return "0"
 
     return "0"

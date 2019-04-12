@@ -5,6 +5,8 @@ import fnmatch
 import os
 import warnings
 from multiprocessing import Process
+import cv2
+from PIL import Image
 
 import torch
 import numpy as np
@@ -75,6 +77,53 @@ class PytorchExperimentLogger(ExperimentLogger):
 
         """
         self.plot_logger.show_image_grid_heatmap(heatmap=heatmap, background=background, name=name, **kwargs)
+
+    def show_video(self, frame_list=None, name="video", dim="LxHxWxC", scale=1.0, fps=25,
+                   extension=".mp4", codec="THEO"):
+        """
+        Saves video in the img folder. Should be a list of arrays with dimension HxWxC.
+
+        Args:
+            frame_list: The list of image tensors/arrays to be saved as a video
+            name: Filename of the video
+            dim: Dimension of the tensor - should be either LxHxWxC or LxCxHxW
+            fps: FPS of the video
+            extension: File extension - should be mp4, ogc, avi or webm
+        """
+        # TODO: trixi browser currently can't show videos, so using GIF instead - work in progress
+        self.show_gif(frame_list, name=name, scale=scale, fps=fps)
+        """
+        tensor = np.array(frame_list)
+        assert tensor.ndim == 4, "video should be a 4d tensor"
+        assert dim == "LxHxWxC" or  dim == "LxCxHxW", "dimension argument should be LxHxWxC or LxCxHxW"
+        if dim == "LxCxHxW":
+            tensor = tensor.transpose([0, 2, 3, 1])
+        filename = os.path.join(self.img_dir, name + extension)
+        fourcc = cv2.VideoWriter_fourcc(*codec)
+        writer = cv2.VideoWriter(filename, fourcc, fps, (tensor.shape[2], tensor.shape[1]))
+        assert writer.isOpened(), "video writer could not be opened"
+        for i in range(tensor.shape[0]):
+            writer.write(tensor[i, :, :, :])
+        writer.release()
+        writer = None
+        """
+
+    def show_gif(self, frame_list=None, name="frames", scale=1.0, fps=25):
+        """
+        Saves gif in the img folder. Should be a list of arrays with dimension HxWxC.
+
+        Args:
+            frame_list: The list of image tensors/arrays to be saved as a gif
+            name: Filename of the gif
+            scale: Scaling factor of the individual frames
+            fps: FPS of the gif
+        """
+        w, h = Image.fromarray(np.uint8(frame_list[0])).size
+        image_list = []
+        for i in range(len(frame_list)):
+            image_list.append(Image.fromarray(np.uint8(frame_list[i])).resize((w*int(scale), h*int(scale))))
+        filename = os.path.join(self.img_dir, name + ".gif")
+        image_list[0].save(filename, save_all=True, append_images=image_list[1:], duration=int(1e3/fps), loop=0)
 
     @staticmethod
     @threaded
@@ -423,7 +472,7 @@ class PytorchExperimentLogger(ExperimentLogger):
                                        reduce_to_n_samples=reduce_to_n_samples,
                                        results_fn=results_fn
                                        )
-            except:
+            except Exception as e:
                 warnings.warn("Sth went wrong with calculating the roc curve")
 
     @staticmethod
@@ -474,7 +523,7 @@ class PytorchExperimentLogger(ExperimentLogger):
                                       reduce_to_n_samples=reduce_to_n_samples,
                                       results_fn=results_fn
                                       )
-            except:
+            except Exception as e:
                 warnings.warn("Sth went wrong with calculating the pr curve")
 
     @staticmethod
@@ -558,7 +607,7 @@ class PytorchExperimentLogger(ExperimentLogger):
                                                     results_fn=results_fn
                                                     )
 
-            except:
+            except Exception as e:
                 warnings.warn("Sth went wrong with calculating the classification metrics")
 
     @staticmethod
