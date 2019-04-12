@@ -673,8 +673,8 @@ class PytorchExperiment(Experiment):
             restore_dict = self.elog.load_checkpoint(name=name, **checkpoint_dict)
         else:
             checkpoint_path = os.path.join(path, name)
-            if checkpoint_path.endswith("/"):
-                checkpoint_path = checkpoint_path[:-1]
+            if checkpoint_path.endswith(os.sep):
+                checkpoint_path = os.path.dirname(checkpoint_path)
             restore_dict = self.elog.load_checkpoint_static(checkpoint_file=checkpoint_path, **checkpoint_dict)
 
         self.update_attributes(restore_dict)
