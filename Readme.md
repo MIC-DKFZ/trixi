@@ -16,6 +16,14 @@ Finally get some structure into your machine learning experiments.
 * [Documentation](#documentation) ([trixi.rtfd.io](https://trixi.readthedocs.io/en/latest/))
 * [Examples](#examples)
 
+# Contribute
+
+We're always grateful for contributions, even small ones! We're PhD students and this is just a side project, so there will always be something to improve.
+
+The best way is to create pull requests on Github. Fork the repository and work either directly on develop or create a feature branch, whichever you like best. Then go to "Pull requests" on our Github, select "New pull request" and "compare across forks". Select our develop as base and your work as head/compare.
+
+We currently don't support the full Github workflow, because we have to mirror from our working repository to Github, but don't worry, we can export the pull requests and apply them so that your contribution will still appear on Github :)
+
 # Features
 
 **trixi** consists of three parts:
