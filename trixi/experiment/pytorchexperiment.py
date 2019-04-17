@@ -890,14 +890,14 @@ class PytorchExperiment(Experiment):
 
 def get_last_file(dir_, name=None):
     """
-    Returns the (alphabetically) last file in the folder which matches the name supplied
+    Returns the most recently created file in the folder which matches the name supplied
 
     Args:
         dir_: The base directory to start the search in
         name: The name pattern to match with the files
 
     Returns:
-        str: the path to the (alphabetically) last file
+        str: the path to the most recent file
 
     """
     if name is None:
@@ -907,15 +907,15 @@ def get_last_file(dir_, name=None):
 
     for root, dirs, files in os.walk(dir_):
         for filename in fnmatch.filter(files, name):
-            if 'last' in filename:
-                return os.path.join(root, filename)
+            #if 'last' in filename:
+            #    return os.path.join(root, filename)
             checkpoint_file = os.path.join(root, filename)
             dir_files.append(checkpoint_file)
 
     if len(dir_files) == 0:
         return ""
 
-    last_file = sorted(dir_files, reverse=True)[0]
+    last_file = max(dir_files, key=os.path.getctime)
 
     return last_file
 
