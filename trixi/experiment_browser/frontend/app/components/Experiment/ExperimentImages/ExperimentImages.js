@@ -4,15 +4,34 @@ import SlideShow from 'react-image-show'
 
 class ExperimentImages extends React.Component {
 
-  generate_image_slider(key, image_path, data) {
-    // parse paths
-    var image_paths = [];
-    for(var i=0; i<data.length;i++) {
-      var path = image_path + "/" + data[i];
-      image_paths.push(path)
+  get_data() {
+    var image_path = [];
+    var experiments = [];
+
+    try {
+      image_path = this.props.images.img_path.experiments;
+      experiments = this.props.images.imgs.experiments;
+    } catch (e) {
+      if (e instanceof TypeError) {
+        console.log("ExperimentImages not initialized yet")
+      } else {
+        console.log(e)
+      }
     }
 
-    // Todo: load images from source (maybe backend). Simple display isn't working.
+    return {"image_path": image_path, "experiments": experiments}
+  }
+
+  generate_image_slider(key, image_base_path, data) {
+    // parse paths
+    var base_url = "http://localhost:5000/serve_image";
+    var image_paths = [];
+    for (var i = 0; i < data.length; i++) {
+      var image_path = image_base_path + "/" + data[i];
+      var url = new URL(base_url);
+      url.searchParams.append("image_path", image_path);
+      image_paths.push(url.href);
+    }
 
     // get slider
     return (
@@ -23,36 +42,22 @@ class ExperimentImages extends React.Component {
         imagesWidth="200px"
         imagesHeight="200px"
         imagesHeightMobile="56vw"
-        // thumbnailsWidth="920px"
-        // thumbnailsHeight="12vw"
-        // thumbnails
         indicators fixedImagesHeight
       />
     )
   }
 
   generate_image_views() {
-    var output = "";
-    try {
-      var image_path = this.props.images.img_path.experiments;
-      var experiments = this.props.images.imgs.experiments;
-      console.log(experiments)
-      var sliders = [];
-      for(var key in experiments) {
-        var image_names = experiments[key];
-        var slider = this.generate_image_slider(key, image_path, image_names)
-        sliders.push(slider)
-      }
-      output = sliders
+    var image_path = this.get_data().image_path;
+    var experiments = this.get_data().experiments;
+    var sliders = [];
+    for (var key in experiments) {
+      var image_names = experiments[key];
+      var slider = this.generate_image_slider(key, image_path, image_names);
+      sliders.push(slider)
     }
-    catch (e) {
-      if (e instanceof TypeError) {
-        console.log("not initialized yet...")
-      } else {
-        console.log(e)
-      }
-    }
-    return output;
+
+    return sliders;
   }
 
   render() {
@@ -61,7 +66,7 @@ class ExperimentImages extends React.Component {
         <h1>Images</h1>
         {this.generate_image_views()}
       </div>
-      )
+    )
   }
 }
 

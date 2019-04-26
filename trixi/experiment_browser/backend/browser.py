@@ -5,7 +5,7 @@ import sys
 from collections import OrderedDict
 
 import colorlover as cl
-from flask import Blueprint, Flask, abort, render_template, request
+from flask import Blueprint, Flask, abort, render_template, request, send_file
 from flask_cors import CORS
 
 from trixi.experiment_browser.backend.dataprocessing import group_images, make_graphs, merge_results, process_base_dir
@@ -85,6 +85,7 @@ def register_url_routes(app, base_dir):
     app.add_url_rule('/experiment_remove', "experiment_remove", lambda: experiment_remove(base_dir), methods=['GET'])
     app.add_url_rule('/experiment_star', "experiment_star", lambda: experiment_star(base_dir), methods=['GET'])
     app.add_url_rule('/experiment_rename', "experiment_rename", lambda: experiment_rename(base_dir), methods=['GET'])
+    app.add_url_rule('/serve_image', "serve_image", lambda: serve_image(), methods=['GET'])
 
 
 def start_browser():
@@ -121,6 +122,7 @@ def overview_(base_dir):
         raise e
         abort(500)
 
+
 def get_overview(base_dir):
     dir_ = request.args.get("dir")
     try:
@@ -131,6 +133,7 @@ def get_overview(base_dir):
         print(e.__repr__())
         raise e
         abort(500)
+
 
 def experiment(base_dir):
     experiment_paths = request.args.getlist('exp')
@@ -219,6 +222,7 @@ def experiment(base_dir):
 
 
     return render_template('experiment.html', **content)
+
 
 def get_experiment(base_dir):
     experiment_paths = request.args.getlist('exp')
@@ -389,6 +393,11 @@ def experiment_rename(base_dir):
     exp.update_meta_info(name=new_name)
 
     return ""
+
+
+def serve_image():
+    image_path = request.args.get('image_path')
+    return send_file(image_path, mimetype='image/gif')
 
 
 def combine(base_dir):
