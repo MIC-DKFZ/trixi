@@ -23,10 +23,10 @@ import './style.scss';
 const App = () => (
   <div className="app-wrapper">
     <Helmet
-      titleTemplate="%s - React.js Boilerplate"
-      defaultTitle="React.js Boilerplate"
+      titleTemplate="%s - TRIXI"
+      defaultTitle="TRIXI Experimentbrowser"
     >
-      <meta name="description" content="A React.js Boilerplate application" />
+      <meta name="description" content="An experiment browser for pytorch experiments." />
     </Helmet>
     <Header />
     <Sidebar/>
