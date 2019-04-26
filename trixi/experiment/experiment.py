@@ -10,16 +10,21 @@ class Experiment(object):
         setup()
         prepare()
 
-        for epoch in n_epochs:
+        while epoch < n_epochs:
             train()
             validate()
+            epoch += 1
 
         end()
+
+    If you want to use another criterion than number of epochs, e.g. stopping based on validation loss,
+    you can implement that in your validation method and just call .stop() at some point to break the loop.
+    Just set your n_epochs to a high number or np.inf.
 
     The reason there is both :meth:`.setup` and :meth:`.prepare` is that internally there is also
     a :meth:`._setup_internal` method for hidden magic in classes that inherit from this. For
     example, the :class:`trixi.experiment.pytorchexperiment.PytorchExperiment` uses this to restore checkpoints. Think
-    if :meth:`.setup` as an :meth:`.__init__` that is only called when the Experiment is actually
+    of :meth:`.setup` as an :meth:`.__init__` that is only called when the Experiment is actually
     asked to do anything. Then use :meth:`.prepare` to modify the fully instantiated Experiment if
     you need to.
 
@@ -56,9 +61,10 @@ class Experiment(object):
             setup()
             prepare()
 
-            for epoch in n_epochs:
+            while epoch < n_epochs:
                 train()
                 validate()
+                epoch += 1
 
             end()
 
@@ -71,6 +77,7 @@ class Experiment(object):
             if setup:
                 self.setup()
                 self._setup_internal()
+
             self.prepare()
 
             self._exp_state = "Started"
@@ -78,13 +85,11 @@ class Experiment(object):
             print("Experiment started.")
 
             self.__stop = False
-            for epoch in range(self._epoch_idx, self.n_epochs):
-                self.train(epoch=epoch)
-                self.validate(epoch=epoch)
-                self._end_epoch_internal(epoch=epoch)
+            while self._epoch_idx < self.n_epochs and not self.__stop:
+                self.train(epoch=self._epoch_idx)
+                self.validate(epoch=self._epoch_idx)
+                self._end_epoch_internal(epoch=self._epoch_idx)
                 self._epoch_idx += 1
-                if self.__stop:
-                    break
 
             self._exp_state = "Trained"
             print("Training complete.")
@@ -98,13 +103,9 @@ class Experiment(object):
 
         except Exception as e:
 
-            # run_error = e
-            # run_error_traceback = traceback.format_tb(e.__traceback__)
             self._exp_state = "Error"
-            self.process_err(e)
             self._time_end = time.strftime("%y-%m-%d_%H:%M:%S", time.localtime(time.time()))
-
-            raise e
+            self.process_err(e)
 
     def run_test(self, setup=True):
         """
@@ -123,30 +124,31 @@ class Experiment(object):
             if setup:
                 self.setup()
                 self._setup_internal()
-                self.prepare()
+
+            self.prepare()
 
             self._exp_state = "Testing"
             print("Start test.")
 
             self.test()
-            self.end_test()
-            self._exp_state = "Tested"
 
+            self.end_test()
             self._end_test_internal()
 
+            self._exp_state = "Tested"
             print("Testing complete.")
 
         except Exception as e:
 
-            # run_error = e
-            # run_error_traceback = traceback.format_tb(e.__traceback__)
             self._exp_state = "Error"
             self.process_err(e)
 
-            raise e
+    @property
+    def epoch(self):
+        return self._epoch_idx
 
     def setup(self):
-        """Is called at the beginning of each Experiment run to setup the basic components needed for a run"""
+        """Is called at the beginning of each Experiment run to setup the basic components needed for a run."""
         pass
 
     def train(self, epoch):
@@ -180,13 +182,13 @@ class Experiment(object):
 
     def process_err(self, e):
         """
-        This method is called if an error occurs during the execution of an experiment
+        This method is called if an error occurs during the execution of an experiment. Will just raise by default.
 
         Args:
             e (Exception): The exception which was raised during the experiment life cycle
 
         """
-        pass
+        raise e
 
     def _setup_internal(self):
         pass
