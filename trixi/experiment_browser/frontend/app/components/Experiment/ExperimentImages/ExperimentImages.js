@@ -13,7 +13,7 @@ class ExperimentImages extends React.Component {
       experiments = this.props.images.imgs.experiments;
     } catch (e) {
       if (e instanceof TypeError) {
-        console.log("ExperimentImages not initialized yet")
+        // console.log("ExperimentImages not initialized yet")
       } else {
         console.log(e)
       }
