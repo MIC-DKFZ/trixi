@@ -9,6 +9,25 @@ class ExperimentPlots extends React.Component { // eslint-disable-line react/pre
     this.data = dummy_data
   }
 
+  get_data() {
+    console.log(this.props)
+    var image_path = [];
+    var experiments = [];
+
+    try {
+      image_path = this.props.images.img_path.experiments;
+      experiments = this.props.images.imgs.experiments;
+    } catch (e) {
+      if (e instanceof TypeError) {
+        console.log("ExperimentImages not initialized yet")
+      } else {
+        console.log(e)
+      }
+    }
+
+    return {"image_path": image_path, "experiments": experiments}
+  }
+
   parse_data() {
     var plots = new Array()
     for (var i = 0; i < this.data.length; i++) {
@@ -29,7 +48,6 @@ class ExperimentPlots extends React.Component { // eslint-disable-line react/pre
           name: key,
           type: 'scatter',
           mode: 'lines+points',
-          name: 'Scatter + Lines'
         };
       }
 
@@ -64,7 +82,6 @@ class ExperimentPlots extends React.Component { // eslint-disable-line react/pre
 
   render() {
     this.generate_dummy_data();
-    console.log(this.props)
     return (
       <div>
         <h1>Plots</h1>
