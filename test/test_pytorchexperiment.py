@@ -205,6 +205,7 @@ class TestPytorchExperiment(unittest.TestCase):
 
         self.cntr = []
         self.experiment.train = lambda epoch: self.cntr.append(0)
+        self.experiment.end = lambda: time.sleep(2)
         self.experiment.run()
         self.assertTrue(len(self.cntr) == 10, "Did not call train for the right number of epochs")
 
