@@ -83,10 +83,10 @@ class ExperimentPlots extends React.Component { // eslint-disable-line react/pre
   render() {
     this.generate_dummy_data();
     return (
-      <div>
+      <article>
         <h1>Plots</h1>
         {this.create_plots()}
-      </div>
+      </article>
     );
   }
 }
