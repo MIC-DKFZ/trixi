@@ -10,7 +10,7 @@ import { Helmet } from 'react-helmet';
 
 import ExperimentConfig from "../../components/Experiment/ExperimentConfig/ExperimentConfig";
 import ExperimentImages from "../../components/Experiment/ExperimentImages/ExperimentImages";
-import ExperimentLogs from "../../components/Experiment/ExperimentLogs/ExperimentLogs";
+import ExperimentResults from "../../components/Experiment/ExperimentResults/ExperimentResults";
 import ExperimentPlots from "../../components/Experiment/ExperimentPlots/ExperimentPlots";
 import axios from "axios/index";
 
@@ -64,7 +64,7 @@ export default class HomePage extends React.PureComponent { // eslint-disable-li
           </section>
           <ExperimentConfig config={this.state.experiment_result.config}/>
           <ExperimentImages images={this.state.experiment_result.images}/>
-          <ExperimentLogs logs={this.state.experiment_result.logs}/>
+          <ExperimentResults results={this.state.experiment_result.results}/>
           <ExperimentPlots plots={this.state.experiment_result.plots}/>
         </div>
       </article>

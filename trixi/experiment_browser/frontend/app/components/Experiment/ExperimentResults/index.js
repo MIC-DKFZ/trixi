@@ -1,1 +1,1 @@
-export { default } from './ExperimentLogs';
+export { default } from './ExperimentResults';
