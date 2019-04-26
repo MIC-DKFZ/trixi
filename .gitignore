@@ -5,6 +5,7 @@ __pycache__/
 
 #pycharm
 .idea
+.vscode
 
 # C extensions
 *.so
@@ -115,5 +116,5 @@ trixi_single/*
 
 ### Except build folder in docs:
 
-doc/api
+doc/_api
 doc/_build

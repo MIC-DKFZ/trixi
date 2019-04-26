@@ -13,12 +13,37 @@ from trixi.util import Config
 from trixi.util.util import StringMultiTypeDecoder
 
 
+REQUIRED_EXPERIMENT_SUBFOLDERS = ("config")
+
+
+def is_experiment(folder):
+
+    is_exp = True
+
+    try:
+
+        subfolders = os.listdir(folder)
+        for required in REQUIRED_EXPERIMENT_SUBFOLDERS:
+            if required not in subfolders:
+                is_exp = False
+                break
+        else:
+            if "config.json" not in os.listdir(os.path.join(folder, "config")):
+                is_exp = False
+
+    except Exception as e:
+
+        is_exp = False
+
+    return is_exp
+
 class ExperimentReader(object):
     """Reader class to read out experiments created by :class:`trixi.experimentlogger.ExperimentLogger`.
 
     Args:
-        work_dir (str): Directory with the structure defined by
-                        :class:`trixi.experimentlogger.ExperimentLogger`.
+        base_dir (str): Either a directory with the structure defined by
+            :class:`trixi.experimentlogger.ExperimentLogger` or parent folder of such a directory.
+        exp_dir (str): Will be concatenated to base_dir.
         name (str): Optional name for the experiment. If None, will try
                     to read name from experiment config.
 

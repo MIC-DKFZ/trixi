@@ -9,7 +9,7 @@ from flask import Blueprint, Flask, abort, render_template, request, send_file
 from flask_cors import CORS
 
 from trixi.experiment_browser.backend.dataprocessing import group_images, make_graphs, merge_results, process_base_dir
-from trixi.experiment_browser.backend.experimentreader import ExperimentReader, CombiExperimentReader, group_experiments_by
+from trixi.experiment_browser.backend.experimentreader import ExperimentReader, CombiExperimentReader, group_experiments_by, is_experiment
 from trixi.util import Config
 
 # These keys will be ignored when in a config file
@@ -73,7 +73,24 @@ def create_flask_app(base_dir):
     return app
 
 
+def start_browser():
+    args, base_dir = parse_args()
+
+    base_dir = os.path.abspath(base_dir)
+
+    app = create_flask_app(base_dir)
+    register_url_routes(app, base_dir)
+
+    host = "0.0.0.0" if args.expose else "localhost"
+    app.run(debug=args.debug, host=host, port=args.port)
+
+
 def register_url_routes(app, base_dir):
+
+    app.add_url_rule("/experiments", "experiments", experiments, methods=["GET"])
+    app.add_url_rule("/experimentDifference", "experiment_difference", experiment_difference, methods=["GET"])
+    app.add_url_rule("/experimentProperty", "experiment_property", experiment_property, methods=["GET"])
+
     app.add_url_rule("/", "overview", lambda: overview(base_dir), methods=["GET"])
     app.add_url_rule("/overview", "overview_", lambda: overview_(base_dir), methods=["GET"])
     app.add_url_rule("/get_overview", "get_overview", lambda: get_overview(base_dir), methods=["GET"])
@@ -88,16 +105,103 @@ def register_url_routes(app, base_dir):
     app.add_url_rule('/serve_image', "serve_image", lambda: serve_image(), methods=['GET'])
 
 
-def start_browser():
-    args, base_dir = parse_args()
+#####################################################################
+### ENDPOINTS
+#####################################################################
 
-    base_dir = os.path.abspath(base_dir)
 
-    app = create_flask_app(base_dir)
-    register_url_routes(app, base_dir)
+def experiments():
+    """For a given directory, will check all subfolders and sort them into two lists
+    by wether or not they represent and experiment."""
 
-    host = "0.0.0.0" if args.expose else "localhost"
-    app.run(debug=args.debug, host=host, port=args.port)
+    base_dir = request.args.get("dir")
+
+    exp_list = []
+    not_exp_list = []
+    if base_dir is not None:
+        for dir_ in sorted(os.listdir(base_dir)):
+            if is_experiment(os.path.join(base_dir, dir_)):
+                exp_list.append(dir_)
+            else:
+                not_exp_list.append(dir_)
+
+    result = {
+        "dir": base_dir,
+        "experiments": exp_list,
+        "not_experiments": not_exp_list
+    }
+
+    return result
+
+
+def experiment_difference():
+    """For a number of experiments, will return their configs as well as the difference config, all flattened."""
+
+    experiments = sorted(request.args.getlist("exp"))
+
+    exps = []
+    names = []
+    configs = []
+
+    for exp in experiments:
+        try:
+            exp_reader = ExperimentReader(exp)
+            names.append(exp_reader.exp_name)
+            configs.append(exp_reader.config)
+            exps.append(exp)
+        except Exception as e:
+            continue
+
+    difference_config = Config.difference_config_static(*configs).flat()
+    for c in range(len(configs)):
+        configs[c] = configs[c].flat()
+
+    result = {
+        "experiments": exps,
+        "names": names,
+        "configs": configs,
+        "difference": difference_config
+    }
+
+    return result
+
+
+def experiment_property():
+    
+    experiment = request.args.get("exp")
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def overview(base_dir):
