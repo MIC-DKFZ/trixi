@@ -261,6 +261,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         except Exception as e:
             warnings.warn("Could not render model, make sure the Graphviz executables are on your system.")
 
+    @convert_params
     @add_to_queue
     def show_image_grid(self, tensor, name=None, caption=None, env_appendix="", opts=None,
                           image_args=None, **kwargs):
@@ -317,7 +318,6 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         )
 
         return win
-
 
     @convert_params
     @add_to_queue

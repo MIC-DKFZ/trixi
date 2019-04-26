@@ -55,7 +55,7 @@
         <tbody>
         {% for dir, star ,name, time, desc, epochs, config_vals, result_vals in rows %}
         <tr dir_name="{{ dir }}">
-            <th>
+            <th cntval="{{ dir }}">
                 {% if star %}
                 <a class="star_element" href="" style="color:black; margin-right: 0.5em;" dir_name="{{ dir }}"><i
                         class="material-icons"
@@ -68,21 +68,21 @@
                     href="/experiment?exp={{ dir }}" style="vertical-align: middle" target="_blank">{{ dir }}</a>
                 {% endif %}
             </th>
-            <td>
+            <td cntval="{{ name }}">
                 <span>{{ name }}</span>
                 <a class="edit_name" href="" style="color:black;" data-toggle="modal" data-target="#renameModal"
                    data-name="{{name}}" data-dir="{{dir}}">
                     <i class="material-icons" style="float: right;">edit</i>
                 </a>
             </td>
-            <td>{{ time }}</td>
-            <td>{{ desc }}</td>
-            <td>{{ epochs }}</td>
+            <td cntval="{{ time }}">{{ time }}</td>
+            <td cntval="{{ desc }}">{{ desc }}</td>
+            <td cntval="{{ epochs }}">{{ epochs }}</td>
             {% for el, el_short in config_vals %}
-            <td title="{{ el }}">{{ el_short }}</td>
+            <td title="{{ el }}" cntval="{{ el }}">{{ el_short }}</td>
             {% endfor %}
             {% for el, el_short in result_vals %}
-            <td title="{{ el }}">{{ el_short }}</td>
+            <td title="{{ el }}" cntval="{{ el }}">{{ el_short }}</td>
             {% endfor %}
         </tr>
         {% endfor %}
@@ -225,9 +225,9 @@
                 <label class="col-form-label">Name:</label>
                 <input type="text" class="form-control" id="combi-name-input">
                 <br>
-                 <div style="float: right;">
+                <div style="float: right;">
                     <label class="switch">
-                        <input type="checkbox"  id="combi-save-input" checked>
+                        <input type="checkbox" id="combi-save-input" checked>
                         <span class="slider round"></span>
                     </label>
                     <div>Save</div>
@@ -281,7 +281,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Loading...</h5>
-                 <i class="fa fa-circle-o-notch fa-spin" style="font-size:24px"></i>
+                <i class="fa fa-circle-o-notch fa-spin" style="font-size:24px"></i>
             </div>
         </div>
     </div>
@@ -330,26 +330,22 @@
 
                     if (data_el === "-") {
                         show_draw_row = false;
-                    }
-                    else if (val.startsWith(">=")) {
+                    } else if (val.startsWith(">=")) {
                         var numb = parseFloat(val.substring(2));
                         if (data_el < numb) {
                             show_draw_row = false;
                         }
-                    }
-                    else if (val.startsWith(">")) {
+                    } else if (val.startsWith(">")) {
                         var numb = parseFloat(val.substring(1));
                         if (data_el <= numb) {
                             show_draw_row = false;
                         }
-                    }
-                    else if (val.startsWith("<=")) {
+                    } else if (val.startsWith("<=")) {
                         var numb = parseFloat(val.substring(2));
                         if (data_el > numb) {
                             show_draw_row = false;
                         }
-                    }
-                    else if (val.startsWith("<")) {
+                    } else if (val.startsWith("<")) {
                         var numb = parseFloat(val.substring(1));
                         if (data_el >= numb) {
                             show_draw_row = false;
@@ -390,13 +386,23 @@
                 $("div.toolbar")
                     .html('<a role="button" class="compare-experiments btn btn-primary" style="float: left">Details</a>\
                            <a role="button" class="combine-experiments btn btn-success" style="float: left;margin-left:                                                       2px;">Combine</a>\
-                           <a role="button" class="remove-experiments btn btn-danger" style="float: left; margin-left: 2px;">Remove</a>');
+                           <a role="button" class="remove-experiments btn btn-danger" style="float: left; margin-left: 2px;">Remove</a>\
+                           <a role="button" class="export-experiments btn btn-info" style="float: left; margin-left: 2px;">Export</a>');
             },
             columnDefs: [
                 {targets: [0, 1, 2, 3, 4], visible: true},
                 {targets: "_all", visible: false}
             ],
-            aaSorting: [[2, 'desc']]
+            aaSorting: [[2, 'desc']],
+            buttons: [
+                {
+                    extend: 'collection',
+                    text: 'Export',
+                    buttons: [
+                        'csv',
+                    ]
+                }
+            ]
         });
 
         // Compare experiments
@@ -415,6 +421,60 @@
                 // window.location.href = new_location;
                 window.open(new_location, '_blank');
             }
+        });
+
+
+
+        // Compare experiments
+        $('a.export-experiments').on('click', function (e) {
+            e.preventDefault();
+            console.log("Export Triggered");
+            var experiments = [];
+            $.each($('#overviewTable tr.selected'), function () {
+                 var children = $(this)[0].children;
+                    var children_elements = [];
+                    for (var i = 0; i < children.length; i++) {
+                        children_elements.push(children[i].getAttribute("cntval"));
+                    }
+                    experiments.push(children_elements.join(";"));
+            });
+            if (experiments.length == 0) {
+                $.each($('#overviewTable tbody').children(), function () {
+                    var children = $(this)[0].children;
+                    var children_elements = [];
+                    for (var i = 0; i < children.length; i++) {
+                        children_elements.push(children[i].getAttribute("cntval"));
+                    }
+                    experiments.push(children_elements.join(";"));
+                });
+            }
+            // console.log(experiments);
+
+            var heads = ["Directory"];
+            $.each($('#overviewTable th.center-elem'), function () {
+                var head_item = $(this)[0].children[0].innerHTML;
+                heads.push(head_item);
+            });
+            // console.log(heads.join(","))
+
+            var csv_text = heads.join(";") + '\n' + experiments.join('\n');
+
+            var csvFile = new Blob([csv_text], {type: 'text/csv'});
+            var downloadLink = document.createElement('a');
+            downloadLink.download = 'exps.csv';
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = 'none';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+
+            // if (experiments.length > 0) {
+            //     var new_location = "experiment?";
+            //     $.each(experiments, function (idx, val) {
+            //         new_location = new_location + "exp=" + val + "&";
+            //     });
+            //     // window.location.href = new_location;
+            //     window.open(new_location, '_blank');
+            // }
         });
 
         $('a.remove-experiments').on('click', function (e) {
@@ -454,8 +514,7 @@
             });
             if (experiments.length > 1) {
                 $('#combineModal').modal({show: true});
-            }
-            else if(experiments.length < 1){
+            } else if (experiments.length < 1) {
                 $('#combineModal2').modal({show: true});
             }
         });
@@ -478,8 +537,7 @@
                             '                                   style="vertical-align: middle">star</i>';
                     }
                 );
-            }
-            else if (text === "star") {
+            } else if (text === "star") {
                 url_exp_star = url_exp_star + "&star=" + 0;
                 $.get(
                     url_exp_star,
@@ -547,7 +605,7 @@
                     new_location = new_location + "exp=" + val + "&";
                 });
                 new_location += "name=" + new_name + "&";
-                new_location += "save=" + do_save+ "&";
+                new_location += "save=" + do_save + "&";
                 new_location += "combi=true";
                 // window.location.href = new_location;
 
@@ -556,7 +614,7 @@
 
         });
 
-         $('#combi-modal-button2').on('click', function (e) {
+        $('#combi-modal-button2').on('click', function (e) {
             e.preventDefault();
             var name_input = document.getElementById('combi-name-input2');
             var new_name = name_input.value;
@@ -564,13 +622,13 @@
             var experiments = [];
             $.each($('#overviewTable tr'), function () {
                 var dir_name = $(this)[0].getAttribute("dir_name");
-                if(dir_name != null) {
+                if (dir_name != null) {
                     experiments.push(dir_name);
                 }
             });
 
             var chkArray = [];
-            $(".chk:checked").each(function() {
+            $(".chk:checked").each(function () {
                 chkArray.push($(this).val());
             });
 
@@ -591,14 +649,12 @@
                     $('#LoadingModal').modal().hide();
                     if (data === "1") {
                         location.reload();
-                    }
-                    else{
+                    } else {
                         $('#ErrorModal').modal({show: true});
                     }
                 }
             );
             $('#LoadingModal').modal({show: true});
-
 
 
         });
@@ -672,8 +728,7 @@
                     search_dict[cidx] = pre_str;
                     table.draw();
 
-                }
-                else {
+                } else {
                     if (!pre_str || 0 === pre_str.length) {
                         delete search_dict[cidx];
                         table.draw();
