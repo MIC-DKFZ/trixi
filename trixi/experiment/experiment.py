@@ -145,6 +145,7 @@ class Experiment(object):
 
     @property
     def epoch(self):
+        """Convenience access property for self._epoch_idx"""
         return self._epoch_idx
 
     def setup(self):
