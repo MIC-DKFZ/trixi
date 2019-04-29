@@ -378,6 +378,8 @@ class PytorchExperiment(Experiment):
     def process_err(self, e):
         if self.elog is not None:
             self.elog.text_logger.log_to("\n".join(traceback.format_tb(e.__traceback__)), "err")
+            self.elog.text_logger.log_to(repr(e), "err")
+        raise e
 
     def update_attributes(self, var_dict, ignore=()):
         """
