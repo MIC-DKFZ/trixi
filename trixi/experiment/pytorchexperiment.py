@@ -769,7 +769,8 @@ class PytorchExperiment(Experiment):
 
     def _end_epoch_internal(self, epoch):
         self.save_results()
-        if epoch % self._save_checkpoint_every_epoch == 0:
+        if self._save_checkpoint_every_epoch is not None and self._save_checkpoint_every_epoch > 0 and epoch % \
+                self._save_checkpoint_every_epoch == 0:
             self.save_temp_checkpoint()
         self._save_exp_config()
 
