@@ -17,6 +17,27 @@ from trixi.logger.abstractlogger import convert_params
 from trixi.util.pytorchutils import get_guided_image_gradient, get_smooth_image_gradient, get_vanilla_image_gradient
 
 
+from functools import wraps
+
+
+def move_to_cpu(fn):
+    """Decorator to call the process_params method of the class."""
+
+    def __process_params(*args, **kwargs):
+        ### convert args
+        args = (a.detach().cpu() if torch.is_tensor(a) else a for a in args)
+        ### convert kwargs
+        for key, data in kwargs.items():
+            if torch.is_tensor(data):
+                kwargs[key] = data.detach().cpu()
+        return fn(*args, **kwargs)
+
+    # # @wraps(f)
+    # def wrapper(*args, **kwargs):
+    #     return __process_params(fn, *args, **kwargs)
+
+    return __process_params
+
 class PytorchVisdomLogger(NumpyVisdomLogger):
     """
     Visual logger, inherits the NumpyVisdomLogger and plots/ logs pytorch tensors and variables on a Visdom server.
@@ -43,6 +64,8 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         return f(self, *args, **kwargs)
 
+
+    @move_to_cpu
     def plot_model_statistics(self, model, env_appendix="", model_name="", plot_grad=False, **kwargs):
         """
         Plots statstics (mean, std, abs(max)) of the weights or the corresponding gradients of a model as a barplot.
@@ -261,6 +284,7 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         except Exception as e:
             warnings.warn("Could not render model, make sure the Graphviz executables are on your system.")
 
+    @move_to_cpu
     @add_to_queue
     def show_image_grid(self, tensor, name=None, caption=None, env_appendix="", opts=None,
                           image_args=None, **kwargs):
