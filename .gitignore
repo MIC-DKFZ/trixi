@@ -27,6 +27,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*node_modules*
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -93,6 +94,9 @@ ENV/
 # Spyder project settings
 .spyderproject
 .spyproject
+
+# VSCode
+.vscode/*
 
 # Rope project settings
 .ropeproject
