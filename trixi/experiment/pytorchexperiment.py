@@ -178,7 +178,8 @@ class PytorchExperiment(Experiment):
                  explogger_kwargs=None,
                  explogger_freq=1,
                  loggers=None,
-                 append_rnd_to_name=False):
+                 append_rnd_to_name=False,
+                 default_save_types=("model", "optimizer", "simple", "th_vars", "results")):
 
         # super(PytorchExperiment, self).__init__()
         Experiment.__init__(self)
@@ -205,6 +206,7 @@ class PytorchExperiment(Experiment):
         self.exp_name = self._config_raw["name"]
         self._checkpoint_to_cpu = checkpoint_to_cpu
         self._save_checkpoint_every_epoch = save_checkpoint_every_epoch
+        self._default_save_types = ("model", "optimizer", "simple", "th_vars", "results")
         self.results = dict()
 
         # get base_dir from _config_raw or store there
@@ -705,7 +707,7 @@ class PytorchExperiment(Experiment):
         if self._exp_state not in ("Ended", "Tested"):
             if isinstance(self.results, ResultLogDict):
                 self.results.print_to_file("]")
-            self.save_checkpoint(name="checkpoint_exit-" + self._exp_state)
+            self.save_checkpoint(name="checkpoint_exit-" + self._exp_state, save_types=self._default_save_types)
             self.save_results()
             self._save_exp_config()
             self.print("Experiment exited. Checkpoints stored =)")
@@ -790,11 +792,11 @@ class PytorchExperiment(Experiment):
 
     def save_temp_checkpoint(self):
         """Saves the current checkpoint as checkpoint_current."""
-        self.save_checkpoint(name="checkpoint_current")
+        self.save_checkpoint(name="checkpoint_current", save_types=self._default_save_types)
 
     def save_end_checkpoint(self):
         """Saves the current checkpoint as checkpoint_last."""
-        self.save_checkpoint(name="checkpoint_last")
+        self.save_checkpoint(name="checkpoint_last", save_types=self._default_save_types)
 
     def add_result(self, value, name, counter=None, tag=None, label=None, plot_result=True, plot_running_mean=False):
         """
