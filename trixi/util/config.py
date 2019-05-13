@@ -411,10 +411,11 @@ class Config(dict):
         self.update(new_dict)
 
     def hasattr_not_none(self, key):
-        if key in self:
-            if self[key] is not None:
-                return True
-        return False
+        try:
+            result = self[key]
+            return result is not None
+        except KeyError as ke:
+            return False
 
     def contains(self, dict_like):
         """Check whether all items in a dictionary-like object match the ones in
