@@ -61,12 +61,16 @@ class Experiment(object):
             setup()
             prepare()
 
-            while epoch < n_epochs:
+            while loop(epoch, train_result, validate_result):
                 train()
                 validate()
+                end_epoch(train_result, validate_result)
                 epoch += 1
 
             end()
+
+        The loop function decides whether to continue, depending on the epoch and the results from the previous epoch.
+        In the default implementation, it just compares the current epoch to the specified number of epochs.
 
         """
 
@@ -85,9 +89,12 @@ class Experiment(object):
             print("Experiment started.")
 
             self.__stop = False
-            while self._epoch_idx < self.n_epochs and not self.__stop:
-                self.train(epoch=self._epoch_idx)
-                self.validate(epoch=self._epoch_idx)
+            self._train_result = None
+            self._validate_result = None
+            while self.loop(epoch=self._epoch_idx, train_result=self._train_result, validate_result=self._validate_result) and not self.__stop:
+                self._train_result = self.train(epoch=self._epoch_idx)
+                self._validate_result = self.validate(epoch=self._epoch_idx)
+                self.end_epoch(train_result=self._train_result, validate_result=self._validate_result)
                 self._end_epoch_internal(epoch=self._epoch_idx)
                 self._epoch_idx += 1
 
@@ -143,6 +150,14 @@ class Experiment(object):
             self._exp_state = "Error"
             self.process_err(e)
 
+    def loop(self, epoch, train_result=None, validate_result=None):
+        """This method decides whether the train loop will continue."""
+
+        if epoch < self.n_epochs:
+            return True
+        else:
+            return False
+
     @property
     def epoch(self):
         """Convenience access property for self._epoch_idx"""
@@ -175,6 +190,10 @@ class Experiment(object):
 
     def test(self):
         """The testing part of the Experiment"""
+        pass
+
+    def end_epoch(self, train_result=None, validate_result=None):
+        """Do anything you need to with the result from train and validate in the current epoch."""
         pass
 
     def stop(self):
