@@ -162,33 +162,51 @@ class TestPytorchExperimentLogger(unittest.TestCase):
         self.assertTrue(text in log_text)
 
     def test_get_roc_curve(self):
-        array = np.random.random_sample(100)
-        labels = np.random.choice((0, 1), 100)
 
-        tpr, fpr = self.experimentLogger.get_roc_curve(array, labels)
-        self.assertTrue(np.all(tpr >= 0) and np.all(tpr <= 1) and np.all(fpr >= 0) and np.all(fpr <= 1),
-                        "Got an invalid tpr, fpr")
+        try:
+            import sklearn
+
+            array = np.random.random_sample(100)
+            labels = np.random.choice((0, 1), 100)
+
+            tpr, fpr = self.experimentLogger.get_roc_curve(array, labels)
+            self.assertTrue(np.all(tpr >= 0) and np.all(tpr <= 1) and np.all(fpr >= 0) and np.all(fpr <= 1),
+                            "Got an invalid tpr, fpr")
+        except:
+            pass
 
     def test_get_pr_curve(self):
-        array = np.random.random_sample(100)
-        labels = np.random.choice((0, 1), 100)
 
-        precision, recall = self.experimentLogger.get_pr_curve(array, labels)
-        self.assertTrue(np.all(precision >= 0) and np.all(precision <= 1)
-                        and np.all(recall >= 0) and np.all(recall <= 1),
-                        "Got an invalid precision, recall")
+        try:
+            import sklearn
+
+            array = np.random.random_sample(100)
+            labels = np.random.choice((0, 1), 100)
+
+            precision, recall = self.experimentLogger.get_pr_curve(array, labels)
+            self.assertTrue(np.all(precision >= 0) and np.all(precision <= 1)
+                            and np.all(recall >= 0) and np.all(recall <= 1),
+                            "Got an invalid precision, recall")
+        except:
+            pass
 
     def test_get_classification_metric(self):
-        array = np.random.random_sample(100)
-        labels = np.random.choice((0, 1), 100)
 
-        vals, tags = self.experimentLogger.get_classification_metrics(array, labels,
-                                                                      metric=("roc-auc", "pr-score"))
+        try:
+            import sklearn
 
-        self.assertTrue("roc-auc" in tags and "pr-score" in tags, "Did not get all classification metrics")
-        self.assertTrue(vals[0] >= 0 and vals[0] <= 1
-                        and vals[1] >= 0 and vals[1] <= 1,
-                        "Got an invalid classification metric values")
+            array = np.random.random_sample(100)
+            labels = np.random.choice((0, 1), 100)
+
+            vals, tags = self.experimentLogger.get_classification_metrics(array, labels,
+                                                                          metric=("roc-auc", "pr-score"))
+
+            self.assertTrue("roc-auc" in tags and "pr-score" in tags, "Did not get all classification metrics")
+            self.assertTrue(vals[0] >= 0 and vals[0] <= 1
+                            and vals[1] >= 0 and vals[1] <= 1,
+                            "Got an invalid classification metric values")
+        except:
+            pass
 
     def test_show_image_gradient(self):
 
