@@ -5,7 +5,7 @@ import torch
 from PIL import Image
 import numpy as np
 from cv2 import cv2
-from scipy.misc import imsave
+from imageio import imwrite
 from torch.autograd import Variable
 from torchvision.utils import save_image as tv_save_image
 from trixi.util.util import np_make_grid
@@ -305,4 +305,4 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
 
             fuse_img = (1.0 - ratio) * image + ratio * map_
 
-        imsave(file_name, fuse_img.transpose(1, 2, 0))
+        imwrite(file_name, fuse_img.transpose(1, 2, 0))

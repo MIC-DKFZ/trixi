@@ -20,7 +20,7 @@ from types import FunctionType, ModuleType
 
 import numpy as np
 import portalocker
-from scipy.misc import imsave
+from imageio import imwrite
 
 try:
     import torch
@@ -244,7 +244,7 @@ def get_image_as_buffered_file(image_array):
         Buffer file-pointer object containing the image file
     """
     buf = io.BytesIO()
-    imsave(name=buf, arr=image_array.transpose((1, 2, 0)), format="png")
+    imwrite(buf, image_array.transpose((1, 2, 0)), format="png")
     buf.seek(0)
 
     return buf
@@ -290,7 +290,7 @@ def figure_to_image(figures, close=True):
 
 def savefig_and_close(figure, filename, close=True):
     fig_img = figure_to_image(figure, close=close)
-    imsave(filename, np.transpose(fig_img, (1, 2, 0)))
+    imwrite(filename, np.transpose(fig_img, (1, 2, 0)))
 
 
 def random_string(length):

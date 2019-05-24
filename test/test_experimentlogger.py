@@ -9,7 +9,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from scipy import misc
+from imageio import imread
 
 from trixi.logger.experiment.experimentlogger import ExperimentLogger
 from trixi.util.config import Config
@@ -84,16 +84,16 @@ class TestExperimentLogger(unittest.TestCase):
     def test_show_value(self):
         val = np.random.random_sample(1)
         self.experimentLogger.show_value(val, "value")
-        plt1_content = misc.imread(os.path.join(self.experimentLogger.plot_dir, "value.png"))
+        plt1_content = imread(os.path.join(self.experimentLogger.plot_dir, "value.png"))
 
         val = np.random.random_sample(1)
         self.experimentLogger.show_value(val, "value")
-        plt2_content = misc.imread(os.path.join(self.experimentLogger.plot_dir, "value.png"))
+        plt2_content = imread(os.path.join(self.experimentLogger.plot_dir, "value.png"))
         self.assertFalse(np.array_equal(plt1_content, plt2_content), "Show value did not update the plot")
 
         val = np.random.random_sample(1)
         self.experimentLogger.show_value(val, "value", counter=4)
-        plt3_content = misc.imread(os.path.join(self.experimentLogger.plot_dir, "value.png"))
+        plt3_content = imread(os.path.join(self.experimentLogger.plot_dir, "value.png"))
         self.assertFalse(np.array_equal(plt2_content, plt3_content), "Show value did not update the plot")
 
     def test_show_text(self):
