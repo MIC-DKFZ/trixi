@@ -2,6 +2,7 @@ import json
 import os
 import time
 import warnings
+from unittest.mock import Mock
 
 import numpy as np
 
@@ -28,7 +29,7 @@ class PytorchExperimentStub:
         if loggers is None:
             loggers = {}
 
-        assert base_dir is not None or "base_dir" in config, "A base dir has to be given, either directly or via config"
+        # assert base_dir is not None or "base_dir" in config, "A base dir has to be given, either directly or via config"
 
         if name is None and 'name' in config:
             self.name = config['name']
@@ -40,19 +41,24 @@ class PytorchExperimentStub:
         if base_dir is not None:
             self.base_dir = base_dir
         else:
-            self.base_dir = config['base_dir']
+            self.base_dir = config.get('base_dir')
 
         self.config = config
 
-        self.elog = PytorchExperimentLogger(base_dir=self.base_dir,
-                                            exp_name=self.name)
+        if base_dir is not None:
+            self.elog = PytorchExperimentLogger(base_dir=self.base_dir,
+                                                exp_name=self.name)
+
+            self.results = ResultLogDict("results-log.json", base_dir=self.elog.result_dir)
+        else:
+            warnings.warn("PytorchExperimentStub will not save to drive")
+            self.elog = Mock()
+            self.results = dict()
 
         self.loggers = {}
         for logger_name, logger_cfg in loggers.items():
             _logger = self._make_logger(logger_name, logger_cfg)
             self.loggers[logger_name] = _logger
-
-        self.results = ResultLogDict("results-log.json", base_dir=self.elog.result_dir)
 
         self._save_exp_config()
         self.elog.save_config(self.config, "config")
@@ -75,11 +81,11 @@ class PytorchExperimentStub:
 
         if log_type == "tensorboard":
             if "target_dir" not in log_params or log_params["target_dir"] is None:
-                if self.elog is not None:
+                if self.elog is not None and not isinstance(self.elog, Mock):
                     log_params["target_dir"] = os.path.join(self.elog.save_dir, "tensorboard")
                 else:
                     raise AttributeError("TensorboardLogger requires a target_dir or an ExperimentLogger instance.")
-            elif self.elog is not None:
+            elif self.elog is not None and not isinstance(self.elog, Mock):
                 log_params["target_dir"] = os.path.join(log_params["target_dir"], self.elog.folder_name)
 
         log_type = logger_lookup_dict[log_type]
@@ -127,7 +133,7 @@ class PytorchExperimentStub:
 
     def _save_exp_config(self):
 
-        if self.elog is not None:
+        if self.elog is not None and not isinstance(self.elog, Mock):
             cur_time = time.strftime("%y-%m-%d_%H:%M:%S", time.localtime(time.time()))
             self.elog.save_config(Config(**{'name': self.name,
                                             'time': cur_time,
@@ -241,7 +247,7 @@ class PytorchExperimentStub:
         available.
         """
 
-        if self.elog is None:
+        if self.elog is None or isinstance(self.elog, Mock):
             print(*args)
         else:
             self.elog.print(*args)
@@ -254,7 +260,7 @@ class PytorchExperimentStub:
             name (str): The name of the json file in which the results are written.
 
         """
-        if self.elog is None:
+        if self.elog is None or isinstance(self.elog, Mock):
             return
         with open(os.path.join(self.elog.result_dir, name), "w") as file_:
             json.dump(self.results, file_, indent=4)
