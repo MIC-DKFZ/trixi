@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import torchvision
-from slackclient import SlackClient
+from slack import WebClient
 
 from trixi.util.util import get_image_as_buffered_file
 
@@ -27,7 +27,7 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
 
         """
 
-        user_list = slack_client.api_call("users.list").get('members', [])
+        user_list = slack_client.users_list().get('members', [])
         user_id = ""
 
         for user in user_list:
@@ -50,8 +50,7 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
             chat/channel id for a direct message
         """
 
-        direct_conv = slack_client.api_call(
-            "conversations.open",
+        direct_conv = slack_client.conversations_open(
             users=[uid]
         )
 
@@ -72,7 +71,7 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
 
         self.token = token
         self.user_email = user_email
-        self.slack_client = SlackClient(token)
+        self.slack_client = WebClient(token)
         self.uid = self.find_uid_for_email(self.slack_client, self.user_email)
         self.cid = self.find_cid_for_user(self.slack_client, self.uid)
         self.exp_name = exp_name
@@ -107,17 +106,15 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
 
         """
         if file is None:
-            ret_val = self.slack_client.api_call(
-                "chat.postMessage",
+            ret_val = self.slack_client.chat_postMessage(
                 channel=self.cid,
                 text=message
             )
             return ret_val.get('ts', '')
         else:
-            ret_val = self.slack_client.api_call(
-                "files.upload",
-                channels=self.cid,
+            ret_val = self.slack_client.files_upload(
                 file=file,
+                channels=self.cid,
                 title=message
             )
             try:
@@ -134,8 +131,7 @@ class SlackMessageLogger(NumpySeabornImagePlotLogger):
             ts: Time stamp the message was sent
 
         """
-        self.slack_client.api_call(
-          "chat.delete",
+        self.slack_client.chat_delete(
           channel=self.cid,
           ts=ts
         )
