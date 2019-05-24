@@ -15,8 +15,9 @@ import warnings
 import torch
 
 from trixi.experiment.experiment import Experiment
-from trixi.logger import CombinedLogger, PytorchExperimentLogger, PytorchVisdomLogger, TelegramMessageLogger
-from trixi.logger.message.slackmessagelogger import SlackMessageLogger
+from trixi.logger import CombinedLogger, PytorchExperimentLogger, PytorchVisdomLogger
+
+
 from trixi.logger.tensorboard.pytorchtensorboardxlogger import PytorchTensorboardXLogger
 from trixi.util import Config, ResultElement, ResultLogDict, SourcePacker, name_and_iter_to_filename
 from trixi.util.config import update_from_sys_argv
@@ -25,9 +26,15 @@ from trixi.util.pytorchutils import set_seed
 logger_lookup_dict = dict(
     visdom=PytorchVisdomLogger,
     tensorboard=PytorchTensorboardXLogger,
-    telegram=TelegramMessageLogger,
-    slack=SlackMessageLogger,
 )
+
+try:
+    from trixi.logger import TelegramMessageLogger
+    from trixi.logger.message.slackmessagelogger import SlackMessageLogger
+    logger_lookup_dict["slack"] = SlackMessageLogger
+    logger_lookup_dict["telegram"] = TelegramMessageLogger
+except:
+    pass
 
 
 class PytorchExperiment(Experiment):
