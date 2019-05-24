@@ -2,7 +2,7 @@ import atexit
 import os
 from collections import defaultdict
 
-from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 
 from trixi.logger.plt.numpyseabornplotlogger import NumpySeabornPlotLogger
 from trixi.logger.abstractlogger import convert_params

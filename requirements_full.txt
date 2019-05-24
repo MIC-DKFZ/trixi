@@ -1,8 +1,9 @@
 -r requirements.txt
-torch>=0.4.0
+torch>=1.1.0
 torchvision>=0.2.1
 python-telegram-bot>=10.1.0
 umap-learn>=0.3.6
 scikit-learn>=0.19.1
 opencv-python==3.3.0.10
 slackclient==2.0.1
+tb-nightly==1.14.0a20190523
