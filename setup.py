@@ -32,7 +32,7 @@ def find_version(file):
 
 required = resolve_requirements(os.path.join(os.path.dirname(__file__), 'requirements_full.txt'))
 readme = read_file(os.path.join(os.path.dirname(__file__), "Readme.md"))
-license = read_file(os.path.join(os.path.dirname(__file__), "LICENSE"))
+#license = read_file(os.path.join(os.path.dirname(__file__), "LICENSE"))
 version = find_version(os.path.join(os.path.dirname(__file__), "trixi", "__init__.py"))
 
 
@@ -44,7 +44,7 @@ setup(name='trixi',
       url='https://github.com/MIC-DKFZ/trixi',
       author='Medical Image Computing Group, DKFZ',
       author_email='mic@dkfz-heidelberg.de',
-      license=license,
+      license="MIT",
       packages=find_packages(),
       install_requires=required,
       zip_safe=True,
