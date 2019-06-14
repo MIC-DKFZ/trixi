@@ -5,7 +5,7 @@ import fnmatch
 import os
 import warnings
 from multiprocessing import Process
-import cv2
+# import cv2
 from PIL import Image
 
 import torch

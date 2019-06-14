@@ -4,6 +4,7 @@ import warnings
 from multiprocessing import Process
 
 import matplotlib.pyplot as plt
+from matplotlib import cm
 import numpy as np
 import torch
 
@@ -345,15 +346,15 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
     @convert_params
     @add_to_queue
-    def show_image_grid_heatmap(self, heatmap, tensor=None, ratio=0.3, colormap=2,
-                                  normalize=True, name=None, caption=None,
+    def show_image_grid_heatmap(self, heatmap, background=None, ratio=0.3, colormap=cm.jet,
+                                  normalize=True, name="heatmap", caption=None,
                                   env_appendix="", opts=None, image_args=None, **kwargs):
         """
         Creates heat map from the given map and if given combines it with the background and then
         displays results with as image grid.
 
         Args:
-           heatmap:  4d- tensor (N, C, H, W)
+           heatmap:  4d- tensor (N, C, H, W), if C = 3, colormap won't be applied.
            background: 4d- tensor (N, C, H, W)
            name: The name of the window
            ratio: The ratio to mix the map with the background (0 = only background, 1 = only map)
@@ -364,27 +365,29 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         """
 
-        from cv2 import cv2
+        if opts is None:
+            opts = {}
+        if image_args is None:
+            image_args = {}
+        if "normalize" not in image_args:
+            image_args["normalize"] = normalize
 
-        if opts is None: opts = {}
-        if image_args is None: image_args = {}
+        # if len(heatmap.shape) != 4:
+        #     raise IndexError("'heatmap' must have dimensions BxCxHxW!")
 
-        map_grid = np_make_grid(heatmap, normalize=normalize)
-        map_ = np.clip(map_grid * 255, a_min=0, a_max=255)
-        map_ = map_.astype(np.uint8)
+        map_grid = np_make_grid(heatmap, normalize=normalize)  # map_grid.shape is (3, X, Y)
+        if heatmap.shape[1] != 3:
+            map_ = colormap(map_grid[0])[..., :-1].transpose(2, 0, 1)
+        else:  # heatmap was already RGB, so don't apply colormap
+            map_ = map_grid
 
-        map_ = cv2.applyColorMap(map_.transpose(1, 2, 0), colormap=colormap)
-        map_ = cv2.cvtColor(map_, cv2.COLOR_BGR2RGB)
-        map_ = map_.transpose(2, 0, 1)
+        if background is not None:
+            img_grid = np_make_grid(background, **image_args)
+            fuse_img = (1.0 - ratio) * img_grid + ratio * map_
+        else:
+            fuse_img = map_
 
-        fuse_img = map_
-
-        if tensor is not None:
-            img_grid = np_make_grid(tensor, **image_args)
-            image = np.clip(img_grid * 255, a_min=0, a_max=255)
-            image = image.astype(np.uint8)
-
-            fuse_img = (1.0 - ratio) * image + ratio * map_
+        fuse_img = np.clip(fuse_img * 255, a_min=0, a_max=255).astype(np.uint8)
 
         opts = opts.copy()
         opts.update(dict(

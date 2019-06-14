@@ -4,7 +4,7 @@ import warnings
 import torch
 from PIL import Image
 import numpy as np
-from cv2 import cv2
+from matplotlib import cm
 from imageio import imwrite
 from torch.autograd import Variable
 from torchvision.utils import save_image as tv_save_image
@@ -260,7 +260,7 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
 
     @convert_params
     def show_image_grid_heatmap(self, heatmap, background=None, ratio=0.3, normalize=True,
-                                colormap=cv2.COLORMAP_JET, name="heatmap", n_iter=None,
+                                colormap=cm.jet, name="heatmap", n_iter=None,
                                 prefix=False, iter_format="{:05d}", image_args=None, **kwargs):
         """
         Creates heat map from the given map and if given combines it with the background and then
@@ -278,7 +278,10 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
 
         """
 
-        if image_args is None: image_args = {}
+        if image_args is None:
+            image_args = {}
+        if "normalize" not in image_args:
+            image_args["normalize"] = normalize
 
         if n_iter is not None:
             name = name_and_iter_to_filename(name=name, n_iter=n_iter, ending=".png", iter_format=iter_format,
@@ -288,21 +291,18 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
 
         file_name = os.path.join(self.img_dir, name)
 
-        map_grid = np_make_grid(heatmap, normalize=normalize)
-        map_ = np.clip(map_grid * 255, a_min=0, a_max=255)
-        map_ = map_.astype(np.uint8)
-
-        map_ = cv2.applyColorMap(map_.transpose(1, 2, 0), colormap=colormap)
-        map_ = cv2.cvtColor(map_, cv2.COLOR_BGR2RGB)
-        map_ = map_.transpose(2, 0, 1)
-
-        fuse_img = map_
+        map_grid = np_make_grid(heatmap, normalize=normalize)  # map_grid.shape is (3, X, Y)
+        if heatmap.shape[1] != 3:
+            map_ = colormap(map_grid[0])[..., :-1].transpose(2, 0, 1)
+        else:  # heatmap was already RGB, so don't apply colormap
+            map_ = map_grid
 
         if background is not None:
             img_grid = np_make_grid(background, **image_args)
-            image = np.clip(img_grid * 255, a_min=0, a_max=255)
-            image = image.astype(np.uint8)
+            fuse_img = (1.0 - ratio) * img_grid + ratio * map_
+        else:
+            fuse_img = map_
 
-            fuse_img = (1.0 - ratio) * image + ratio * map_
+        fuse_img = np.clip(fuse_img * 255, a_min=0, a_max=255).astype(np.uint8)
 
         imwrite(file_name, fuse_img.transpose(1, 2, 0))
