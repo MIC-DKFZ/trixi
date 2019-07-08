@@ -208,6 +208,7 @@ autodoc_mock_imports = [
     "PIL",
     "umap",
     "visdom",
+    "slack",
     "slackclient",
     "tensorboardX"
 ]
