@@ -958,7 +958,7 @@ def get_vars_from_sys_argv():
             warnings.warn("Called with unknown arguments: %s" % unknown, RuntimeWarning)
 
         # update dict
-        return param.get("config_path"), param.get("resume_path")
+        return param.config_path, param.resume_path
 
 
 def experimentify(setup_fn="setup", train_fn="train", validate_fn="validate", end_fn="end", test_fn="test", **decoargs):
