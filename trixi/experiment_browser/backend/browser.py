@@ -91,9 +91,12 @@ def register_url_routes(app, base_dir):
     app.add_url_rule("/experimentDifference", "experiment_difference", experiment_difference, methods=["GET"])
     app.add_url_rule("/experimentProperty", "experiment_property", experiment_property, methods=["GET"])
 
+    # this should be implemented in the frontend and use "experiments" endpoint 
     app.add_url_rule("/", "overview", lambda: overview(base_dir), methods=["GET"])
     app.add_url_rule("/overview", "overview_", lambda: overview_(base_dir), methods=["GET"])
     app.add_url_rule("/get_overview", "get_overview", lambda: get_overview(base_dir), methods=["GET"])
+
+
     app.add_url_rule('/experiment', "experiment", lambda: experiment(base_dir), methods=['GET'])
     app.add_url_rule('/get_experiment', "get_experiment", lambda: get_experiment(base_dir), methods=['GET'])
     app.add_url_rule('/combine', "combine", lambda: combine(base_dir), methods=['GET'])
@@ -110,23 +113,25 @@ def register_url_routes(app, base_dir):
 #####################################################################
 
 
-def experiments():
+def experiments(base_dir=""):
     """For a given directory, will check all subfolders and sort them into two lists
     by wether or not they represent and experiment."""
 
-    base_dir = request.args.get("dir")
+    dir_ = request.args.get("dir")
+    if dir_ is None:
+        abort(400)
+    dir_ = os.path.join(base_dir, dir_)
 
     exp_list = []
     not_exp_list = []
-    if base_dir is not None:
-        for dir_ in sorted(os.listdir(base_dir)):
-            if is_experiment(os.path.join(base_dir, dir_)):
-                exp_list.append(dir_)
-            else:
-                not_exp_list.append(dir_)
+    for d in sorted(os.listdir(dir_)):
+        if is_experiment(os.path.join(dir_, d)):
+            exp_list.append(d)
+        else:
+            not_exp_list.append(d)
 
     result = {
-        "dir": base_dir,
+        "dir": dir_,
         "experiments": exp_list,
         "not_experiments": not_exp_list
     }
@@ -134,10 +139,59 @@ def experiments():
     return result
 
 
-def experiment_difference():
-    """For a number of experiments, will return their configs as well as the difference config, all flattened."""
+def experiment_property(base_dir=""):
+    
+    experiments = sorted(request.args.getlist("exp"))
+    if len(experiments) < 1:
+        abort(400)
+    properties = sorted(request.args.getlist("prop"))
+
+    result = {"experiments": experiments}
+    for p in properties:
+        result[p] = []
+
+    for exp in experiments:
+
+        exp_reader = ExperimentReader(base_dir, exp)
+        config = exp_reader.config
+        for p in properties:
+            try:
+                val = config[p]
+            except KeyError:
+                val = None
+            result[p].append(val)
+
+    return result
+
+
+def experiment_checkpoint(base_dir=""):
 
     experiments = sorted(request.args.getlist("exp"))
+    if len(experiments) < 1:
+        abort(400)
+
+    result = {"experiments": experiments}
+
+    checkpoints = []
+    for exp in experiments:
+
+        exp_reader = ExperimentReader(base_dir, exp)
+        try:
+            checkpoints.append(exp_reader.get_checkpoints())
+        except Exception as e:
+            checkpoints.append([])
+
+    result["checkpoints"] = checkpoints
+
+    return result
+
+
+def experiment_config(base_dir=""):
+    """For a number of experiments, will return their configs as well as the difference config."""
+
+    experiments = sorted(request.args.getlist("exp"))
+    if len(experiments) < 1:
+        abort(400)
 
     exps = []
     names = []
@@ -145,16 +199,14 @@ def experiment_difference():
 
     for exp in experiments:
         try:
-            exp_reader = ExperimentReader(exp)
+            exp_reader = ExperimentReader(base_dir, exp)
             names.append(exp_reader.exp_name)
             configs.append(exp_reader.config)
             exps.append(exp)
         except Exception as e:
             continue
 
-    difference_config = Config.difference_config_static(*configs).flat()
-    for c in range(len(configs)):
-        configs[c] = configs[c].flat()
+    difference_config = Config.difference_config_static(*configs)
 
     result = {
         "experiments": exps,
@@ -166,9 +218,73 @@ def experiment_difference():
     return result
 
 
-def experiment_property():
-    
-    experiment = request.args.get("exp")
+def experiment_img(base_dir=""):
+
+    experiments = sorted(request.args.getlist("exp"))
+    if len(experiments) < 1:
+        abort(400)
+
+    result = {"experiments": experiments}
+
+    imgs = []
+    for exp in experiments:
+
+        exp_reader = ExperimentReader(base_dir, exp)
+        try:
+            imgs.append(exp_reader.get_images())
+        except Exception as e:
+            imgs.append([])
+
+    result["images"] = imgs
+
+    return result
+
+
+def experiment_log(base_dir=""):
+
+    experiments = sorted(request.args.getlist("exp"))
+    if len(experiments) < 1:
+        abort(400)
+    log_names = sorted(request.args.getlist("log"))
+    if len(log_names) < 1:
+        log_names = ["default"]
+
+    result = {"experiments": experiments}
+    for log in log_names:
+        result[log] = []
+
+    for exp in experiments:
+
+        exp_reader = ExperimentReader(base_dir, exp)
+        for log in log_names:
+            try:
+                result[log].append(exp_reader.get_log_file_content(log))
+            except Exception as e:
+                result[log].append(None)
+
+    return result
+
+
+def experiment_plot(base_dir=""):
+
+    experiments = sorted(request.args.getlist("exp"))
+    if len(experiments) < 1:
+        abort(400)
+
+    result = {"experiments": experiments}
+
+    plots = []
+    for exp in experiments:
+
+        exp_reader = ExperimentReader(base_dir, exp)
+        try:
+            plots.append(exp_reader.get_plots())
+        except Exception as e:
+            plots.append([])
+
+    result["plots"] = plots
+
+    return result
     
 
 
@@ -425,19 +541,6 @@ def get_experiment(base_dir):
 
 
     return json.dumps(content)
-
-
-
-def experiment_log(base_dir):
-    experiment_path = request.args.get('exp')
-    log_name = request.args.get('log')
-
-    exp = ExperimentReader(base_dir, experiment_path)
-    content = exp.get_log_file_content(log_name)
-
-    print(experiment_path, log_name)
-
-    return content
 
 
 def experiment_remove(base_dir):
