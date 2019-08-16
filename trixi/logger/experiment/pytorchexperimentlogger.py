@@ -609,6 +609,8 @@ class PytorchExperimentLogger(ExperimentLogger):
 
             except Exception as e:
                 warnings.warn("Sth went wrong with calculating the classification metrics")
+                v, t = zip(*[(0.0,m) for m in metric])
+                return v,t
 
     @staticmethod
     def get_input_gradient(model, inpt, err_fn, grad_type="vanilla", n_runs=20, eps=0.1,
