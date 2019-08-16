@@ -27,6 +27,10 @@ class AbstractLogger(object):
 
     __metaclass__ = ABCMeta
 
+    @abstractmethod
+    def __init__(self, *args, **kwargs):
+        pass
+
     def process_params(self, f, *args, **kwargs):
         """
         Implement this to handle data conversions in your logger.

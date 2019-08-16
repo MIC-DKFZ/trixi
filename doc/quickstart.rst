@@ -3,49 +3,18 @@
 Quick Start
 ===========
 
-Install Dependencies::
+Introduction & Features:
 
-	pip install numpy seaborn matplotlib
-
-
-If you want to use pytorch*logger:
-
-Install pytorch: http://pytorch.org/
-
-::
-
-	pip install torchvision
+https://github.com/MIC-DKFZ/trixi#features
 
 
 Install trixi::
 
-	git clone https://phabricator.mitk.org/source/trixi.git
-	cd trixi
-	pip install -e .
+	pip install trixi
 
 
-**IMPORTANT NOTE**: Somehow pytorch and lasagne/theano do not play nicely together. So if you
-import lasagne/theano and trixi (which imports pytorch if you have it installed),
-your program will get stuck. So you can only use trixi with lasagne/theano if you do not
-have pytorch installed. If you need both you can use virtual_envs.
-
-* Use on remote server in same network
-
-Simple run visdom on remote server and then on your local computer go to `MY_REMOTE_SERVER_NAME:8080`.
-
-* Use on remote server in different network
-
-If you want to run trixi on a remote server, but show the results locally
-you can do:
 
 
-* On local computer::
+Have a look and run a simple MNIST example:
 
-	ssh -N -f -L localhost:8080:localhost:8080 USERNAME@REMOTE_SERVERNAME
-
-* On remote server::
-
-	python -m visdom.server -port 8080
-	python my_random_trixi_script.py
-
-Now on your local computer you can go to `localhost:8080` and see the visdom dashboard.
+https://github.com/MIC-DKFZ/trixi/blob/master/examples/pytorch_experiment.ipynb

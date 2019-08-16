@@ -1,7 +1,10 @@
 import ast
 import importlib
+import io
 import json
 import logging
+import math
+
 import numpy as np
 import os
 import random
@@ -10,18 +13,22 @@ import matplotlib.pyplot as plt
 import time
 import traceback
 import warnings
-from collections import defaultdict
+from collections import defaultdict, deque
 from hashlib import sha256
 from tempfile import gettempdir
 from types import FunctionType, ModuleType
 
+import numpy as np
 import portalocker
+from imageio import imwrite
 
 try:
     import torch
 except ImportError as e:
-    print("Could not import Pytorch related modules.")
-    print(e)
+    import warnings
+    warnings.warn(ImportWarning("Could not import Pytorch related modules:\n%s"
+        % e.msg))
+
 
     class torch:
         dtype = None
@@ -141,7 +148,7 @@ class ModuleMultiTypeDecoder(MultiTypeDecoder):
                 type_ = str_
                 try:
                     type_ = getattr(importlib.import_module(module_), name_)
-                except:
+                except Exception as e:
                     warnings.warn("Could not load {}".format(str_))
                 return type_
             elif obj.startswith("__function__"):
@@ -151,7 +158,7 @@ class ModuleMultiTypeDecoder(MultiTypeDecoder):
                 type_ = str_
                 try:
                     type_ = getattr(importlib.import_module(module_), name_)
-                except:
+                except Exception as e:
                     warnings.warn("Could not load {}".format(str_))
                 return type_
             elif obj.startswith("__module__"):
@@ -159,7 +166,7 @@ class ModuleMultiTypeDecoder(MultiTypeDecoder):
                 type_ = str_
                 try:
                     type_ = importlib.import_module(str_)
-                except:
+                except Exception as e:
                     warnings.warn("Could not load {}".format(str_))
                 return type_
         return super(ModuleMultiTypeDecoder, self)._decode(obj)
@@ -226,9 +233,64 @@ class Singleton:
         return isinstance(inst, self._decorated)
 
 
-def savefig_and_close(figure, *args, **kwargs):
-    figure.savefig(*args, **kwargs)
-    plt.close(figure)
+def get_image_as_buffered_file(image_array):
+    """
+    Returns a images as file pointer in a buffer
+
+    Args:
+        image_array: (C,W,H) To be returned as a file pointer
+
+    Returns:
+        Buffer file-pointer object containing the image file
+    """
+    buf = io.BytesIO()
+    imwrite(buf, image_array.transpose((1, 2, 0)), format="png")
+    buf.seek(0)
+
+    return buf
+
+
+def figure_to_image(figures, close=True):
+    """Render matplotlib figure to numpy format.
+
+    Note that this requires the ``matplotlib`` package.
+    (https://tensorboardx.readthedocs.io/en/latest/_modules/tensorboardX/utils.html#figure_to_image)
+
+    Args:
+        figure (matplotlib.pyplot.figure) or list of figures: figure or a list of figures
+        close (bool): Flag to automatically close the figure
+
+    Returns:
+        numpy.array: image in [CHW] order
+    """
+    try:
+        import matplotlib.pyplot as plt
+        import matplotlib.backends.backend_agg as plt_backend_agg
+    except ModuleNotFoundError:
+        print('please install matplotlib')
+
+    def render_to_rgb(figure):
+        canvas = plt_backend_agg.FigureCanvasAgg(figure)
+        canvas.draw()
+        data = np.frombuffer(canvas.buffer_rgba(), dtype=np.uint8)
+        w, h = figure.canvas.get_width_height()
+        image_hwc = data.reshape([h, w, 4])[:, :, 0:3]
+        image_chw = np.moveaxis(image_hwc, source=2, destination=0)
+        if close:
+            plt.close(figure)
+        return image_chw
+
+    if isinstance(figures, list):
+        images = [render_to_rgb(figure) for figure in figures]
+        return np.stack(images)
+    else:
+        image = render_to_rgb(figures)
+        return image
+
+
+def savefig_and_close(figure, filename, close=True):
+    fig_img = figure_to_image(figure, close=close)
+    imwrite(filename, np.transpose(fig_img, (1, 2, 0)))
 
 
 def random_string(length):
@@ -327,13 +389,15 @@ class LogDict(dict):
 
 
 class ResultLogDict(LogDict):
-    def __init__(self, file_name, base_dir=None, **kwargs):
+    def __init__(self, file_name, base_dir=None, running_mean_length=10, **kwargs):
         """Initializes a new Dict which directly logs value changes to a given target_file."""
         super(ResultLogDict, self).__init__(file_name=file_name, base_dir=base_dir, **kwargs)
 
         self.is_init = False
+        self.running_mean_dict = defaultdict(lambda: deque(maxlen=running_mean_length))
 
         self.__cntr_dict = defaultdict(float)
+
         if self.file_handler.mode == "w" or os.stat(self.file_handler.baseFilename).st_size == 0:
             self.print_to_file("[")
 
@@ -357,6 +421,8 @@ class ResultLogDict(LogDict):
         self.__cntr_dict[key] += 1
         self.logger.info(json.dumps(json_dict) + ",")
 
+        self.running_mean_dict[key].append(data)
+
         super(ResultLogDict, self).__setitem__(key, data)
 
     def print_to_file(self, text):
@@ -364,7 +430,7 @@ class ResultLogDict(LogDict):
 
     def load(self, reload_dict):
         for key, item in reload_dict.items():
-            print(key)
+
             if isinstance(item, dict) and "data" in item and "label" in item and "epoch" in item:
                 data = item["data"]
                 if "counter" in item and item["counter"] is not None:
@@ -373,17 +439,19 @@ class ResultLogDict(LogDict):
                 data = item
             self.__cntr_dict[key] += 1
 
-        super(ResultLogDict, self).__setitem__(key, data)
+            super(ResultLogDict, self).__setitem__(key, data)
 
     def close(self):
 
         self.file_handler.close()
-        # this approach (fixed offset) sometimes fails upon errors and the like,
+        # Remove trailing comma, unless we've only written "[".
+        # This approach (fixed offset) sometimes fails upon errors and the like,
         # we could alternatively read the whole file,
         # parse to only keep "clean" rows and rewrite.
         with open(self.file_handler.baseFilename, "rb+") as handle:
-            handle.seek(-2, os.SEEK_END)
-            handle.truncate()
+            if os.stat(self.file_handler.baseFilename).st_size > 2:
+                handle.seek(-2, os.SEEK_END)
+                handle.truncate()
         with open(self.file_handler.baseFilename, "a") as handle:
             handle.write("\n]")
 
@@ -404,3 +472,159 @@ class ResultElement(dict):
             self["epoch"] = epoch
         if counter is not None:
             self["counter"] = counter
+
+
+def chw_to_hwc(np_array):
+    if len(np_array.shape) != 3:
+        return np_array
+    elif np_array.shape[0] != 1 and np_array.shape[0] != 3:
+        return np_array
+    elif np_array.shape[2] == 1 or np_array.shape[2] == 3:
+        return np_array
+    else:
+        np_array = np.transpose(np_array, (1, 2, 0))
+        return np_array
+
+
+def np_make_grid(np_array, nrow=8, padding=2,
+                 normalize=False, range=None, scale_each=False, pad_value=0, to_int=False):
+    """Make a grid of images.
+
+    Args:
+        np_array (numpy array): 4D mini-batch Tensor of shape (B x C x H x W)
+            or a list of images all of the same size.
+        nrow (int, optional): Number of images displayed in each row of the grid.
+            The Final grid size is (B / nrow, nrow). Default is 8.
+        padding (int, optional): amount of padding. Default is 2.
+        normalize (bool, optional): If True, shift the image to the range (0, 1),
+            by subtracting the minimum and dividing by the maximum pixel value.
+        range (tuple, optional): tuple (min, max) where min and max are numbers,
+            then these numbers are used to normalize the image. By default, min and max
+            are computed from the tensor.
+        scale_each (bool, optional): If True, scale each image in the batch of
+            images separately rather than the (min, max) over all images.
+        pad_value (float, optional): Value for the padded pixels.
+        to_int (bool): Transforms the np array to a unit8 array with min 0 and max 255
+
+    Example:
+        See this notebook `here <https://gist.github.com/anonymous/bf16430f7750c023141c562f3e9f2a91>`_
+
+    """
+    if not (isinstance(np_array, np.ndarray) or
+            (isinstance(np_array, list) and all(isinstance(a, np.ndarray) for a in np_array))):
+        raise TypeError('Numpy array or list of tensors expected, got {}'.format(type(np_array)))
+
+    # if list of tensors, convert to a 4D mini-batch Tensor
+    if isinstance(np_array, list):
+        np_array = np.stack(np_array, axis=0)
+
+    if len(np_array.shape) == 2:  # single image H x W
+        np_array = np_array.reshape((1, np_array.shape[0], np_array.shape[1]))
+    if len(np_array.shape) == 3:  # single image
+        if np_array.shape[0] == 1:  # if single-channel, convert to 3-channel
+            np_array = np.concatenate((np_array, np_array, np_array), 0)
+        np_array = np_array.reshape((1, np_array.shape[0], np_array.shape[1], np_array.shape[2]))
+
+    if len(np_array.shape) == 3 == 4 and np_array.shape[1] == 1:  # single-channel images
+        np_array = np.concatenate((np_array, np_array, np_array), 1)
+
+    if normalize is True:
+        np_array = np.copy(np_array)  # avoid modifying tensor in-place
+        if range is not None:
+            assert isinstance(range, tuple), \
+                "range has to be a tuple (min, max) if specified. min and max are numbers"
+
+        def norm_ip(img, min_, max_):
+            img = np.clip(img, a_min=min_, a_max=max_)
+            img = (img - min_) / (max_ - min_ + 1e-5)
+            return img
+
+        def norm_range(t, range_=None):
+            if range_ is not None:
+                t = norm_ip(t, range_[0], range_[1])
+            else:
+                t = norm_ip(t, float(t.min()), float(t.max()))
+            return t
+
+        if scale_each is True:
+            for i in np.arange(np_array.shape[0]):  # loop over mini-batch dimension
+                np_array[i] = norm_range(np_array[i], range)
+        else:
+            np_array = norm_range(np_array, range)
+
+    if np_array.shape[0] == 1:
+        return np_array.squeeze(0)
+
+    # make the mini-batch of images into a grid
+    nmaps = np_array.shape[0]
+    xmaps = min(nrow, nmaps)
+    ymaps = int(math.ceil(float(nmaps) / xmaps))
+    height, width = int(np_array.shape[2] + padding), int(np_array.shape[3] + padding)
+    grid = np.zeros((3, height * ymaps + padding, width * xmaps + padding))
+    grid += pad_value
+    k = 0
+    for y in np.arange(ymaps):
+        for x in np.arange(xmaps):
+            if k >= nmaps:
+                break
+            grid[:,
+            y * height + padding: y * height + padding + height - padding,
+            x * width + padding: x * width + padding + width - padding] = np_array[k]
+            k = k + 1
+
+    if to_int:
+        grid = np.clip(grid * 255, a_min=0, a_max=255)
+        grid = grid.astype(np.uint8)
+
+    return grid
+
+
+def get_tensor_embedding(tensor, method="tsne", n_dims=2, n_neigh=30, **meth_args):
+    """
+    Return a embedding of a tensor (in a lower dimensional space, e.g. t-SNE)
+
+    Args:
+       tensor: Tensor to be embedded
+       method: Method used for embedding, options are: tsne, standard, ltsa, hessian, modified, isomap, mds,
+       spectral, umap
+       n_dims: dimensions to embed the data into
+       n_neigh: Neighbour parameter to kind of determin the embedding (see t-SNE for more information)
+       **meth_args: Further arguments which can be passed to the embedding method
+
+    Returns:
+        The embedded tensor
+
+    """
+    from sklearn import manifold
+    import umap
+
+    linears = ['standard', 'ltsa', 'hessian', 'modified']
+    if method in linears:
+
+        loclin = manifold.LocallyLinearEmbedding(n_neigh, n_dims, method=method, **meth_args)
+        emb_data = loclin.fit_transform(tensor)
+
+    elif method == "isomap":
+        iso = manifold.Isomap(n_neigh, n_dims, **meth_args)
+        emb_data = iso.fit_transform(tensor)
+
+    elif method == "mds":
+        mds = manifold.MDS(n_dims, **meth_args)
+        emb_data = mds.fit_transform(tensor)
+
+    elif method == "spectral":
+        se = manifold.SpectralEmbedding(n_components=n_dims, n_neighbors=n_neigh, **meth_args)
+        emb_data = se.fit_transform(tensor)
+
+    elif method == "tsne":
+        tsne = manifold.TSNE(n_components=n_dims, perplexity=n_neigh, **meth_args)
+        emb_data = tsne.fit_transform(tensor)
+
+    elif method == "umap":
+        um = umap.UMAP(n_components=n_dims, n_neighbors=n_neigh, **meth_args)
+        emb_data = um.fit_transform(tensor)
+
+    else:
+        emb_data = tensor
+
+    return emb_data

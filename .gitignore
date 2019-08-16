@@ -28,6 +28,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*node_modules*
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -95,6 +96,9 @@ ENV/
 .spyderproject
 .spyproject
 
+# VSCode
+.vscode/*
+
 # Rope project settings
 .ropeproject
 
@@ -115,6 +119,5 @@ trixi_multi/*
 trixi_single/*
 
 ### Except build folder in docs:
-
-doc/_api
+doc/_api/_build
 doc/_build

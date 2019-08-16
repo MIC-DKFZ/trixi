@@ -1,22 +1,14 @@
 Installation
 ============
- Install Dependencies::
+ Install Trixi::
 
-	pip install numpy seaborn matplotlib
-
-
-If you want to use pytorch*logger:
-
-Install pytorch: http://pytorch.org/
-
-::
-
-	pip install torchvision
+	pip install trixi
 
 
- Install trixi::
 
-	git clone https://phabricator.mitk.org/source/trixi.git
-	cd trixi
-	pip install -e .
+ Install trixi directly via git::
+
+    git clone https://github.com/MIC-DKFZ/trixi.git
+    cd trixi
+    pip install -e .
 

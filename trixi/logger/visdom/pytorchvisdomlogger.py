@@ -3,16 +3,41 @@ import tempfile
 import warnings
 from multiprocessing import Process
 
+import matplotlib.pyplot as plt
+from matplotlib import cm
 import numpy as np
 import torch
-from graphviz import Digraph
+
 from torch.autograd import Variable
 from torchvision.utils import make_grid
 
-from trixi.logger.visdom.numpyvisdomlogger import NumpyVisdomLogger
+from trixi.util.util import np_make_grid, get_tensor_embedding
+from trixi.logger.experiment.pytorchexperimentlogger import PytorchExperimentLogger
+from trixi.logger.visdom.numpyvisdomlogger import NumpyVisdomLogger, add_to_queue
 from trixi.logger.abstractlogger import convert_params
 from trixi.util.pytorchutils import get_guided_image_gradient, get_smooth_image_gradient, get_vanilla_image_gradient
 
+
+from functools import wraps
+
+
+def move_to_cpu(fn):
+    """Decorator to call the process_params method of the class."""
+
+    def __process_params(*args, **kwargs):
+        ### convert args
+        args = (a.detach().cpu() if torch.is_tensor(a) else a for a in args)
+        ### convert kwargs
+        for key, data in kwargs.items():
+            if torch.is_tensor(data):
+                kwargs[key] = data.detach().cpu()
+        return fn(*args, **kwargs)
+
+    # # @wraps(f)
+    # def wrapper(*args, **kwargs):
+    #     return __process_params(fn, *args, **kwargs)
+
+    return __process_params
 
 class PytorchVisdomLogger(NumpyVisdomLogger):
     """
@@ -28,31 +53,30 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         """
 
         ### convert args
-        args = (a.cpu().numpy() if torch.is_tensor(a) else a for a in args)
-        args = (a.data.cpu().numpy() if isinstance(a, Variable) else a for a in args)
+        args = (a.detach().cpu().numpy() if torch.is_tensor(a) else a for a in args)
+        # args = (a.data.cpu().numpy() if isinstance(a, Variable) else a for a in args)
 
         ### convert kwargs
         for key, data in kwargs.items():
-            if isinstance(data, Variable):
-                kwargs[key] = data.data.cpu().numpy()
-            elif torch.is_tensor(data):
-                kwargs[key] = data.cpu().numpy()
+            # if isinstance(data, Variable):
+            #     kwargs[key] = data.detach().cpu().numpy()
+            if torch.is_tensor(data):
+                kwargs[key] = data.detach().cpu().numpy()
 
         return f(self, *args, **kwargs)
 
-    def plot_model_statistics(self, model, env_appendix=None, model_name="", plot_grad=False, **kwargs):
+
+    @move_to_cpu
+    def plot_model_statistics(self, model, env_appendix="", model_name="", plot_grad=False, **kwargs):
         """
         Plots statstics (mean, std, abs(max)) of the weights or the corresponding gradients of a model as a barplot.
 
         Args:
             model: Model with the weights.
-            env_appendix: Visdom environment name appendix, if none is given, it uses "-histogram".
+            env_appendix: Visdom environment name appendix
             model_name: Name of the model (is used as window name).
             plot_grad: If false plots weight statistics, if true plot the gradients of the weights.
         """
-
-        if env_appendix is None:
-            env_appendix = "-histogram"
 
         means = []
         stds = []
@@ -65,8 +89,8 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                 win_name = "%s_grad" % model_name
 
             if m_param is not None:
-                param_mean = m_param.data.mean()
-                param_std = m_param.data.std()
+                param_mean = m_param.detach().mean().item()
+                param_std = m_param.detach().std().item()
 
                 if np.isnan(param_std):
                     param_std = 0
@@ -79,27 +103,58 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         self.show_barplot(name=win_name, array=np.asarray([means, stds, maxmin]), legend=legendary,
                           rownames=["mean", "std", "max"], env_appendix=env_appendix)
 
-    def plot_model_statistics_weights(self, model, env_appendix=None, model_name="", **kwargs):
+    def plot_model_statistics_weights(self, model, env_appendix="", model_name="", **kwargs):
         """
         Plots statstics (mean, std, abs(max)) of the weights of a model as a barplot (uses plot model statistics with plot_grad=False).
 
         Args:
             model: Model with the weights.
-            env_appendix: Visdom environment name appendix, if none is given, it uses "-histogram".
+            env_appendix: Visdom environment name appendix
             model_name: Name of the model (is used as window name).
         """
         self.plot_model_statistics(model=model, env_appendix=env_appendix, model_name=model_name, plot_grad=False)
 
-    def plot_model_statistics_grads(self, model, env_appendix=None, model_name="", **kwargs):
+    def plot_model_statistics_grads(self, model, env_appendix="", model_name="", **kwargs):
         """
         Plots statstics (mean, std, abs(max)) of the gradients of a model as a barplot (uses plot model statistics with plot_grad=True).
 
         Args:
             model: Model with the weights and the corresponding gradients (have to calculated previously).
-            env_appendix: Visdom environment name appendix, if none is given, it uses "-histogram".
+            env_appendix: Visdom environment name appendix
             model_name: Name of the model (is used as window name).
         """
         self.plot_model_statistics(model=model, env_appendix=env_appendix, model_name=model_name, plot_grad=True)
+
+    def plot_model_gradient_flow(self, model, name="model", title=None):
+        """
+        Plots statstics (mean, std, abs(max)) of the weights or the corresponding gradients of a model as a barplot.
+
+        Args:
+            model: Model with the weights.
+            env_appendix: Visdom environment name appendix, if none is given, it uses "-histogram".
+            model_name: Name of the model (is used as window name).
+            plot_grad: If false plots weight statistics, if true plot the gradients of the weights.
+        """
+        ave_grads = []
+        layers = []
+
+        named_parameters = model.named_parameters()
+        for n, p in named_parameters:
+            if (p.requires_grad) and ("bias" not in n):
+                layers.append(n)
+                ave_grads.append(p.grad.abs().mean())
+
+        plt.figure()
+        plt.plot(ave_grads, alpha=0.3, color="b")
+        plt.hlines(0, 0, len(ave_grads) + 1, linewidth=1, color="k")
+        plt.xticks(range(0, len(ave_grads), 1), layers, rotation="vertical")
+        plt.xlim(xmin=0, xmax=len(ave_grads))
+        plt.xlabel("Layers")
+        plt.ylabel("average gradient {}".format(name))
+        plt.title("Gradient flow")
+        plt.grid(True)
+
+        self.show_matplot_plt(plt.gcf(), name=name, title=title)
 
     def plot_mutliple_models_statistics_weights(self, model_dict, env_appendix=None, **kwargs):
         """
@@ -107,23 +162,23 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         Args:
             model_dict: Dict with models, the key is assumed to be the name, while the value is the model.
-            env_appendix: visdom environment name appendix, if none is given, it uses "-histogram".
+            env_appendix: Visdom environment name appendix
         """
         for model_name, model in model_dict.items():
             self.plot_model_statistics_weights(model=model, env_appendix=env_appendix, model_name=model_name)
 
-    def plot_mutliple_models_statistics_grads(self, model_dict, env_appendix=None, **kwargs):
+    def plot_mutliple_models_statistics_grads(self, model_dict, env_appendix="", **kwargs):
         """
         Given models in a dict, plots the gradient statistics of the models.
 
         Args:
             model_dict: Dict with models, the key is assumed to be the name, while the value is the model.
-            env_appendix: Visdom environment name appendix, if none is given, it uses "-histogram".
+            env_appendix: Visdom environment name appendix
         """
         for model_name, model in model_dict.items():
             self.plot_model_statistics_grads(model=model, env_appendix=env_appendix, model_name=model_name)
 
-    def plot_model_structure(self, model, *input_size, name=None, use_cuda=True, delete_tmp_on_close=False, **kwargs):
+    def plot_model_structure(self, model, input_size, name="model_structure", use_cuda=True, delete_tmp_on_close=False, forward_kwargs=None, **kwargs):
         """
         Plots the model structure/ model graph of a pytorch module (this only works correctly with pytorch 0.2.0).
 
@@ -135,6 +190,15 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             delete_tmp_on_close: Determines if the tmp file will be deleted on close. If set true, can cause problems due to the multi threadded plotting.
         """
 
+        if not hasattr(input_size[0], "__iter__"):
+            input_size = [input_size, ]
+
+        if not torch.cuda.is_available():
+            use_cuda = False
+
+        if forward_kwargs is None:
+            forward_kwargs = {}
+
         def make_dot(output_var, state_dict=None):
             """
             Produces Graphviz representation of Pytorch autograd graph.
@@ -145,6 +209,8 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                 output_var: output Variable
                 state_dict: dict of (name, parameter) to add names to node that require grad
             """
+            from graphviz import Digraph
+
             if state_dict is not None:
                 # assert isinstance(params.values()[0], Variable)
                 param_map = {id(v): k for k, v in state_dict.items()}
@@ -193,26 +259,36 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             return dot
 
         # Create input
-        inpt_vars = [Variable(torch.randn(i_s)) for i_s in input_size]
+        inpt_vars = [torch.randn(i_s) for i_s in input_size]
         if use_cuda:
-            inpt_vars = [i_v.cuda() for i_v in inpt_vars]
-            model = model.cuda()
+            if next(model.parameters()).is_cuda:
+                device = next(model.parameters()).device.index
+            else:
+                device = None
+            inpt_vars = [i_v.cuda(device) for i_v in inpt_vars]
+            model = model.cuda(device)
 
         # get output
-        output = model(*inpt_vars)
+        output = model(*inpt_vars, **forward_kwargs)
 
         # get temp file to store svg in
         fp = tempfile.NamedTemporaryFile(suffix=".svg", delete=delete_tmp_on_close)
-
-        # Create model graph and store it as svg
         g = make_dot(output, model.state_dict())
-        x = g.render(fp.name[:-4], cleanup=True)
 
-        # Display model graph in visdom
-        self.show_svg(svg=x, name=name)
+        try:
 
-    def show_image_grid(self, images, name=None, caption=None, env_appendix="", opts=None,
-                        image_args=None, **kwargs):
+            # Create model graph and store it as svg
+            x = g.render(fp.name[:-4], cleanup=True)
+
+            # Display model graph in visdom
+            self.show_svg(svg=x, name=name)
+        except Exception as e:
+            warnings.warn("Could not render model, make sure the Graphviz executables are on your system.")
+
+    @move_to_cpu
+    @add_to_queue
+    def show_image_grid(self, tensor, name=None, caption=None, env_appendix="", opts=None,
+                          image_args=None, **kwargs):
         """
         Calls the save image grid method (for abstract logger combatibility)
 
@@ -230,40 +306,27 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
         if opts is None: opts = {}
         if image_args is None: image_args = {}
 
-        tensor = images.cpu()
-        viz_task = {
-            "type": "image_grid",
-            "tensor": tensor,
-            "name": name,
-            "caption": caption,
-            "env_appendix": env_appendix,
-            "opts": opts,
-            "image_args": image_args
-        }
-        self._queue.put_nowait(viz_task)
-
-    def __show_image_grid(self, tensor, name=None, caption=None, env_appendix="", opts=None,
-                          image_args=None, **kwargs):
-        """
-          Internal show_image_grid method, called by the internal process.
-          This function does all the magic.
-        """
-
-        if opts is None: opts = {}
-        if image_args is None: image_args = {}
-
         if isinstance(tensor, Variable):
-            tensor = tensor.data
 
-        assert torch.is_tensor(tensor), "tensor has to be a pytorch tensor or variable"
-        assert tensor.dim() == 4, "tensor has to have 4 dimensions"
-        if not (tensor.size(1) == 1 or tensor.size(1) == 3):
-            warnings.warn("The 1. dimension (channel) has to be either 1 (gray) or 3 (rgb), taking the first "
-                          "dimension now !!!")
-            tensor = tensor[:, 0:1, ]
+            tensor = tensor.detach()
 
-        grid = make_grid(tensor, **image_args)
-        image = grid.mul(255).clamp(0, 255).byte().numpy()
+        if torch.is_tensor(tensor):
+            assert torch.is_tensor(tensor), "tensor has to be a pytorch tensor or variable"
+            assert tensor.dim() == 4, "tensor has to have 4 dimensions"
+            if not (tensor.size(1) == 1 or tensor.size(1) == 3):
+                warnings.warn("The 1. dimension (channel) has to be either 1 (gray) or 3 (rgb), taking the first "
+                              "dimension now !!!")
+                tensor = tensor[:, 0:1, ]
+
+            grid = make_grid(tensor, **image_args)
+            image = grid.mul(255).clamp(0, 255).byte().numpy()
+        elif isinstance(tensor, np.ndarray):
+            grid = np_make_grid(tensor, **image_args)
+            image = np.clip(grid * 255, a_min=0, a_max=255)
+            image = image.astype(np.uint8)
+
+        else:
+            raise ValueError("Tensor has to be a torch tensor or a numpy array")
 
         opts = opts.copy()
         opts.update(dict(
@@ -280,10 +343,71 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         return win
 
-    NumpyVisdomLogger.show_funcs["image_grid"] = __show_image_grid
 
     @convert_params
-    def show_embedding(self, tensor, labels=None, name=None, method="tsne", n_dims=2, n_neigh=30, **meth_args):
+    @add_to_queue
+    def show_image_grid_heatmap(self, heatmap, background=None, ratio=0.3, colormap=cm.jet,
+                                  normalize=True, name="heatmap", caption=None,
+                                  env_appendix="", opts=None, image_args=None, **kwargs):
+        """
+        Creates heat map from the given map and if given combines it with the background and then
+        displays results with as image grid.
+
+        Args:
+           heatmap:  4d- tensor (N, C, H, W), if C = 3, colormap won't be applied.
+           background: 4d- tensor (N, C, H, W)
+           name: The name of the window
+           ratio: The ratio to mix the map with the background (0 = only background, 1 = only map)
+           caption: Caption of the generated image grid
+           env_appendix: appendix to the environment name, if used the new env is env+env_appendix
+           opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
+           image_args: Arguments for the tensorvision save image method
+
+        """
+
+        if opts is None:
+            opts = {}
+        if image_args is None:
+            image_args = {}
+        if "normalize" not in image_args:
+            image_args["normalize"] = normalize
+
+        # if len(heatmap.shape) != 4:
+        #     raise IndexError("'heatmap' must have dimensions BxCxHxW!")
+
+        map_grid = np_make_grid(heatmap, normalize=normalize)  # map_grid.shape is (3, X, Y)
+        if heatmap.shape[1] != 3:
+            map_ = colormap(map_grid[0])[..., :-1].transpose(2, 0, 1)
+        else:  # heatmap was already RGB, so don't apply colormap
+            map_ = map_grid
+
+        if background is not None:
+            img_grid = np_make_grid(background, **image_args)
+            fuse_img = (1.0 - ratio) * img_grid + ratio * map_
+        else:
+            fuse_img = map_
+
+        fuse_img = np.clip(fuse_img * 255, a_min=0, a_max=255).astype(np.uint8)
+
+        opts = opts.copy()
+        opts.update(dict(
+            title=name,
+            caption=caption
+        ))
+
+        win = self.vis.image(
+            img=fuse_img,
+            win=name,
+            env=self.name + env_appendix,
+            opts=opts
+        )
+
+        return win
+
+
+    @convert_params
+    def show_embedding(self, tensor, labels=None, name=None, method="tsne", n_dims=2, n_neigh=30, meth_args=None,
+                       *args, **kwargs):
         """
         Displays a tensor a an embedding
 
@@ -295,41 +419,15 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             spectral, umap
             n_dims: dimensions to embed the data into
             n_neigh: Neighbour parameter to kind of determin the embedding (see t-SNE for more information)
-            **meth_args: Further arguments which can be passed to the embedding method
+            meth_args: Further arguments which can be passed to the embedding method
 
         """
 
-        from sklearn import manifold
-        import umap
+        if meth_args is None:
+            meth_args = {}
 
         def __show_embedding(queue, tensor, labels=None, name=None, method="tsne", n_dims=2, n_neigh=30, **meth_args):
-            emb_data = []
-
-            linears = ['standard', 'ltsa', 'hessian', 'modified']
-            if method in linears:
-
-                loclin = manifold.LocallyLinearEmbedding(n_neigh, n_dims, method=method, **meth_args)
-                emb_data = loclin.fit_transform(tensor)
-
-            elif method == "isomap":
-                iso = manifold.Isomap(n_neigh, n_dims, **meth_args)
-                emb_data = iso.fit_transform(tensor)
-
-            elif method == "mds":
-                mds = manifold.MDS(n_dims, **meth_args)
-                emb_data = mds.fit_transform(tensor)
-
-            elif method == "spectral":
-                se = manifold.SpectralEmbedding(n_components=n_dims, n_neighbors=n_neigh, **meth_args)
-                emb_data = se.fit_transform(tensor)
-
-            elif method == "tsne":
-                tsne = manifold.TSNE(n_components=n_dims, perplexity=n_neigh, **meth_args)
-                emb_data = tsne.fit_transform(tensor)
-
-            elif method == "umap":
-                um = umap.UMAP(n_components=n_dims, n_neighbors=n_neigh, **meth_args)
-                emb_data = um.fit_transform(tensor)
+            emb_data = get_tensor_embedding(tensor, method=method, n_dims=n_dims, n_neigh=n_neigh, **meth_args)
 
             vis_task = {
                 "type": "scatterplot",
@@ -362,42 +460,15 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             tensor: Tensor with scores (e.g class probability )
             labels: Labels of the samples to which the scores match
             name: The name of the window
+            reduce_to_n_samples: Reduce/ downsample to to n samples for fewer data points
+            use_sub_process: Use a sub process to do the processing
 
         """
-        from sklearn import metrics
 
-        def __show_roc_curve(self, tensor, labels, name, reduce_to_n_samples=None):
-
-            if not isinstance(labels, list):
-                labels = labels.flatten()
-            if not isinstance(tensor, list):
-                tensor = tensor.flatten()
-
-            fpr, tpr, thresholds = metrics.roc_curve(labels, tensor)
-            if reduce_to_n_samples is not None:
-                fpr = [np.mean(x) for x in np.array_split(fpr, reduce_to_n_samples)]
-                tpr = [np.mean(x) for x in np.array_split(tpr, reduce_to_n_samples)]
-            self.show_lineplot(tpr, fpr, name=name, opts={"fillarea": True, "webgl": True})
-            # self.add_to_graph(x_vals=np.arange(0, 1.1, 0.1), y_vals=np.arange(0, 1.1, 0.1), name=name, append=True)
-
-        if use_sub_process:
-            p = Process(target=__show_roc_curve, kwargs=dict(self=self,
-                                                             tensor=tensor,
-                                                             labels=labels,
-                                                             name=name,
-                                                             reduce_to_n_samples=reduce_to_n_samples
-                                                             ))
-            atexit.register(p.terminate)
-            p.start()
-        else:
-            try:
-                __show_roc_curve(self=self,
-                                 tensor=tensor,
-                                 labels=labels,
-                                 name=name,
-                                 reduce_to_n_samples=reduce_to_n_samples)
-            except:
-                warnings.warn("Sth went wrong with calculating the roc curve")
+        res_fn = lambda tpr, fpr: self.show_lineplot(tpr, fpr, name=name, opts={"fillarea": True,
+                                                                                "webgl": True})
+        PytorchExperimentLogger.get_roc_curve(tensor=tensor, labels=labels, reduce_to_n_samples=reduce_to_n_samples,
+                                              use_sub_process=use_sub_process, results_fn=res_fn)
 
     @convert_params
     def show_pr_curve(self, tensor, labels, name, reduce_to_n_samples=None, use_sub_process=False):
@@ -408,47 +479,17 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             tensor: Tensor with scores (e.g class probability )
             labels: Labels of the samples to which the scores match
             name: The name of the window
-
+            reduce_to_n_samples: Reduce/ downsample to to n samples for fewer data points
+            use_sub_process: Use a sub process to do the processing
         """
-        from sklearn import metrics
-
-        def __show_pr_curve(self, tensor, labels, name, reduce_to_n_samples=None):
-
-            if not isinstance(labels, list):
-                labels = labels.flatten()
-            if not isinstance(tensor, list):
-                tensor = tensor.flatten()
-
-            precision, recall, thresholds = metrics.precision_recall_curve(labels, tensor)
-            if reduce_to_n_samples is not None:
-                precision = [np.mean(x) for x in np.array_split(precision, reduce_to_n_samples)]
-                recall = [np.mean(x) for x in np.array_split(recall, reduce_to_n_samples)]
-            self.show_lineplot(precision, recall, name=name, opts={"fillarea": True, "webgl": True})
-            # self.add_to_graph(x_vals=np.arange(0, 1.1, 0.1), y_vals=np.arange(0, 1.1, 0.1), name=name, append=True)
-
-        if use_sub_process:
-            p = Process(target=__show_pr_curve, kwargs=dict(self=self,
-                                                            tensor=tensor,
-                                                            labels=labels,
-                                                            name=name,
-                                                            reduce_to_n_samples=reduce_to_n_samples
-                                                            ))
-            atexit.register(p.terminate)
-            p.start()
-        else:
-            try:
-                __show_pr_curve(self=self,
-                                tensor=tensor,
-                                labels=labels,
-                                name=name,
-                                reduce_to_n_samples=reduce_to_n_samples
-                                )
-            except:
-                warnings.warn("Sth went wrong with calculating the pr curve")
+        res_fn = lambda precision, recall: self.show_lineplot(precision, recall, name=name, opts={"fillarea": True,
+                                                                                                  "webgl": True})
+        PytorchExperimentLogger.get_pr_curve(tensor=tensor, labels=labels, reduce_to_n_samples=reduce_to_n_samples,
+                                             use_sub_process=use_sub_process, results_fn=res_fn)
 
     @convert_params
     def show_classification_metrics(self, tensor, labels, name, metric=("roc-auc", "pr-score"),
-                                    add_res_fn=None, use_sub_process=False, tag_name=None):
+                                    use_sub_process=False, tag_name=None):
         """
         Displays some classification metrics as line plots in a graph (similar to show value (also uses show value
         for the caluclated values))
@@ -463,72 +504,10 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
 
         """
 
-        from sklearn import metrics
-
-        def __show_classification_metrics(self, tensor, labels, name, metric=("roc-auc", "pr-score"),
-                                          add_res_fn=None, tag_name=None):
-
-            vals = []
-            tags = []
-
-            if not isinstance(labels, list):
-                labels = labels.flatten()
-            if not isinstance(tensor, list):
-                tensor = tensor.flatten()
-
-            if "roc-auc" in metric:
-                roc_auc = metrics.roc_auc_score(labels, tensor)
-                vals.append(roc_auc)
-                tags.append("roc-auc")
-            if "pr-auc" in metric:
-                precision, recall, thresholds = metrics.precision_recall_curve(labels, tensor)
-                pr_auc = metrics.auc(recall, precision)
-                vals.append(pr_auc)
-                tags.append("pr-auc")
-            if "pr-score" in metric:
-                pr_score = metrics.average_precision_score(labels, tensor)
-                vals.append(pr_score)
-                tags.append("pr-score")
-            if "mcc" in metric:
-                mcc_score = metrics.matthews_corrcoef(labels, tensor)
-                vals.append(mcc_score)
-                tags.append("mcc")
-            if "f1" in metric:
-                f1_score = metrics.f1_score(labels, tensor)
-                vals.append(f1_score)
-                tags.append("f1")
-
-            for val, tag in zip(vals, tags):
-                if add_res_fn is not None:
-                    if tag_name is None:
-                        tag_name = name
-                    add_res_fn(val, name=tag + "-" + name, tag=tag_name, plot_result=True)
-                else:
-                    self.show_value(val, name=name, tag=tag)
-
-        if use_sub_process:
-            p = Process(target=__show_classification_metrics, kwargs=dict(self=self,
-                                                                          tensor=tensor,
-                                                                          labels=labels,
-                                                                          name=name,
-                                                                          metric=metric,
-                                                                          add_res_fn=add_res_fn,
-                                                                          tag_name=tag_name
-                                                                          ))
-            atexit.register(p.terminate)
-            p.start()
-        else:
-            try:
-                __show_classification_metrics(self=self,
-                                              tensor=tensor,
-                                              labels=labels,
-                                              name=name,
-                                              metric=metric,
-                                              add_res_fn=add_res_fn,
-                                              tag_name=tag_name
-                                              )
-            except:
-                warnings.warn("Sth went wrong with calculating the classification metrics")
+        res_fn = lambda val, name, tag: self.show_value(val, name=name, tag=tag)
+        PytorchExperimentLogger.get_classification_metrics(tensor=tensor, labels=labels, name=name, metric=metric,
+                                                           use_sub_process=use_sub_process, tag_name=tag_name,
+                                                           results_fn=res_fn)
 
     def show_image_gradient(self, model, inpt, err_fn, grad_type="vanilla", n_runs=20, eps=0.1,
                             abs=False, **image_grid_params):
@@ -547,16 +526,9 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
             **image_grid_params: Params for make image grid.
 
         """
-        if grad_type == "vanilla":
-            grad = get_vanilla_image_gradient(model, inpt, err_fn, abs)
-        elif grad_type == "guided":
-            grad = get_guided_image_gradient(model, inpt, err_fn, abs)
-        elif grad_type == "smooth-vanilla":
-            grad = get_smooth_image_gradient(model, inpt, err_fn, n_runs, eps, grad_type="vanilla")
-        elif grad_type == "smooth-guided":
-            grad = get_smooth_image_gradient(model, inpt, err_fn, n_runs, eps, grad_type="guided")
-        else:
-            warnings.warn("This grad_type is not implemented yet")
-            grad = torch.zeros_like(inpt)
-
+        grad = PytorchExperimentLogger.get_input_gradient(model=model, inpt=inpt, err_fn=err_fn, grad_type=grad_type,
+                                                          n_runs=n_runs, eps=eps, abs=abs)
         self.show_image_grid(grad, **image_grid_params)
+
+    def show_video(self, frame_list=None, name="frames", dim="LxHxWxC", scale=1.0, fps=25):
+        self.vis.video(tensor=np.array(frame_list), dim=dim, opts={'fps': fps})

@@ -15,7 +15,7 @@ except ImportError:
 import numpy as np
 
 from trixi.logger.abstractlogger import AbstractLogger
-from trixi.logger.file.textlogger import TextLogger
+from trixi.logger.file.textfilelogger import TextFileLogger
 from trixi.logger.file.numpyplotfilelogger import NumpyPlotFileLogger
 from trixi.util import create_folder, MultiTypeEncoder, MultiTypeDecoder, Config
 
@@ -45,7 +45,7 @@ class ExperimentLogger(AbstractLogger):
     """
 
     def __init__(self,
-                 experiment_name,
+                 exp_name,
                  base_dir,
                  folder_format="%Y%m%d-%H%M%S_{experiment_name}",
                  resume=False,
@@ -56,17 +56,17 @@ class ExperimentLogger(AbstractLogger):
         Initializes the Experiment logger and creates the experiment folder structure
 
         Args:
-            experiment_name (str): The name of the experiment
+            exp_name (str): The name of the experiment
             base_dir (str): The base directory in which the experiment folder will be created
             folder_format (str): The format for the naming of the experiment folder
             resume (bool): if True use the given folder and do not create new ones
-            text_logger_args: Parameters for the TextLogger initialization
+            text_logger_args: Parameters for the TextFileLogger initialization
             plot_logger_args: Parameters for the NumpyPlotFileLogger initialization
         """
 
         super(ExperimentLogger, self).__init__(**kwargs)
 
-        self.experiment_name = experiment_name
+        self.experiment_name = exp_name
         self.base_dir = base_dir
         self.folder_format = folder_format
 
@@ -116,7 +116,7 @@ class ExperimentLogger(AbstractLogger):
         if plot_logger_args is None:
             plot_logger_args = {}
 
-        self.text_logger = TextLogger(self.log_dir, **text_logger_args)
+        self.text_logger = TextFileLogger(self.log_dir, **text_logger_args)
         self.plot_logger = NumpyPlotFileLogger(
             self.img_dir, self.plot_dir, **plot_logger_args)
 
@@ -143,7 +143,7 @@ class ExperimentLogger(AbstractLogger):
         self.plot_logger.show_barplot(
             array, name, file_format=".png", **kwargs)
 
-    def show_lineplot(self, y_vals, x_vals, name, file_format=".png", **kwargs):
+    def show_lineplot(self, y_vals, x_vals=None, name="lineplot", file_format=".png", **kwargs):
         """
         This function saves a line plot in the experiment plot folder.
 
@@ -206,6 +206,18 @@ class ExperimentLogger(AbstractLogger):
         """
         self.text_logger.show_text(text, name, logger, **kwargs)
 
+    def show_boxplot(self, array, name, file_format=".png", **kwargs):
+        """
+        This function saves a boxplot in the experiment plot folder.
+
+        Args:
+            array(np.ndarray): array to be plotted
+            name(str): image title
+            file_format (str): file format of the image
+        """
+        self.plot_logger.show_boxplot(
+            array, name, file_format=".png", **kwargs)
+
     def save_model(self):
         raise NotImplementedError
 
@@ -258,6 +270,7 @@ class ExperimentLogger(AbstractLogger):
             name: name of the result json file
             indent: Indent for the json file
             separators: Separators for the json file
+            encoder_cls: Encoder Class for the encoding to json
 
         """
 
@@ -265,13 +278,14 @@ class ExperimentLogger(AbstractLogger):
             name += ".json"
         name = os.path.join(self.result_dir, name)
         create_folder(os.path.dirname(name))
-        json.dump(data, open(name, "w"),
-                  cls=encoder_cls,
-                  indent=indent,
-                  separators=separators,
-                  **kwargs)
+        with open(name, "w") as jf:
+            json.dump(data, jf,
+                      cls=encoder_cls,
+                      indent=indent,
+                      separators=separators,
+                      **kwargs)
 
-    def save_dict(self, data, path, indent=4, separators=(",", ": "), **kwargs):
+    def save_dict(self, data, path, indent=4, separators=(",", ": "), encoder_cls=MultiTypeEncoder, **kwargs):
         """
         Saves a dict as a json file in the experiment save dir
 
@@ -280,17 +294,19 @@ class ExperimentLogger(AbstractLogger):
             path: sub path in the save folder (or simply filename)
             indent: Indent for the json file
             separators: Separators for the json file
+            encoder_cls: Encoder Class for the encoding to json
         """
 
         if not path.endswith(".json"):
             path += ".json"
         path = os.path.join(self.save_dir, path)
         create_folder(os.path.dirname(path))
-        json.dump(data, open(path, "w"),
-                  cls=MultiTypeEncoder,
-                  indent=indent,
-                  separators=separators,
-                  **kwargs)
+        with open(path, "w") as jf:
+            json.dump(data, jf,
+                      cls=encoder_cls,
+                      indent=indent,
+                      separators=separators,
+                      **kwargs)
 
     def load_dict(self, path):
         """
@@ -305,7 +321,10 @@ class ExperimentLogger(AbstractLogger):
         if not path.endswith(".json"):
             path += ".json"
         path = os.path.join(self.save_dir, path)
-        return json.load(open(path, "r"), cls=MultiTypeDecoder)
+        ret_val = dict()
+        with open(path, "r") as df:
+            ret_val = json.load(df, cls=MultiTypeDecoder)
+        return ret_val
 
     def save_numpy_data(self, data, path):
         """

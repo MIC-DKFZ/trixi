@@ -5,6 +5,7 @@ import numpy as np
 import seaborn
 
 from trixi.logger.abstractlogger import AbstractLogger, convert_params
+from trixi.util.util import chw_to_hwc
 
 
 class NumpySeabornPlotLogger(AbstractLogger):
@@ -22,7 +23,7 @@ class NumpySeabornPlotLogger(AbstractLogger):
         self.max_values = defaultdict(int)
 
     @convert_params
-    def show_image(self, image, name, show=True, *args, **kwargs):
+    def show_image(self, image, name=None, show=True, *args, **kwargs):
         """
         Create an image figure
 
@@ -38,6 +39,8 @@ class NumpySeabornPlotLogger(AbstractLogger):
         figure = self.get_figure(name)
         plt.clf()
 
+        image = chw_to_hwc(image)
+
         plt.imshow(image)
         plt.axis("off")
         if show:
@@ -49,7 +52,7 @@ class NumpySeabornPlotLogger(AbstractLogger):
     @convert_params
     def show_value(self, value, name, counter=None, tag=None, show=True, *args, **kwargs):
         """
-       Creates a line plot that is automatically appended with new values and returns it as a figurte.
+       Creates a line plot that is automatically appended with new values and returns it as a figure.
 
        Args:
            value: Value to be plotted / appended to the graph (y-axis value)
@@ -92,12 +95,12 @@ class NumpySeabornPlotLogger(AbstractLogger):
         return figure
 
     @convert_params
-    def show_barplot(self, array, name, show=True, *args, **kwargs):
+    def show_barplot(self, array, name=None, show=True, *args, **kwargs):
         """
         Creates a bar plot figure from an array
 
         Args:
-            array: array of shape NxM where N is the nomber of rows and M is the number of elements in the row.
+            array: array of shape NxM where N is the number of rows and M is the number of elements in the row.
             name: The name of the figure
             show: Flag if it should also display the figure (result might also depend on the matplotlib backend )
 
@@ -121,7 +124,38 @@ class NumpySeabornPlotLogger(AbstractLogger):
         return figure
 
     @convert_params
-    def show_lineplot(self, y_vals, x_vals, name, show=True, *args, **kwargs):
+    def show_boxplot(self, array, name, show=True, *args, **kwargs):
+        """
+        Creates a box plot figure from an array
+
+        Args:
+            array: array of shape NxM where N is the number of rows and M is the number of elements in the row.
+            name: The name of the figure
+            show: Flag if it should also display the figure (result might also depend on the matplotlib backend )
+
+        Returns:
+            A matplotlib figure
+        """
+
+        figure = self.get_figure(name)
+        seaborn.set_style("whitegrid")
+
+        ax = seaborn.boxplot(data=array)
+
+        handles, _ = ax.get_legend_handles_labels()
+        try:
+            legend = kwargs['opts']['legend']
+            ax.legend(handles, legend)
+        except KeyError: # if no legend is defined
+            pass
+        if show:
+            plt.show(block=False)
+            plt.pause(0.01)
+
+        return figure
+
+    @convert_params
+    def show_lineplot(self, y_vals, x_vals=None, name=None, show=True, *args, **kwargs):
         """
         Creates a line plot figure with (multiple) lines plot, given values Y (and optional the corresponding X values)
 
@@ -141,6 +175,9 @@ class NumpySeabornPlotLogger(AbstractLogger):
 
         seaborn.set_style("whitegrid")
 
+        if x_vals is None:
+            x_vals = list(range(len(y_vals)))
+
         plt.plot(x_vals, y_vals)
 
         if show:
@@ -150,7 +187,7 @@ class NumpySeabornPlotLogger(AbstractLogger):
         return figure
 
     @convert_params
-    def show_scatterplot(self, array, name, show=True, *args, **kwargs):
+    def show_scatterplot(self, array, name=None, show=True, *args, **kwargs):
         """
         Creates a scatter plot figure with the points given in array
 
@@ -167,6 +204,10 @@ class NumpySeabornPlotLogger(AbstractLogger):
         if not isinstance(array, np.ndarray):
             raise TypeError("Array must be numpy arrays (this class is called NUMPY seaborn logger, and seaborn"
                             " can only handle numpy arrays -.- .__. )")
+        if len(array.shape) != 2:
+            raise ValueError("Array must be 2D for scatterplot")
+        if array.shape[1] != 2:
+            raise ValueError("Array must be 2D and have x,y pairs in the 2nd dim for scatterplot")
 
         x, y = zip(*array)
         x, y = np.asarray(x), np.asarray(y)
@@ -183,7 +224,7 @@ class NumpySeabornPlotLogger(AbstractLogger):
         return figure
 
     @convert_params
-    def show_piechart(self, array, name, show=True, *args, **kwargs):
+    def show_piechart(self, array, name=None, show=True, *args, **kwargs):
         """
         Creates a scatter plot figure
 

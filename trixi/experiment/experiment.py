@@ -5,56 +5,68 @@ class Experiment(object):
     """
     An abstract Experiment which can be run for a number of epochs.
 
-    The basic life cyle of an experiment is:
+    The basic life cycle of an experiment is::
 
         setup()
         prepare()
 
-        for epoch in n_epochs:
+        while epoch < n_epochs:
             train()
             validate()
+            epoch += 1
 
         end()
 
+    If you want to use another criterion than number of epochs, e.g. stopping based on validation loss,
+    you can implement that in your validation method and just call .stop() at some point to break the loop.
+    Just set your n_epochs to a high number or np.inf.
+
+    The reason there is both :meth:`.setup` and :meth:`.prepare` is that internally there is also
+    a :meth:`._setup_internal` method for hidden magic in classes that inherit from this. For
+    example, the :class:`trixi.experiment.pytorchexperiment.PytorchExperiment` uses this to restore checkpoints. Think
+    of :meth:`.setup` as an :meth:`.__init__` that is only called when the Experiment is actually
+    asked to do anything. Then use :meth:`.prepare` to modify the fully instantiated Experiment if
+    you need to.
+
     To write a new Experiment simply inherit the Experiment class and overwrite the methods.
-    You can then start your experiment calling experiment.run()
+    You can then start your Experiment calling :meth:`.run`
 
-    In Addition the Experiment also has a test function. If you call the run_test() method is will call the test()
-    and end_test() method internally (and if you give the parameter setup = True in run_test is will again call
-    setup() and prepare()).
+    In Addition the Experiment also has a test function. If you call the :meth:`.run_test` method it
+    will call the :meth:`.test` and :meth:`.end_test` method internally (and if you give the
+    parameter setup = True in run_test is will again call :meth:`.setup` and :meth:`.prepare` ).
 
-    Each experiment also has its current state in _exp_state, its start time in _time_start, its end time in
-    _time_end and the current epoch index in _epoch_idx
+    Each Experiment also has its current state in  :attr:`_exp_state`, its start time in
+    :attr:`_time_start`, its end time in :attr:`_time_end` and the current epoch index in
+    :attr:`_epoch_idx`
+
+    Args:
+        n_epochs (int): The number of epochs in the Experiment (how often the train and validate
+            method will be called)
 
     """
 
-
     def __init__(self, n_epochs=0):
-        """
-        Initiallizes a new Experiment with a given number of epochs
-
-        Args:
-            n_epochs (int): The number of epochs in the experiment (how often the train and validate method
-                will be called)
-        """
 
         self.n_epochs = n_epochs
         self._exp_state = "Preparing"
         self._time_start = ""
         self._time_end = ""
         self._epoch_idx = 0
+        self.__stop = False
 
-    def run(self):
-        """This method runs the experiment. It runs through the basic lifecycle of an experiment:
+    def run(self, setup=True):
+        """
+        This method runs the Experiment. It runs through the basic lifecycle of an Experiment::
 
-        setup()
-        prepare()
+            setup()
+            prepare()
 
-        for epoch in n_epochs:
-            train()
-            validate()
+            while epoch < n_epochs:
+                train()
+                validate()
+                epoch += 1
 
-        end()
+            end()
 
         """
 
@@ -62,24 +74,28 @@ class Experiment(object):
             self._time_start = time.strftime("%y-%m-%d_%H:%M:%S", time.localtime(time.time()))
             self._time_end = ""
 
-            self.setup()
-            self._setup_internal()
+            if setup:
+                self.setup()
+                self._setup_internal()
+
             self.prepare()
 
             self._exp_state = "Started"
             self._start_internal()
             print("Experiment started.")
 
-            for epoch in range(self._epoch_idx, self.n_epochs):
-                self._epoch_idx = epoch
-                self.train(epoch=epoch)
-                self.validate(epoch=epoch)
-                self._end_epoch_internal(epoch=epoch)
+            self.__stop = False
+            while self._epoch_idx < self.n_epochs and not self.__stop:
+                self.train(epoch=self._epoch_idx)
+                self.validate(epoch=self._epoch_idx)
+                self._end_epoch_internal(epoch=self._epoch_idx)
+                self._epoch_idx += 1
 
             self._exp_state = "Trained"
             print("Training complete.")
 
             self.end()
+            self._end_internal()
             self._exp_state = "Ended"
             print("Experiment ended.")
 
@@ -87,61 +103,58 @@ class Experiment(object):
 
         except Exception as e:
 
-            # run_error = e
-            # run_error_traceback = traceback.format_tb(e.__traceback__)
             self._exp_state = "Error"
-            self.process_err(e)
             self._time_end = time.strftime("%y-%m-%d_%H:%M:%S", time.localtime(time.time()))
-
-            raise e
+            self.process_err(e)
 
     def run_test(self, setup=True):
         """
-        This method runs the experiment.
+        This method runs the Experiment.
 
-        The test consist of an optional setup and then calls the test() and end_test() methods
-
+        The test consist of an optional setup and then calls the :meth:`.test` and :meth:`.end_test`.
 
         Args:
-            setup: If True it will execute the setup() and prepare() function similar to the run method before
-             calling test()
+            setup: If True it will execute the :meth:`.setup` and :meth:`.prepare` function similar to the run method
+                before calling :meth:`.test`.
 
         """
-
-        """"""
 
         try:
 
             if setup:
                 self.setup()
                 self._setup_internal()
-                self.prepare()
+
+            self.prepare()
 
             self._exp_state = "Testing"
             print("Start test.")
 
             self.test()
+
             self.end_test()
+            self._end_test_internal()
 
             self._exp_state = "Tested"
             print("Testing complete.")
 
         except Exception as e:
 
-            # run_error = e
-            # run_error_traceback = traceback.format_tb(e.__traceback__)
             self._exp_state = "Error"
             self.process_err(e)
 
-            raise e
+    @property
+    def epoch(self):
+        """Convenience access property for self._epoch_idx"""
+        return self._epoch_idx
 
     def setup(self):
-        """Is called at the beginning of each experiment run to setup the basic components needed for a run"""
+        """Is called at the beginning of each Experiment run to setup the basic components needed for a run."""
         pass
 
     def train(self, epoch):
         """
-        The training part of the experiment, it is called once for each epoch
+        The training part of the Experiment, it is called once for each epoch
 
         Args:
             epoch (int): The current epoch the train method is called in
@@ -151,7 +164,7 @@ class Experiment(object):
 
     def validate(self, epoch):
         """
-        The evaluation/valdiation part of the experiment, it is called once for each epoch (after the training
+        The evaluation/validation part of the Experiment, it is called once for each epoch (after the training
         part)
 
         Args:
@@ -161,18 +174,22 @@ class Experiment(object):
         pass
 
     def test(self):
-        """The testing part of the experiment"""
+        """The testing part of the Experiment"""
         pass
+
+    def stop(self):
+        """If called the Experiment will stop after that epoch and not continue training"""
+        self.__stop = True
 
     def process_err(self, e):
         """
-        This method is called if an error occurs during the execution of an experimtn
+        This method is called if an error occurs during the execution of an experiment. Will just raise by default.
 
         Args:
             e (Exception): The exception which was raised during the experiment life cycle
 
         """
-        pass
+        raise e
 
     def _setup_internal(self):
         pass
@@ -193,4 +210,10 @@ class Experiment(object):
         pass
 
     def _start_internal(self):
+        pass
+
+    def _end_internal(self):
+        pass
+
+    def _end_test_internal(self):
         pass

@@ -202,6 +202,15 @@ def experiment_property():
 
 
 
+def start_browser():
+    args, base_dir = parse_args()
+
+    base_dir = os.path.abspath(base_dir)
+
+    app = create_flask_app(base_dir)
+    register_url_routes(app, base_dir)
+
+
 
 
 def overview(base_dir):
@@ -272,7 +281,8 @@ def experiment(base_dir):
     default_val = "-"
     combi_config = {}
     exp_configs = [exp.config.flat(False) for exp in experiments]
-    diff_config_keys = list(Config.difference_config_static(*exp_configs).keys())
+    diff_config_keys = list(Config.difference_config_static(*exp_configs).flat().keys())
+
     config_keys = set([k for c in exp_configs for k in c.keys()])
     for k in sorted(config_keys):
         combi_config[k] = []
@@ -417,6 +427,7 @@ def get_experiment(base_dir):
     return json.dumps(content)
 
 
+
 def experiment_log(base_dir):
     experiment_path = request.args.get('exp')
     log_name = request.args.get('log')
@@ -527,7 +538,7 @@ def combine(base_dir):
             expc.save()
 
         return "1"
-    except:
+    except Exception as e:
         return "0"
 
     return "0"

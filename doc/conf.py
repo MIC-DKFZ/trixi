@@ -78,7 +78,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = []
+exclude_patterns = ["_api/_build/*"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -99,8 +99,11 @@ html_theme = 'sphinx_rtd_theme'
 # documentation.
 #
 html_theme_options = {
-    "collapse_navigation": False
+    "collapse_navigation": False,
+    "logo_only": True
 }
+
+html_logo = "_static/logo/trixi-100w.png"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -150,7 +153,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'TRIXI.tex', 'TRIXI Documentation',
+    (master_doc, 'trixi.tex', 'trixi Documentation',
      'MIC', 'manual'),
 ]
 
@@ -160,7 +163,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'trixi', 'TRIXI Documentation',
+    (master_doc, 'trixi', 'trixi Documentation',
      [author], 1)
 ]
 
@@ -171,8 +174,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'TRIXI', 'TRIXI Documentation',
-     author, 'TRIXI', 'One line description of project.',
+    (master_doc, 'trixi', 'trixi Documentation',
+     author, 'trixi', 'One line description of project.',
      'Miscellaneous'),
 ]
 
@@ -190,6 +193,7 @@ autodoc_mock_imports = [
     "colorlover",
     "flask",
     "graphviz",
+    "imageio",
     "matplotlib",
     "numpy",
     "seaborn",
@@ -198,12 +202,20 @@ autodoc_mock_imports = [
     "telegram",
     "torch",
     "torchvision",
+    "pathos",
     "portalocker",
     "plotly",
     "PIL",
     "umap",
     "visdom",
+    "slack",
+    "slackclient",
+    "tensorboardX"
 ]
+
+# We use the following to automatically run sphinx-apidoc, whenever we run make html.
+# The output is ignored (see exclude_patterns above) and just created for convenience,
+# so that we can compare _build with the existing rst files and see what we need to update.
 
 
 def run_apidoc(_):
@@ -213,13 +225,11 @@ def run_apidoc(_):
     sys.path.append(parentFolder)
     # change "backend" to your module name
     module = os.path.join(parentFolder, 'trixi')
-    output_path = os.path.join(cur_dir, 'api')
+    output_path = os.path.join(cur_dir, '_api/_build')
     main(['-e', '-f', '-o', output_path, module, "-d", "1"])
-    file = open(os.path.join(output_path, "modules.rst"), 'a')
-    file.write("   ../class_diagram\n")
-    file.close()
 
 
 def setup(app):
     # trigger the run_apidoc
     app.connect('builder-inited', run_apidoc)
+    app.add_stylesheet("css/custom.css")
