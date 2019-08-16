@@ -1,3 +1,5 @@
+import sys
+import traceback
 from collections import defaultdict
 
 from trixi.logger.abstractlogger import AbstractLogger
@@ -44,6 +46,9 @@ def create_function(self, sub_methods):
 
             except Exception as e:
                 print("a combi logger method failed: ", str(sub_method))
+                error = sys.exc_info()[0]
+                msg = traceback.format_exc()
+                print("Error {}: {}".format(error, msg))
 
     return surrogate_fn
 
