@@ -726,7 +726,6 @@ class NumpyVisdomLogger(AbstractLogger):
             title: The title of the image window
             caption: The of the image, displayed in the window
             env_appendix: appendix to the environment name, if used the new env is env+env_appendix
-            opts: opts dict for the ploty/ visdom plot, i.e. can set window size, en/disable ticks,...
         """
 
         win = self.vis.plotlyplot(
