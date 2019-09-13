@@ -500,7 +500,7 @@ class PytorchExperimentLogger(ExperimentLogger):
 
         """
         warnings.warn("This method is deprecated !!! Please use the utils.pytorchutils method")
-        get_input_gradient(model, inpt, err_fn, grad_type, n_runs, eps, abs, results_fn)
+        return get_input_gradient(model, inpt, err_fn, grad_type, n_runs, eps, abs, results_fn)
 
     def show_image_gradient(self, name, *args, **kwargs):
         """
