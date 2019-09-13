@@ -15,8 +15,9 @@ from trixi.logger.abstractlogger import threaded
 from trixi.logger.experiment import ExperimentLogger
 from trixi.logger.file.pytorchplotfilelogger import PytorchPlotFileLogger
 from trixi.util import name_and_iter_to_filename
+from trixi.util.metrics import get_classification_metrics, get_pr_curve, get_roc_curve
 from trixi.util.pytorchutils import update_model, get_vanilla_image_gradient, get_guided_image_gradient, \
-    get_smooth_image_gradient
+    get_smooth_image_gradient, get_input_gradient
 
 
 class PytorchExperimentLogger(ExperimentLogger):
@@ -121,9 +122,9 @@ class PytorchExperimentLogger(ExperimentLogger):
         w, h = Image.fromarray(np.uint8(frame_list[0])).size
         image_list = []
         for i in range(len(frame_list)):
-            image_list.append(Image.fromarray(np.uint8(frame_list[i])).resize((w*int(scale), h*int(scale))))
+            image_list.append(Image.fromarray(np.uint8(frame_list[i])).resize((w * int(scale), h * int(scale))))
         filename = os.path.join(self.img_dir, name + ".gif")
-        image_list[0].save(filename, save_all=True, append_images=image_list[1:], duration=int(1e3/fps), loop=0)
+        image_list[0].save(filename, save_all=True, append_images=image_list[1:], duration=int(1e3 / fps), loop=0)
 
     @staticmethod
     @threaded
@@ -438,42 +439,8 @@ class PytorchExperimentLogger(ExperimentLogger):
             results_fn: function which is called with the results/ return values. Expected f(tpr, fpr)
 
         """
-        from sklearn import metrics
-
-        def __get_roc_curve(tensor, labels, reduce_to_n_samples=None, results_fn=lambda x, *y, **z: None):
-
-            if not isinstance(labels, list):
-                labels = labels.flatten()
-            if not isinstance(tensor, list):
-                tensor = tensor.flatten()
-
-            fpr, tpr, thresholds = metrics.roc_curve(labels, tensor)
-            if reduce_to_n_samples is not None:
-                fpr = [np.mean(x) for x in np.array_split(fpr, reduce_to_n_samples)]
-                tpr = [np.mean(x) for x in np.array_split(tpr, reduce_to_n_samples)]
-            results_fn(tpr, fpr)
-
-            return tpr, fpr
-            # self.show_lineplot(tpr, fpr, name=name, opts={"fillarea": True, "webgl": True})
-            # self.add_to_graph(x_vals=np.arange(0, 1.1, 0.1), y_vals=np.arange(0, 1.1, 0.1), name=name, append=True)
-
-        if use_sub_process:
-            p = Process(target=__get_roc_curve, kwargs=dict(tensor=tensor,
-                                                            labels=labels,
-                                                            reduce_to_n_samples=reduce_to_n_samples,
-                                                            results_fn=results_fn
-                                                            ))
-            atexit.register(p.terminate)
-            p.start()
-        else:
-            try:
-                return __get_roc_curve(tensor=tensor,
-                                       labels=labels,
-                                       reduce_to_n_samples=reduce_to_n_samples,
-                                       results_fn=results_fn
-                                       )
-            except Exception as e:
-                warnings.warn("Sth went wrong with calculating the roc curve")
+        warnings.warn("This method is deprecated !!! Please use the utils.metrics method")
+        return get_roc_curve(tensor, labels, reduce_to_n_samples, use_sub_process, results_fn)
 
     @staticmethod
     def get_pr_curve(tensor, labels, reduce_to_n_samples=None, use_sub_process=False,
@@ -489,42 +456,8 @@ class PytorchExperimentLogger(ExperimentLogger):
             results_fn: function which is called with the results/ return values. Expected f(precision, recall)
 
         """
-        from sklearn import metrics
-
-        def __get_pr_curve(tensor, labels, reduce_to_n_samples=None, results_fn=lambda x, *y, **z: None):
-
-            if not isinstance(labels, list):
-                labels = labels.flatten()
-            if not isinstance(tensor, list):
-                tensor = tensor.flatten()
-
-            precision, recall, thresholds = metrics.precision_recall_curve(labels, tensor)
-            if reduce_to_n_samples is not None:
-                precision = [np.mean(x) for x in np.array_split(precision, reduce_to_n_samples)]
-                recall = [np.mean(x) for x in np.array_split(recall, reduce_to_n_samples)]
-            results_fn(precision, recall)
-
-            return precision, recall
-            # self.show_lineplot(precision, recall, name=name, opts={"fillarea": True, "webgl": True})
-            # self.add_to_graph(x_vals=np.arange(0, 1.1, 0.1), y_vals=np.arange(0, 1.1, 0.1), name=name, append=True)
-
-        if use_sub_process:
-            p = Process(target=__get_pr_curve, kwargs=dict(tensor=tensor,
-                                                           labels=labels,
-                                                           reduce_to_n_samples=reduce_to_n_samples,
-                                                           results_fn=results_fn
-                                                           ))
-            atexit.register(p.terminate)
-            p.start()
-        else:
-            try:
-                return __get_pr_curve(tensor=tensor,
-                                      labels=labels,
-                                      reduce_to_n_samples=reduce_to_n_samples,
-                                      results_fn=results_fn
-                                      )
-            except Exception as e:
-                warnings.warn("Sth went wrong with calculating the pr curve")
+        warnings.warn("This method is deprecated !!! Please use the utils.metrics method")
+        return get_pr_curve(tensor, labels, reduce_to_n_samples, use_sub_process, results_fn)
 
     @staticmethod
     def get_classification_metrics(tensor, labels, name="", metric=("roc-auc", "pr-score"), use_sub_process=False,
@@ -538,7 +471,6 @@ class PytorchExperimentLogger(ExperimentLogger):
             labels: Labels of the samples to which the scores match
             name: The name of the window
             metric: List of metrics to calculate. Options are: roc-auc, pr-auc, pr-score, mcc, f1
-            reduce_to_n_samples: Reduce/ downsample to to n samples for fewer data points
             tag_name: Name for the tag, if no given use name
             use_sub_process: Use a sub process to do the processing, if true nothing is returned
             results_fn: function which is called with the results/ return values. Expected f(val, name, tag)
@@ -546,71 +478,8 @@ class PytorchExperimentLogger(ExperimentLogger):
         Returns:
 
         """
-
-        from sklearn import metrics
-
-        def __get_classification_metrics(tensor, labels, name="", metric=("roc-auc", "pr-score"),
-                                         tag_name=None, results_fn=lambda x, *y, **z: None):
-
-            vals = []
-            tags = []
-
-            if not isinstance(labels, list):
-                labels = labels.flatten()
-            if not isinstance(tensor, list):
-                tensor = tensor.flatten()
-
-            if "roc-auc" in metric:
-                roc_auc = metrics.roc_auc_score(labels, tensor)
-                vals.append(roc_auc)
-                tags.append("roc-auc")
-            if "pr-auc" in metric:
-                precision, recall, thresholds = metrics.precision_recall_curve(labels, tensor)
-                pr_auc = metrics.auc(recall, precision)
-                vals.append(pr_auc)
-                tags.append("pr-auc")
-            if "pr-score" in metric:
-                pr_score = metrics.average_precision_score(labels, tensor)
-                vals.append(pr_score)
-                tags.append("pr-score")
-            if "mcc" in metric:
-                mcc_score = metrics.matthews_corrcoef(labels, tensor)
-                vals.append(mcc_score)
-                tags.append("mcc")
-            if "f1" in metric:
-                f1_score = metrics.f1_score(labels, tensor)
-                vals.append(f1_score)
-                tags.append("f1")
-
-            for val, tag in zip(vals, tags):
-                results_fn(val, name=tag + "-" + name, tag=tag_name)
-
-            return vals, tags
-
-        if use_sub_process:
-            p = Process(target=__get_classification_metrics, kwargs=dict(tensor=tensor,
-                                                                         labels=labels,
-                                                                         name=name,
-                                                                         metric=metric,
-                                                                         tag_name=tag_name,
-                                                                         results_fn=results_fn
-                                                                         ))
-            atexit.register(p.terminate)
-            p.start()
-        else:
-            try:
-                return __get_classification_metrics(tensor=tensor,
-                                                    labels=labels,
-                                                    name=name,
-                                                    metric=metric,
-                                                    tag_name=tag_name,
-                                                    results_fn=results_fn
-                                                    )
-
-            except Exception as e:
-                warnings.warn("Sth went wrong with calculating the classification metrics")
-                v, t = zip(*[(0.0,m) for m in metric])
-                return v,t
+        warnings.warn("This method is deprecated !!! Please use the utils.metrics method")
+        return get_classification_metrics(tensor, labels, name, metric, use_sub_process, tag_name, results_fn)
 
     @staticmethod
     def get_input_gradient(model, inpt, err_fn, grad_type="vanilla", n_runs=20, eps=0.1,
@@ -630,24 +499,8 @@ class PytorchExperimentLogger(ExperimentLogger):
             results_fn: function which is called with the results/ return values. Expected f(grads)
 
         """
-        model.zero_grad()
-
-        if grad_type == "vanilla":
-            grad = get_vanilla_image_gradient(model, inpt, err_fn, abs)
-        elif grad_type == "guided":
-            grad = get_guided_image_gradient(model, inpt, err_fn, abs)
-        elif grad_type == "smooth-vanilla":
-            grad = get_smooth_image_gradient(model, inpt, err_fn, abs, n_runs, eps, grad_type="vanilla")
-        elif grad_type == "smooth-guided":
-            grad = get_smooth_image_gradient(model, inpt, err_fn, abs, n_runs, eps, grad_type="guided")
-        else:
-            warnings.warn("This grad_type is not implemented yet")
-            grad = torch.zeros_like(inpt)
-        model.zero_grad()
-
-        results_fn(grad)
-
-        return grad
+        warnings.warn("This method is deprecated !!! Please use the utils.pytorchutils method")
+        get_input_gradient(model, inpt, err_fn, grad_type, n_runs, eps, abs, results_fn)
 
     def show_image_gradient(self, name, *args, **kwargs):
         """

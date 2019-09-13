@@ -79,6 +79,42 @@ def get_smooth_image_gradient(model, inpt, err_fn, abs=True, n_runs=20, eps=0.1,
     return grad.detach()
 
 
+def get_input_gradient(model, inpt, err_fn, grad_type="vanilla", n_runs=20, eps=0.1,
+                       abs=False, results_fn=lambda x, *y, **z: None):
+    """
+    Given a model creates calculates the error and backpropagates it to the image and saves it (saliency map).
+
+    Args:
+        model: The model to be evaluated
+        inpt: Input to the model
+        err_fn: The error function the evaluate the output of the model on
+        grad_type: Gradient calculation method, currently supports (vanilla, vanilla-smooth, guided,
+        guided-smooth) ( the guided backprob can lead to segfaults -.-)
+        n_runs: Number of runs for the smooth variants
+        eps: noise scaling to be applied on the input image (noise is drawn from N(0,1))
+        abs (bool): Flag, if the gradient should be a absolute value
+        results_fn: function which is called with the results/ return values. Expected f(grads)
+
+    """
+    model.zero_grad()
+
+    if grad_type == "vanilla":
+        grad = get_vanilla_image_gradient(model, inpt, err_fn, abs)
+    elif grad_type == "guided":
+        grad = get_guided_image_gradient(model, inpt, err_fn, abs)
+    elif grad_type == "smooth-vanilla":
+        grad = get_smooth_image_gradient(model, inpt, err_fn, abs, n_runs, eps, grad_type="vanilla")
+    elif grad_type == "smooth-guided":
+        grad = get_smooth_image_gradient(model, inpt, err_fn, abs, n_runs, eps, grad_type="guided")
+    else:
+        warnings.warn("This grad_type is not implemented yet")
+        grad = torch.zeros_like(inpt)
+    model.zero_grad()
+
+    results_fn(grad)
+
+    return grad
+
 def update_model(original_model, update_dict, exclude_layers=(), do_warnings=True):
     # also allow loading of partially pretrained net
     model_dict = original_model.state_dict()
