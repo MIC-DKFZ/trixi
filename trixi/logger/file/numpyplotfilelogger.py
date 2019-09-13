@@ -143,3 +143,17 @@ class NumpyPlotFileLogger(NumpySeabornPlotLogger):
         outname = os.path.join(self.plot_dir, name) + file_format
         os.makedirs(os.path.dirname(outname), exist_ok=True)
         threaded(savefig_and_close)(figure, outname)
+
+    def show_matplot_plt(self, figure, name, file_format=".png", *args, **kwargs):
+        """
+        Method to save a custom matplotlib figure
+
+        Args:
+            figure: Figure you want to plot
+            name: file name
+            file_format: output image (plot) file format
+        """
+
+        outname = os.path.join(self.plot_dir, name) + file_format
+        os.makedirs(os.path.dirname(outname), exist_ok=True)
+        threaded(savefig_and_close)(figure, outname)
