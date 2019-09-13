@@ -89,14 +89,21 @@ class ExperimentReader(object):
         imgs = []
         imgs += ExperimentReader.get_file_contents(self.img_dir)
         if os.path.isdir(self.img_dir):
-            for f in os.listdir(self.img_dir):
+            for f in sorted(os.listdir(self.img_dir)):
                 f = os.path.join(self.img_dir, f)
                 if os.path.isdir(f):
                     imgs += ExperimentReader.get_file_contents(f)
         return imgs
 
     def get_plots(self):
-        return ExperimentReader.get_file_contents(self.plot_dir)
+        plots = []
+        plots += ExperimentReader.get_file_contents(self.plot_dir)
+        if os.path.isdir(self.plot_dir):
+            for f in sorted(os.listdir(self.plot_dir)):
+                f = os.path.join(self.plot_dir, f)
+                if os.path.isdir(f):
+                    plots += ExperimentReader.get_file_contents(f)
+        return plots
 
     def get_checkpoints(self):
         return ExperimentReader.get_file_contents(self.checkpoint_dir)
