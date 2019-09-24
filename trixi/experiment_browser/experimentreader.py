@@ -83,10 +83,6 @@ class ExperimentReader(object):
             list_ = list(map(lambda x: os.path.join(folder, x), sorted(os.listdir(folder))))
             files = list(filter(lambda x: os.path.isfile(x), list_))
             dirs = list(filter(lambda x: os.path.isdir(x), list_))
-            print("-------------------")
-            print(files)
-            print("-------------------")
-            print(dirs)
             if include_subdirs:
                 for d in dirs:
                     files += ExperimentReader.get_file_contents(d, True)
