@@ -218,6 +218,17 @@ class ExperimentLogger(AbstractLogger):
         self.plot_logger.show_boxplot(
             array, name, file_format=".png", **kwargs)
 
+    def show_matplot_plt(self, figure, name, file_format=".png", *args, **kwargs):
+        """
+        This function saves a custom matplotlib figure in the experiment plot folder.
+
+        Args:
+            figure(matplotlib.figure.Figure): figure to be plotted
+            name(str): image title
+            file_format (str): file format of the image
+        """
+        self.plot_logger.show_matplot_plt(figure, name, file_format=".png", *args, **kwargs)
+
     def save_model(self):
         raise NotImplementedError
 

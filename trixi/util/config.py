@@ -245,6 +245,21 @@ class Config(dict):
         else:
             super(Config, self).__setitem__(key, value)
 
+    def __delitem__(self, key):
+        """Allows convenience access to deeper levels using dots to separate
+        levels, for example `config["a.b.c"]`.
+        """
+
+        if type(key) == str and "." in key and key not in self:
+            superkey = key.split(".")[0]
+            subkeys = ".".join(key.split(".")[1:])
+            if superkey not in self:
+                raise KeyError(superkey + " not found.")
+            else:
+                self[superkey].__delitem__(subkeys)
+        else:
+            super().__delitem__(key)
+
     def set_with_decode(self, key, value, stringify_value=False):
         """Set single value, using :class:`.ModuleMultiTypeDecoder` to interpret
         key and value strings by creating a temporary JSON string.

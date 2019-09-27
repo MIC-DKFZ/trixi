@@ -97,7 +97,7 @@ class ExperimentReader(object):
         self.star = self.meta_star
 
     @staticmethod
-    def get_file_contents(folder):
+    def get_file_contents(folder, include_subdirs=False):
         """Get all files in a folder.
 
         Returns:
@@ -105,23 +105,21 @@ class ExperimentReader(object):
         """
 
         if os.path.isdir(folder):
-            list_ = map(lambda x: os.path.join(folder, x), sorted(os.listdir(folder)))
-            return list(filter(lambda x: os.path.isfile(x), list_))
+            list_ = list(map(lambda x: os.path.join(folder, x), sorted(os.listdir(folder))))
+            files = list(filter(lambda x: os.path.isfile(x), list_))
+            dirs = list(filter(lambda x: os.path.isdir(x), list_))
+            if include_subdirs:
+                for d in dirs:
+                    files += ExperimentReader.get_file_contents(d, True)
+            return files
         else:
             return []
 
     def get_images(self):
-        imgs = []
-        imgs += ExperimentReader.get_file_contents(self.img_dir)
-        if os.path.isdir(self.img_dir):
-            for f in os.listdir(self.img_dir):
-                f = os.path.join(self.img_dir, f)
-                if os.path.isdir(f):
-                    imgs += ExperimentReader.get_file_contents(f)
-        return imgs
+        return ExperimentReader.get_file_contents(self.img_dir, True)
 
     def get_plots(self):
-        return ExperimentReader.get_file_contents(self.plot_dir)
+        return ExperimentReader.get_file_contents(self.plot_dir, True)
 
     def get_checkpoints(self):
         return ExperimentReader.get_file_contents(self.checkpoint_dir)
