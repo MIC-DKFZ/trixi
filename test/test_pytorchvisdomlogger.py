@@ -1,7 +1,4 @@
-import os
-import tempfile
 import unittest
-import shutil
 import time
 
 import numpy as np
@@ -124,7 +121,6 @@ class TestPytorchVisdomLogger(unittest.TestCase):
     def test_plot_model_structure(self):
         net = Net()
         self.visdomLogger.plot_model_structure(net, [(1, 1, 28, 28)])
-
 
     def test_plot_model_statistics(self):
         net = Net()

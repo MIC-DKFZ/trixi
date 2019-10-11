@@ -4,13 +4,14 @@ import unittest
 import shutil
 import time
 import matplotlib
-matplotlib.use("Agg")
-
 import numpy as np
+
+matplotlib.use("Agg")
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from trixi.logger.experiment import PytorchExperimentLogger
 
 
@@ -164,8 +165,6 @@ class TestPytorchExperimentLogger(unittest.TestCase):
     def test_get_roc_curve(self):
 
         try:
-            import sklearn
-
             array = np.random.random_sample(100)
             labels = np.random.choice((0, 1), 100)
 
@@ -178,8 +177,6 @@ class TestPytorchExperimentLogger(unittest.TestCase):
     def test_get_pr_curve(self):
 
         try:
-            import sklearn
-
             array = np.random.random_sample(100)
             labels = np.random.choice((0, 1), 100)
 
@@ -193,8 +190,6 @@ class TestPytorchExperimentLogger(unittest.TestCase):
     def test_get_classification_metric(self):
 
         try:
-            import sklearn
-
             array = np.random.random_sample(100)
             labels = np.random.choice((0, 1), 100)
 
@@ -202,8 +197,7 @@ class TestPytorchExperimentLogger(unittest.TestCase):
                                                                           metric=("roc-auc", "pr-score"))
 
             self.assertTrue("roc-auc" in tags and "pr-score" in tags, "Did not get all classification metrics")
-            self.assertTrue(vals[0] >= 0 and vals[0] <= 1
-                            and vals[1] >= 0 and vals[1] <= 1,
+            self.assertTrue(0 <= vals[0] <= 1 and 0 <= vals[1] <= 1,
                             "Got an invalid classification metric values")
         except:
             pass
@@ -246,10 +240,11 @@ class TestPytorchExperimentLogger(unittest.TestCase):
     def test_plot_model_structure(self):
         net = Net()
         random_input = torch.from_numpy(np.random.randn(28 * 28).reshape((1, 1, 28, 28))).float()
-        self.experimentLogger.plot_model_structure(save_dir=self.experimentLogger.base_dir, model=net, input_size=random_input.size(),
+        self.experimentLogger.plot_model_structure(save_dir=self.experimentLogger.plot_dir, model=net,
+                                                   input_size=random_input.size(),
                                                    name="example_model_structure")
         time.sleep(1)
-        self.assertTrue(os.path.exists(os.path.join(self.experimentLogger.base_dir, "example_model_structure.png")),
+        self.assertTrue(os.path.exists(os.path.join(self.experimentLogger.plot_dir, "example_model_structure.png")),
                         "Could not visualize model structure")
 
 

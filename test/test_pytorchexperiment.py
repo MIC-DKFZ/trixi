@@ -5,8 +5,6 @@ import unittest
 import shutil
 import time
 
-import numpy as np
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -229,7 +227,6 @@ class TestPytorchExperiment(unittest.TestCase):
 
         exp2._exp_state = "Ended"
         exp3._exp_state = "Ended"
-
 
 
 class Net(nn.Module):

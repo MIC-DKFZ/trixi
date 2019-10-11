@@ -2,13 +2,8 @@ import os
 import tempfile
 import unittest
 import shutil
-import time
-
 import numpy as np
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from imageio import imread
 
 from trixi.logger.experiment.experimentlogger import ExperimentLogger
@@ -84,8 +79,8 @@ class TestExperimentLogger(unittest.TestCase):
     def test_show_histogram2d(self):
         array1 = np.random.random_sample(5)
         array2 = np.random.random_sample(5)
-        self.experimentLogger.show_histogram2d(array1, array2, "histogram")
-        self.assertTrue(os.path.exists(os.path.join(self.experimentLogger.plot_dir, "histogram.png")),
+        self.experimentLogger.show_histogram2d(array1, array2, "histogram2d")
+        self.assertTrue(os.path.exists(os.path.join(self.experimentLogger.plot_dir, "histogram2d.png")),
                         "Show histogram could not create histogram")
 
     def test_show_scatterplot(self):
@@ -116,8 +111,6 @@ class TestExperimentLogger(unittest.TestCase):
         with open(os.path.join(self.experimentLogger.log_dir, "default.log"), 'r') as log_file:
             log_text = log_file.read()
         self.assertTrue(text in log_text)
-
-
 
     def test_save_and_load_config(self):
         c = Config()
@@ -169,7 +162,6 @@ class TestExperimentLogger(unittest.TestCase):
         self.assertTrue("text" in d2 and d2['text'] == d['text'], "Text in dict could not be restored")
         self.assertTrue("nmbr" in d2 and d2['nmbr'] == d['nmbr'], "Number in dict could not be restored")
         self.assertTrue("tuple" in d2 and d2['tuple'] == d['tuple'], "Tuple in dict could not be restored")
-
 
     def test_save_and_load_numpy_data(self):
         np_array = np.random.random_sample((3, 128, 128))

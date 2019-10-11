@@ -2,18 +2,10 @@ import os
 import tempfile
 import unittest
 import shutil
-import time
-
 import numpy as np
-
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from scipy import misc
 
-from trixi.logger.experiment.experimentlogger import ExperimentLogger
 from trixi.logger.tensorboard.pytorchtensorboardxlogger import PytorchTensorboardXLogger
-from trixi.util.config import Config
 
 
 class TestPytorchTensorboardXLogger(unittest.TestCase):
@@ -66,7 +58,7 @@ class TestPytorchTensorboardXLogger(unittest.TestCase):
         self.logger.show_value(val, "value")
         val = np.random.random_sample(1)
         self.logger.show_value(val, "value", counter=4)
-        
+
         val = np.random.random_sample(1)
         self.logger.show_value(val, "value1", tag="xD")
         val = np.random.random_sample(1)
@@ -78,15 +70,13 @@ class TestPytorchTensorboardXLogger(unittest.TestCase):
         self.logger.show_pr_curve(np.random.rand(100), np.random.randint(2, size=100))
 
     def test_show_embedding(self):
-        import torch
         label_img = torch.rand(100, 3, 10, 32)
         for i in range(100):
-            label_img[i]*=i/100.0
+            label_img[i] *= i / 100.0
         self.logger.show_embedding(torch.randn(100, 5), label_img=label_img)
 
     def test_show_histogram(self):
         self.logger.show_histogram(np.random.rand(100))
-        
 
 
 if __name__ == '__main__':

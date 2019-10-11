@@ -1,18 +1,7 @@
-import os
-import tempfile
 import unittest
-import shutil
-import time
-
 import numpy as np
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
 from trixi.logger.plt.numpyseabornimageplotlogger import NumpySeabornImagePlotLogger
-from trixi.logger.visdom import PytorchVisdomLogger
-from trixi.logger.visdom.numpyvisdomlogger import start_visdom
 
 
 class TestNumpySearbonImagePlotLogger(unittest.TestCase):
@@ -20,7 +9,6 @@ class TestNumpySearbonImagePlotLogger(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestNumpySearbonImagePlotLogger, cls).setUpClass()
-
 
     def setUp(self):
         self.logger = NumpySeabornImagePlotLogger()
@@ -63,6 +51,7 @@ class TestNumpySearbonImagePlotLogger(unittest.TestCase):
         val = np.random.random_sample(1)
         figure_image = self.logger.show_value(val, "value", counter=4)
         self.assertTrue(isinstance(figure_image, np.ndarray))
+
 
 if __name__ == '__main__':
     unittest.main()
