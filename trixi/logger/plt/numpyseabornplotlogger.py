@@ -263,3 +263,28 @@ class NumpySeabornPlotLogger(AbstractLogger):
         """
 
         return plt.figure(name)
+
+    def show_histogram(self, array, name=None, bins=None, show=True, *args, **kwargs):
+        """
+        Creates a histogram figure
+
+        Args:
+            array: Array of integers.
+            bins: Number of bins to use
+            name: The name of the figure
+            show: Flag if it should also display the figure (result might also depend on the matplotlib backend )
+
+        Returns:
+            A matplotlib figure
+        """
+
+        figure = self.get_figure(name)
+        plt.clf()
+
+        plt.hist(array, bins=bins)
+
+        if show:
+            plt.show(block=False)
+            plt.pause(0.01)
+
+        return figure

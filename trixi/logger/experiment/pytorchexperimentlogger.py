@@ -43,7 +43,7 @@ class PytorchExperimentLogger(ExperimentLogger):
         """Initializes the PytorchExperimentLogger and parses the arguments to the ExperimentLogger"""
 
         super(PytorchExperimentLogger, self).__init__(*args, **kwargs)
-        self.plot_logger = PytorchPlotFileLogger(self.img_dir, self.plot_dir)
+        self.plot_file_logger = PytorchPlotFileLogger(self.img_dir, self.plot_dir)
 
     def show_images(self, images, name, **kwargs):
         """
@@ -54,7 +54,7 @@ class PytorchExperimentLogger(ExperimentLogger):
             name: file name of the new image file
 
         """
-        self.plot_logger.show_images(images, name, **kwargs)
+        self.plot_file_logger.show_images(images, name, **kwargs)
 
     def show_image_grid(self, image, name, **kwargs):
         """
@@ -65,7 +65,7 @@ class PytorchExperimentLogger(ExperimentLogger):
             name: file name of the new image file
 
         """
-        self.plot_logger.show_image_grid(image, name, **kwargs)
+        self.plot_file_logger.show_image_grid(image, name, **kwargs)
 
     def show_image_grid_heatmap(self, heatmap, background=None, name="heatmap", **kwargs):
         """
@@ -77,7 +77,7 @@ class PytorchExperimentLogger(ExperimentLogger):
             name: file name of the new image file
 
         """
-        self.plot_logger.show_image_grid_heatmap(heatmap=heatmap, background=background, name=name, **kwargs)
+        self.plot_file_logger.show_image_grid_heatmap(heatmap=heatmap, background=background, name=name, **kwargs)
 
     def show_video(self, frame_list=None, name="video", dim="LxHxWxC", scale=1.0, fps=25,
                    extension=".mp4", codec="THEO"):

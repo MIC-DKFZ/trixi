@@ -157,3 +157,17 @@ class NumpyPlotFileLogger(NumpySeabornPlotLogger):
         outname = os.path.join(self.plot_dir, name) + file_format
         os.makedirs(os.path.dirname(outname), exist_ok=True)
         threaded(savefig_and_close)(figure, outname)
+
+    def show_histogram(self, array, name, file_format=".png", *args, **kwargs):
+        """
+        Method which creates and stores a histogram
+
+        Args:
+            array: Array of values you want to visualize
+            name: file-name
+            file_format: output-image (plot) file format
+        """
+        figure = NumpySeabornPlotLogger.show_histogram(self, array, name, show=False)
+        outname = os.path.join(self.plot_dir, name) + file_format
+        os.makedirs(os.path.dirname(outname), exist_ok=True)
+        threaded(savefig_and_close)(figure, outname)

@@ -117,7 +117,7 @@ class ExperimentLogger(AbstractLogger):
             plot_logger_args = {}
 
         self.text_logger = TextFileLogger(self.log_dir, **text_logger_args)
-        self.plot_logger = NumpyPlotFileLogger(
+        self.plot_file_logger = NumpyPlotFileLogger(
             self.img_dir, self.plot_dir, **plot_logger_args)
 
     def show_image(self, image, name, file_format=".png", **kwargs):
@@ -129,7 +129,7 @@ class ExperimentLogger(AbstractLogger):
             name(str): image title
             file_format (str): file format of the image
         """
-        self.plot_logger.show_image(image, name, file_format=".png", **kwargs)
+        self.plot_file_logger.show_image(image, name, file_format=file_format, **kwargs)
 
     def show_barplot(self, array, name, file_format=".png", **kwargs):
         """
@@ -140,8 +140,8 @@ class ExperimentLogger(AbstractLogger):
             name(str): image title
             file_format (str): file format of the image
         """
-        self.plot_logger.show_barplot(
-            array, name, file_format=".png", **kwargs)
+        self.plot_file_logger.show_barplot(
+            array, name, file_format=file_format, **kwargs)
 
     def show_lineplot(self, y_vals, x_vals=None, name="lineplot", file_format=".png", **kwargs):
         """
@@ -153,8 +153,8 @@ class ExperimentLogger(AbstractLogger):
             name(str): image title
             file_format (str): file format of the image
         """
-        self.plot_logger.show_lineplot(
-            y_vals, x_vals, name, file_format=".png", **kwargs)
+        self.plot_file_logger.show_lineplot(
+            y_vals, x_vals, name, file_format=file_format, **kwargs)
 
     def show_piechart(self, array, name, file_format=".png", **kwargs):
         """
@@ -165,8 +165,20 @@ class ExperimentLogger(AbstractLogger):
             name(str): image title
             file_format (str): file format of the image
         """
-        self.plot_logger.show_piechart(
-            array, name, file_format=".png", **kwargs)
+        self.plot_file_logger.show_piechart(
+            array, name, file_format=file_format, **kwargs)
+
+    def show_histogram(self, array, name, file_format=".png", **kwargs):
+        """
+        This function saves a histogram in the experiment plot folder.
+
+        Args:
+            array(np.ndarray): array to be plotted
+            name(str): image title
+            file_format (str): file format of the image
+        """
+        self.plot_file_logger.show_histogram(
+            array, name, file_format=file_format, **kwargs)
 
     def show_scatterplot(self, array, name, file_format=".png", **kwargs):
         """
@@ -177,8 +189,8 @@ class ExperimentLogger(AbstractLogger):
             name(str): image title
             file_format (str): file format of the image
         """
-        self.plot_logger.show_scatterplot(
-            array, name, file_format=".png", **kwargs)
+        self.plot_file_logger.show_scatterplot(
+            array, name, file_format=file_format, **kwargs)
 
     def show_value(self, value, name=None, counter=None, tag=None, file_format=".png", **kwargs):
         """
@@ -191,7 +203,7 @@ class ExperimentLogger(AbstractLogger):
             tag: group/label for the value. Values with the same tag will be plotted in the same plot
             file_format (str): file format of the image
         """
-        self.plot_logger.show_value(value, name, counter, tag, file_format, **kwargs)
+        self.plot_file_logger.show_value(value, name, counter, tag, file_format, **kwargs)
 
     def show_text(self, text, name=None, logger="default", **kwargs):
         """
@@ -215,8 +227,8 @@ class ExperimentLogger(AbstractLogger):
             name(str): image title
             file_format (str): file format of the image
         """
-        self.plot_logger.show_boxplot(
-            array, name, file_format=".png", **kwargs)
+        self.plot_file_logger.show_boxplot(
+            array, name, file_format=file_format, **kwargs)
 
     def show_matplot_plt(self, figure, name, file_format=".png", *args, **kwargs):
         """
@@ -227,7 +239,7 @@ class ExperimentLogger(AbstractLogger):
             name(str): image title
             file_format (str): file format of the image
         """
-        self.plot_logger.show_matplot_plt(figure, name, file_format=".png", *args, **kwargs)
+        self.plot_file_logger.show_matplot_plt(figure, name, file_format=file_format, *args, **kwargs)
 
     def save_model(self):
         raise NotImplementedError
