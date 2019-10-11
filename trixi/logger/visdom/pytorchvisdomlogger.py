@@ -255,7 +255,10 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                             dot.edge(str(id(t)), str(id(var)))
                             add_nodes(t)
 
-            add_nodes(output_var.grad_fn)
+            if type(output_var) == tuple:
+                [add_nodes(output_var_el.grad_fn) for output_var_el in output_var]
+            else:
+                add_nodes(output_var.grad_fn)
             return dot
 
         # Create input
