@@ -1,6 +1,5 @@
 import os
 import warnings
-
 import torch
 from PIL import Image
 import numpy as np
@@ -306,3 +305,111 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
         fuse_img = np.clip(fuse_img * 255, a_min=0, a_max=255).astype(np.uint8)
 
         imwrite(file_name, fuse_img.transpose(1, 2, 0))
+
+    def plot_model_structure(self, save_dir, model, input_size, name="model_structure", use_cuda=True, forward_kwargs=None, **kwargs):
+        """
+        Plots the model structure/ model graph of a pytorch module (this only works correctly with pytorch 0.2.0).
+
+        Args:
+            save_dir: The directory to save the file
+            model: The graph of this model will be plotted.
+            input_size: Input size of the model (with batch dim).
+            name: The name of the file to save to
+            use_cuda: Perform model dimension calculations on the gpu (cuda).
+        """
+
+        if not hasattr(input_size[0], "__iter__"):
+            input_size = [input_size, ]
+
+        if not torch.cuda.is_available():
+            use_cuda = False
+
+        if forward_kwargs is None:
+            forward_kwargs = {}
+
+        def make_dot(output_var, state_dict=None):
+            """
+            Produces Graphviz representation of Pytorch autograd graph.
+            Blue nodes are the Variables that require grad, orange are Tensors
+            saved for backward in torch.autograd.Function.
+
+            Args:
+                output_var: output Variable
+                state_dict: dict of (name, parameter) to add names to node that require grad
+            """
+            from graphviz import Digraph
+
+            if state_dict is not None:
+                # assert isinstance(params.values()[0], Variable)
+                param_map = {id(v): k for k, v in state_dict.items()}
+
+            node_attr = dict(style='filled',
+                             shape='box',
+                             align='left',
+                             fontsize='12',
+                             ranksep='0.1',
+                             height='0.2')
+            dot = Digraph(node_attr=node_attr, graph_attr=dict(size="12,12"), format="png")
+            seen = set()
+
+            def size_to_str(size):
+                return '(' + (', ').join(['%d' % v for v in size]) + ')'
+
+            def add_nodes(var):
+                if var not in seen:
+                    if torch.is_tensor(var):
+                        dot.node(str(id(var)), size_to_str(var.size()), fillcolor='orange')
+                    elif hasattr(var, 'variable'):
+                        u = var.variable
+                        if state_dict is not None and id(u.data) in param_map:
+                            node_name = param_map[id(u.data)]
+                        else:
+                            node_name = ""
+                        node_name = '%s\n %s' % (node_name, size_to_str(u.size()))
+                        dot.node(str(id(var)), node_name, fillcolor='lightblue')
+                    else:
+                        node_name = str(type(var).__name__)
+                        if node_name.endswith("Backward"):
+                            node_name = node_name[:-8]
+                        dot.node(str(id(var)), node_name)
+                    seen.add(var)
+                    if hasattr(var, 'next_functions'):
+                        for u in var.next_functions:
+                            if u[0] is not None:
+                                dot.edge(str(id(u[0])), str(id(var)))
+                                add_nodes(u[0])
+                    if hasattr(var, 'saved_tensors'):
+                        for t in var.saved_tensors:
+                            dot.edge(str(id(t)), str(id(var)))
+                            add_nodes(t)
+
+            if type(output_var) == tuple:
+                [add_nodes(output_var_el.grad_fn) for output_var_el in output_var]
+            else:
+                add_nodes(output_var.grad_fn)
+            return dot
+
+        # Create input
+        inpt_vars = [torch.randn(i_s) for i_s in input_size]
+        if use_cuda:
+            if next(model.parameters()).is_cuda:
+                device = next(model.parameters()).device.index
+            else:
+                device = None
+            inpt_vars = [i_v.cuda(device) for i_v in inpt_vars]
+            model = model.cuda(device)
+
+        # get output
+        output = model(*inpt_vars, **forward_kwargs)
+
+        # get temp file to store svg in
+        g = make_dot(output, model.state_dict())
+
+        try:
+            # Create model graph and store it as png
+            figure_file = os.path.join(save_dir, name)
+            os.makedirs(os.path.dirname(save_dir), exist_ok=True)
+            g.render(figure_file, view=False)
+
+        except Exception as e:
+            warnings.warn("Could not render model, make sure the Graphviz executables are on your system.")

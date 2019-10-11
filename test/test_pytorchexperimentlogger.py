@@ -243,6 +243,15 @@ class TestPytorchExperimentLogger(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(self.experimentLogger.img_dir, "grads-sguided.png")),
                         "Could not get vanilla gradients")
 
+    def test_plot_model_structure(self):
+        net = Net()
+        random_input = torch.from_numpy(np.random.randn(28 * 28).reshape((1, 1, 28, 28))).float()
+        self.experimentLogger.plot_model_structure(save_dir=self.experimentLogger.base_dir, model=net, input_size=random_input.size(),
+                                                   name="example_model_structure")
+        time.sleep(1)
+        self.assertTrue(os.path.exists(os.path.join(self.experimentLogger.base_dir, "example_model_structure.png")),
+                        "Could not visualize model structure")
+
 
 class Net(nn.Module):
     """

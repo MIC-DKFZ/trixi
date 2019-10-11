@@ -521,3 +521,16 @@ class PytorchExperimentLogger(ExperimentLogger):
         """
         grad = self.get_input_gradient(*args, **kwargs)
         self.show_image_grid(grad, name)
+
+    def plot_model_structure(self, save_dir, model, input_size, name, **kwargs):
+        """
+        Saves model structure as pdf file
+
+        Args:
+            save_dir: The directory to save the file
+            model: The graph of this model will be plotted.
+            input_size: Input size of the model (with batch dim).
+            name: The name of the file to save to.
+
+        """
+        self.plot_file_logger.plot_model_structure(save_dir=save_dir, model=model, input_size=input_size, name=name, **kwargs)
