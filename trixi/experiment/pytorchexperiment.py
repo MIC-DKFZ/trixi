@@ -18,14 +18,14 @@ from trixi.experiment.experiment import Experiment
 from trixi.logger import CombinedLogger, PytorchExperimentLogger, PytorchVisdomLogger
 
 
-from trixi.logger.tensorboard.pytorchtensorboardxlogger import PytorchTensorboardXLogger
+from trixi.logger.tensorboard.pytorchtensorboardlogger import PytorchTensorboardLogger
 from trixi.util import Config, ResultElement, ResultLogDict, SourcePacker, name_and_iter_to_filename
 from trixi.util.config import update_from_sys_argv
 from trixi.util.pytorchutils import set_seed
 
 logger_lookup_dict = dict(
     visdom=PytorchVisdomLogger,
-    tensorboard=PytorchTensorboardXLogger,
+    tensorboard=PytorchTensorboardLogger,
 )
 
 try:

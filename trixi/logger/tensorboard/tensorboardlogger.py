@@ -9,12 +9,12 @@ from trixi.logger.abstractlogger import convert_params
 from trixi.util.util import np_make_grid
 
 
-class TensorboardXLogger(NumpySeabornPlotLogger):
+class TensorboardLogger(NumpySeabornPlotLogger):
     """Logger that uses tensorboardX to log to Tensorboard."""
 
     def __init__(self, target_dir, *args, **kwargs):
 
-        super(TensorboardXLogger, self).__init__(*args, **kwargs)
+        super(TensorboardLogger, self).__init__(*args, **kwargs)
 
         os.makedirs(target_dir, exist_ok=True)
 

@@ -121,18 +121,18 @@ tensorboard
     :undoc-members:
     :show-inheritance:
 
-:hidden:`TensorboardXLogger`
+:hidden:`TensorboardLogger`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: trixi.logger.tensorboard.tensorboardxlogger
+.. automodule:: trixi.logger.tensorboard.tensorboardlogger
     :members:
     :undoc-members:
     :show-inheritance:
 
-:hidden:`PytorchTensorboardXLogger`
+:hidden:`PytorchTensorboardLogger`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: trixi.logger.tensorboard.pytorchtensorboardxlogger
+.. automodule:: trixi.logger.tensorboard.pytorchtensorboardlogger
     :members:
     :undoc-members:
     :show-inheritance:

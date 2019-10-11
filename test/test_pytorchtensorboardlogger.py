@@ -12,7 +12,7 @@ import torch.nn.functional as F
 from scipy import misc
 
 from trixi.logger.experiment.experimentlogger import ExperimentLogger
-from trixi.logger.tensorboard.pytorchtensorboardxlogger import PytorchTensorboardXLogger
+from trixi.logger.tensorboard.pytorchtensorboardlogger import PytorchTensorboardLogger
 from trixi.util.config import Config
 
 
@@ -20,7 +20,7 @@ class TestPytorchTensorboardXLogger(unittest.TestCase):
 
     def setUp(self):
         self.test_dir = tempfile.gettempdir()
-        self.logger = PytorchTensorboardXLogger(self.test_dir)
+        self.logger = PytorchTensorboardLogger(self.test_dir)
 
     def tearDown(self):
         self.logger.close()
