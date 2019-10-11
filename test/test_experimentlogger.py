@@ -81,6 +81,13 @@ class TestExperimentLogger(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(self.experimentLogger.plot_dir, "histogram.png")),
                         "Show histogram could not create histogram")
 
+    def test_show_histogram2d(self):
+        array1 = np.random.random_sample(5)
+        array2 = np.random.random_sample(5)
+        self.experimentLogger.show_histogram2d(array1, array2, "histogram")
+        self.assertTrue(os.path.exists(os.path.join(self.experimentLogger.plot_dir, "histogram.png")),
+                        "Show histogram could not create histogram")
+
     def test_show_scatterplot(self):
         array = np.random.random_sample((5, 2))
         self.experimentLogger.show_scatterplot(array, "scatterplot")

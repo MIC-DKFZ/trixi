@@ -171,3 +171,18 @@ class NumpyPlotFileLogger(NumpySeabornPlotLogger):
         outname = os.path.join(self.plot_dir, name) + file_format
         os.makedirs(os.path.dirname(outname), exist_ok=True)
         threaded(savefig_and_close)(figure, outname)
+
+    def show_histogram2d(self, array1, array2, name, file_format=".png", *args, **kwargs):
+        """
+        Method which creates and stores a histogram
+
+        Args:
+            array1: First array of integers.
+            array2: Second array of integers.
+            name: file-name
+            file_format: output-image (plot) file format
+        """
+        figure = NumpySeabornPlotLogger.show_histogram2d(self, array1, array2, name, show=False)
+        outname = os.path.join(self.plot_dir, name) + file_format
+        os.makedirs(os.path.dirname(outname), exist_ok=True)
+        threaded(savefig_and_close)(figure, outname)

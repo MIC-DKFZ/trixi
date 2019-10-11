@@ -180,6 +180,18 @@ class ExperimentLogger(AbstractLogger):
         self.plot_file_logger.show_histogram(
             array, name, file_format=file_format, **kwargs)
 
+    def show_histogram2d(self, array1, array2, name, file_format=".png", **kwargs):
+        """
+        This function saves a histogram in the experiment plot folder.
+
+        Args:
+            array(np.ndarray): array to be plotted
+            name(str): image title
+            file_format (str): file format of the image
+        """
+        self.plot_file_logger.show_histogram2d(
+            array1, array2, name, file_format=file_format, **kwargs)
+
     def show_scatterplot(self, array, name, file_format=".png", **kwargs):
         """
         This function saves a scatterplot in the experiment plot folder.
