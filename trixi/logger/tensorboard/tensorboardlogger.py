@@ -10,7 +10,7 @@ from trixi.util.util import np_make_grid
 
 
 class TensorboardLogger(NumpySeabornPlotLogger):
-    """Logger that uses tensorboardX to log to Tensorboard."""
+    """Logger that logs to Tensorboard."""
 
     def __init__(self, target_dir, *args, **kwargs):
 
