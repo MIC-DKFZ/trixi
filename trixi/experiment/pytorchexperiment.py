@@ -17,11 +17,11 @@ import torch
 from trixi.experiment.experiment import Experiment
 from trixi.logger import CombinedLogger, PytorchExperimentLogger, PytorchVisdomLogger
 
-
 from trixi.logger.tensorboard.pytorchtensorboardxlogger import PytorchTensorboardXLogger
 from trixi.util import Config, ResultElement, ResultLogDict, SourcePacker, name_and_iter_to_filename
 from trixi.util.config import update_from_sys_argv
 from trixi.util.pytorchutils import set_seed
+from trixi.util.util import is_picklable
 
 logger_lookup_dict = dict(
     visdom=PytorchVisdomLogger,
@@ -31,6 +31,7 @@ logger_lookup_dict = dict(
 try:
     from trixi.logger import TelegramMessageLogger
     from trixi.logger.message.slackmessagelogger import SlackMessageLogger
+
     logger_lookup_dict["slack"] = SlackMessageLogger
     logger_lookup_dict["telegram"] = TelegramMessageLogger
 except:
@@ -165,6 +166,7 @@ class PytorchExperiment(Experiment):
             "identifier" is one of "telegram", "tensorboard", "visdom", "slack".
         append_rnd_to_name (bool): If :obj:`True`, will append a random six
             digit string to the experiment name.
+        save_checkpoints_default (bool): By default save the current and the last checkpoint or not.
 
      """
 
@@ -186,7 +188,8 @@ class PytorchExperiment(Experiment):
                  explogger_freq=1,
                  loggers=None,
                  append_rnd_to_name=False,
-                 default_save_types=("model", "optimizer", "simple", "th_vars", "results")):
+                 default_save_types=("model", "optimizer", "simple", "th_vars", "results"),
+                 save_checkpoints_default=True):
 
         # super(PytorchExperiment, self).__init__()
         Experiment.__init__(self)
@@ -214,6 +217,7 @@ class PytorchExperiment(Experiment):
         self._checkpoint_to_cpu = checkpoint_to_cpu
         self._save_checkpoint_every_epoch = save_checkpoint_every_epoch
         self._default_save_types = ("model", "optimizer", "simple", "th_vars", "results")
+        self._save_checkpoint_default = save_checkpoints_default
         self.results = dict()
 
         # get base_dir from _config_raw or store there
@@ -486,7 +490,8 @@ class PytorchExperiment(Experiment):
             if key in ignore:
                 continue
             if isinstance(val, (int, float, bytes, bool, str, set, list, tuple)):
-                simple_vars[key] = val
+                if is_picklable(val):
+                    simple_vars[key] = val
         return simple_vars
 
     def get_pytorch_tensors(self, ignore=()):
@@ -799,11 +804,13 @@ class PytorchExperiment(Experiment):
 
     def save_temp_checkpoint(self):
         """Saves the current checkpoint as checkpoint_current."""
-        self.save_checkpoint(name="checkpoint_current", save_types=self._default_save_types)
+        if self._save_checkpoint_default:
+            self.save_checkpoint(name="checkpoint_current", save_types=self._default_save_types)
 
     def save_end_checkpoint(self):
         """Saves the current checkpoint as checkpoint_last."""
-        self.save_checkpoint(name="checkpoint_last", save_types=self._default_save_types)
+        if self._save_checkpoint_default:
+            self.save_checkpoint(name="checkpoint_last", save_types=self._default_save_types)
 
     def add_result(self, value, name, counter=None, tag=None, label=None, plot_result=True, plot_running_mean=False):
         """
@@ -919,7 +926,7 @@ def get_last_file(dir_, name=None):
 
     for root, dirs, files in os.walk(dir_):
         for filename in fnmatch.filter(files, name):
-            #if 'last' in filename:
+            # if 'last' in filename:
             #    return os.path.join(root, filename)
             checkpoint_file = os.path.join(root, filename)
             dir_files.append(checkpoint_file)

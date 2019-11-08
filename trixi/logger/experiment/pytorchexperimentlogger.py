@@ -439,7 +439,7 @@ class PytorchExperimentLogger(ExperimentLogger):
             results_fn: function which is called with the results/ return values. Expected f(tpr, fpr)
 
         """
-        warnings.warn("This method is deprecated !!! Please use the utils.metrics method")
+        warnings.warn("This method is deprecated !!! Please use the util.metrics method")
         return get_roc_curve(tensor, labels, reduce_to_n_samples, use_sub_process, results_fn)
 
     @staticmethod
@@ -456,7 +456,7 @@ class PytorchExperimentLogger(ExperimentLogger):
             results_fn: function which is called with the results/ return values. Expected f(precision, recall)
 
         """
-        warnings.warn("This method is deprecated !!! Please use the utils.metrics method")
+        warnings.warn("This method is deprecated !!! Please use the util.metrics method")
         return get_pr_curve(tensor, labels, reduce_to_n_samples, use_sub_process, results_fn)
 
     @staticmethod
@@ -478,7 +478,7 @@ class PytorchExperimentLogger(ExperimentLogger):
         Returns:
 
         """
-        warnings.warn("This method is deprecated !!! Please use the utils.metrics method")
+        warnings.warn("This method is deprecated !!! Please use the util.metrics method")
         return get_classification_metrics(tensor, labels, name, metric, use_sub_process, tag_name, results_fn)
 
     @staticmethod
@@ -499,7 +499,7 @@ class PytorchExperimentLogger(ExperimentLogger):
             results_fn: function which is called with the results/ return values. Expected f(grads)
 
         """
-        warnings.warn("This method is deprecated !!! Please use the utils.pytorchutils method")
+        warnings.warn("This method is deprecated !!! Please use the util.pytorchutils method")
         return get_input_gradient(model, inpt, err_fn, grad_type, n_runs, eps, abs, results_fn)
 
     def show_image_gradient(self, name, *args, **kwargs):

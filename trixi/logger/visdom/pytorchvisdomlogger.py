@@ -318,8 +318,12 @@ class PytorchVisdomLogger(NumpyVisdomLogger):
                               "dimension now !!!")
                 tensor = tensor[:, 0:1, ]
 
-            grid = make_grid(tensor, **image_args)
-            image = grid.mul(255).clamp(0, 255).byte().numpy()
+            tensor_np = tensor.numpy()
+            grid = np_make_grid(tensor_np, **image_args)
+            image = np.clip(grid * 255, a_min=0, a_max=255)
+            image = image.astype(np.uint8)
+            # grid = make_grid(tensor, **image_args)
+            # image = grid.mul(255).clamp(0, 255).byte().numpy()
         elif isinstance(tensor, np.ndarray):
             grid = np_make_grid(tensor, **image_args)
             image = np.clip(grid * 255, a_min=0, a_max=255)

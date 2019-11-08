@@ -4,6 +4,7 @@ import io
 import json
 import logging
 import math
+import pickle
 
 import numpy as np
 import os
@@ -26,8 +27,9 @@ try:
     import torch
 except ImportError as e:
     import warnings
+
     warnings.warn(ImportWarning("Could not import Pytorch related modules:\n%s"
-        % e.msg))
+                                % e.msg))
 
 
     class torch:
@@ -628,3 +630,12 @@ def get_tensor_embedding(tensor, method="tsne", n_dims=2, n_neigh=30, **meth_arg
         emb_data = tensor
 
     return emb_data
+
+
+def is_picklable(obj):
+    try:
+        pickle.dumps(obj)
+
+    except pickle.PicklingError:
+        return False
+    return True
