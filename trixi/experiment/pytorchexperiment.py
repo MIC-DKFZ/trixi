@@ -763,15 +763,15 @@ class PytorchExperiment(Experiment):
                     checkpoint_file = get_last_file(self._resume_path)
                     base_dir = os.path.dirname(os.path.dirname(checkpoint_file))
 
-        if base_dir:
-            if not self._ignore_resume_config:
-                load_config = Config()
-                load_config.load(os.path.join(base_dir, "config/config.json"))
-                self._config_raw = load_config
-                self.config = Config.init_objects(self._config_raw)
-                self.print("Loaded existing config from:", base_dir)
-                if self.n_epochs is None:
-                    self.n_epochs = self._config_raw.get("n_epochs")
+        # if base_dir:
+        #     if not self._ignore_resume_config:
+        #         load_config = Config()
+        #         load_config.load(os.path.join(base_dir, "config/config.json"))
+        #         self._config_raw = load_config
+        #         self.config = Config.init_objects(self._config_raw)
+        #         self.print("Loaded existing config from:", base_dir)
+        #         if self.n_epochs is None:
+        #             self.n_epochs = self._config_raw.get("n_epochs")
 
         if checkpoint_file:
             self.load_checkpoint(name="", path=checkpoint_file, save_types=self._resume_save_types)
