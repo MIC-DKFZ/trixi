@@ -30,6 +30,12 @@ IGNORE_KEYS = ("name",
 COLORMAP = cl.scales["8"]["qual"]["Dark2"]
 
 
+def ischild(child, parent):
+    parent = os.path.realpath(parent)
+    child = os.path.realpath(os.path.join(parent, child))
+    return parent == os.path.commonpath([parent, child])
+
+
 def parse_args():
     # Read in base directory
 
@@ -74,8 +80,8 @@ def create_flask_app(base_dir):
 
 
 def start_browser():
-    args, base_dir = parse_args()
 
+    args, base_dir = parse_args()
     base_dir = os.path.abspath(base_dir)
 
     app = create_flask_app(base_dir)
@@ -87,7 +93,8 @@ def start_browser():
 
 def register_url_routes(app, base_dir):
 
-    app.add_url_rule("/experiment", "experiment", lambda: experiment(base_dir), methods=["GET"])
+    app.add_url_rule("/root", "root", lambda: base_dir, methods=["GET"]),
+    app.add_url_rule("/experiment", "experiment", lambda: experiment_api(base_dir), methods=["GET"])
     app.add_url_rule("/experiment_property", "experiment_property", lambda: experiment_property(base_dir), methods=["GET"])
     app.add_url_rule("/experiment_checkpoint", "experiment_checkpoint", lambda: experiment_checkpoint(base_dir), methods=["GET"])
     app.add_url_rule("/experiment_config", "experiment_config", lambda: experiment_config(base_dir), methods=["GET"])
@@ -120,30 +127,35 @@ def register_url_routes(app, base_dir):
 #####################################################################
 
 
-def experiment(base_dir=""):
+def experiment(directory):
     """For a given directory, will check all subfolders and sort them into two lists
     by wether or not they represent and experiment."""
 
-    dir_ = request.args.get("dir")
-    if dir_ is None:
-        abort(400)
-    dir_ = os.path.join(base_dir, dir_)
-
     exp_list = []
     not_exp_list = []
-    for d in sorted(os.listdir(dir_)):
-        if is_experiment(os.path.join(dir_, d)):
+    for d in sorted(os.listdir(directory)):
+        if is_experiment(os.path.join(directory, d)):
             exp_list.append(d)
         else:
             not_exp_list.append(d)
 
     result = {
-        "dir": dir_,
+        "dir": directory,
         "experiments": exp_list,
         "not_experiments": not_exp_list
     }
 
-    return jsonify(result)
+    return result
+
+
+def experiment_api(base_dir=""):
+
+    dir_ = request.args.get("dir")
+    if dir_ is None or not ischild(dir_, base_dir):
+        abort(400)
+    dir_ = os.path.join(base_dir, dir_)
+
+    return jsonify(experiment(dir_))
 
 
 def experiment_property(base_dir=""):
@@ -151,6 +163,9 @@ def experiment_property(base_dir=""):
     experiments = sorted(request.args.getlist("exp"))
     if len(experiments) < 1:
         abort(400)
+    for exp in experiments:
+        if not ischild(exp, base_dir):
+            abort(400)
     properties = sorted(request.args.getlist("prop"))
 
     result = {"experiments": experiments}
@@ -176,6 +191,9 @@ def experiment_checkpoint(base_dir=""):
     experiments = sorted(request.args.getlist("exp"))
     if len(experiments) < 1:
         abort(400)
+    for exp in experiments:
+        if not ischild(exp, base_dir):
+            abort(400)
 
     result = {"experiments": experiments}
 
@@ -197,8 +215,15 @@ def experiment_config(base_dir=""):
     """For a number of experiments, will return their configs as well as the difference config."""
 
     experiments = sorted(request.args.getlist("exp"))
+    dir_ = request.args.get("dir")
+    if dir_ is not None and ischild(dir_, base_dir):  # this will just ignore a bad dir_, maybe change to abort?
+        for exp in experiment(os.path.join(base_dir, dir_))["experiments"]:
+            experiments.append(os.path.join(dir_, exp))
     if len(experiments) < 1:
         abort(400)
+    for exp in experiments:
+        if not ischild(exp, base_dir):
+            abort(400)
 
     exps = []
     names = []
@@ -230,6 +255,9 @@ def experiment_img(base_dir=""):
     experiments = sorted(request.args.getlist("exp"))
     if len(experiments) < 1:
         abort(400)
+    for exp in experiments:
+        if not ischild(exp, base_dir):
+            abort(400)
 
     result = {"experiments": experiments}
 
@@ -252,6 +280,9 @@ def experiment_log(base_dir=""):
     experiments = sorted(request.args.getlist("exp"))
     if len(experiments) < 1:
         abort(400)
+    for exp in experiments:
+        if not ischild(exp, base_dir):
+            abort(400)
     log_names = sorted(request.args.getlist("log"))
     if len(log_names) < 1:
         log_names = ["default"]
@@ -277,6 +308,9 @@ def experiment_plot(base_dir=""):
     experiments = sorted(request.args.getlist("exp"))
     if len(experiments) < 1:
         abort(400)
+    for exp in experiments:
+        if not ischild(exp, base_dir):
+            abort(400)
 
     result = {"experiments": experiments}
 

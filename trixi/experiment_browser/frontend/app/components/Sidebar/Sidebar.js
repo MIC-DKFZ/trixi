@@ -25,7 +25,7 @@ class Sidebar extends React.Component { // eslint-disable-line react/prefer-stat
       >
         <SideNav.Toggle/>
         <SideNav.Nav defaultSelected="home">
-          <NavItem eventKey="">
+          <NavItem eventKey="home">
             <NavIcon>
               <i className="fa fa-fw fa-home" style={{fontSize: '1.75em'}}/>
             </NavIcon>

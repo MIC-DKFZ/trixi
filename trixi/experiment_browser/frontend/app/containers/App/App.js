@@ -23,18 +23,18 @@ import './style.scss';
 const App = () => (
   <div className="app-wrapper">
     <Helmet
-      titleTemplate="%s - TRIXI"
-      defaultTitle="TRIXI Experimentbrowser"
+      titleTemplate="trixi - %s"
+      defaultTitle="trixi Experiment Browser"
     >
-      <meta name="description" content="An experiment browser for pytorch experiments." />
+      <meta name="description" content="Browse your trixi experiments." />
     </Helmet>
     <Header />
     <Sidebar/>
     <Switch>
       <Route exact path="/" component={HomePage} />
-      <Route path="/features" component={FeaturePage} />
+      {/* <Route path="/features" component={FeaturePage} /> */}
       <Route path="/experiment" component={ExperimentPage} />
-      <Route path="/overview" component={OverviewPage} />
+      {/* <Route path="/overview" component={OverviewPage} /> */}
       <Route path="" component={NotFoundPage} />
     </Switch>
     <Footer />

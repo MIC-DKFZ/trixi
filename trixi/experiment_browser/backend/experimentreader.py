@@ -13,7 +13,7 @@ from trixi.util import Config
 from trixi.util.util import StringMultiTypeDecoder
 
 
-REQUIRED_EXPERIMENT_SUBFOLDERS = ("config")
+REQUIRED_EXPERIMENT_SUBFOLDERS = ("config", )
 
 
 def is_experiment(folder):
