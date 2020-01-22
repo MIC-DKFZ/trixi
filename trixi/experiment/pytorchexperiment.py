@@ -216,7 +216,7 @@ class PytorchExperiment(Experiment):
         self.exp_name = self._config_raw["name"]
         self._checkpoint_to_cpu = checkpoint_to_cpu
         self._save_checkpoint_every_epoch = save_checkpoint_every_epoch
-        self._default_save_types = ("model", "optimizer", "simple", "th_vars", "results")
+        self._default_save_types = default_save_types
         self._save_checkpoint_default = save_checkpoints_default
         self.results = dict()
 
