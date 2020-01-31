@@ -188,6 +188,7 @@ class PytorchExperimentLogger(ExperimentLogger):
 
             pretrained_dict = torch.load(model_file, map_location=lambda storage, loc: storage)
             update_model(model, pretrained_dict, exclude_layers, warnings)
+            return model
 
         else:
 
