@@ -25,7 +25,7 @@ class PytorchExperimentStub:
         super(PytorchExperimentStub, self).__init__()
 
         if config is None:
-            config = {}
+            config = Config()
         if loggers is None:
             loggers = {}
 
