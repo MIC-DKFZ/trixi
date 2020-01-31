@@ -7,7 +7,7 @@ matrix:
     env: PYTORCH_URL=http://download.pytorch.org/whl/cpu/torch-0.4.1-cp35-cp35m-linux_x86_64.whl
 before_install:
 - sudo apt-get install -qq graphviz
-- pip install $PYTORCH_URL
+- pip install pytorch
 - pip install twine
 install:
 - pip install .
