@@ -4,6 +4,9 @@ import unittest
 import shutil
 import time
 import matplotlib
+
+from trixi.util.metrics import get_roc_curve, get_pr_curve, get_classification_metrics
+
 matplotlib.use("Agg")
 
 import numpy as np
@@ -169,7 +172,7 @@ class TestPytorchExperimentLogger(unittest.TestCase):
             array = np.random.random_sample(100)
             labels = np.random.choice((0, 1), 100)
 
-            tpr, fpr = self.experimentLogger.get_roc_curve(array, labels)
+            tpr, fpr = get_roc_curve(array, labels)
             self.assertTrue(np.all(tpr >= 0) and np.all(tpr <= 1) and np.all(fpr >= 0) and np.all(fpr <= 1),
                             "Got an invalid tpr, fpr")
         except:
@@ -183,7 +186,7 @@ class TestPytorchExperimentLogger(unittest.TestCase):
             array = np.random.random_sample(100)
             labels = np.random.choice((0, 1), 100)
 
-            precision, recall = self.experimentLogger.get_pr_curve(array, labels)
+            precision, recall = get_pr_curve(array, labels)
             self.assertTrue(np.all(precision >= 0) and np.all(precision <= 1)
                             and np.all(recall >= 0) and np.all(recall <= 1),
                             "Got an invalid precision, recall")
@@ -198,50 +201,16 @@ class TestPytorchExperimentLogger(unittest.TestCase):
             array = np.random.random_sample(100)
             labels = np.random.choice((0, 1), 100)
 
-            vals, tags = self.experimentLogger.get_classification_metrics(array, labels,
-                                                                          metric=("roc-auc", "pr-score"))
+            ret_dict = get_classification_metrics(array, labels, metric=("roc-auc", "pr-score"))
 
-            self.assertTrue("roc-auc" in tags and "pr-score" in tags, "Did not get all classification metrics")
+            vals = list(ret_dict.values())
+
+            self.assertTrue("roc-auc" in ret_dict and "pr-score" in ret_dict, "Did not get all classification metrics")
             self.assertTrue(vals[0] >= 0 and vals[0] <= 1
                             and vals[1] >= 0 and vals[1] <= 1,
                             "Got an invalid classification metric values")
         except:
             pass
-
-    def test_show_image_gradient(self):
-
-        net = Net()
-        random_input = torch.from_numpy(np.random.randn(28 * 28).reshape((1, 1, 28, 28))).float()
-        fake_labels = torch.from_numpy(np.array([2])).long()
-        criterion = torch.nn.CrossEntropyLoss()
-
-        def err_fn(x):
-            x = net(x)
-            return criterion(x, fake_labels)
-
-        self.experimentLogger.show_image_gradient("grads-vanilla", model=net, inpt=random_input, err_fn=err_fn,
-                                                  grad_type="vanilla")
-        time.sleep(1)
-        self.assertTrue(os.path.exists(os.path.join(self.experimentLogger.img_dir, "grads-vanilla.png")),
-                        "Could not get vanilla gradients")
-
-        self.experimentLogger.show_image_gradient("grads-svanilla", model=net, inpt=random_input, err_fn=err_fn,
-                                                  grad_type="smooth-vanilla")
-        time.sleep(1)
-        self.assertTrue(os.path.exists(os.path.join(self.experimentLogger.img_dir, "grads-svanilla.png")),
-                        "Could not get vanilla gradients")
-
-        self.experimentLogger.show_image_gradient("grads-guided", model=net, inpt=random_input, err_fn=err_fn,
-                                                  grad_type="guided")
-        time.sleep(1)
-        self.assertTrue(os.path.exists(os.path.join(self.experimentLogger.img_dir, "grads-guided.png")),
-                        "Could not get vanilla gradients")
-
-        self.experimentLogger.show_image_gradient("grads-sguided", model=net, inpt=random_input, err_fn=err_fn,
-                                                  grad_type="smooth-guided")
-        time.sleep(1)
-        self.assertTrue(os.path.exists(os.path.join(self.experimentLogger.img_dir, "grads-sguided.png")),
-                        "Could not get vanilla gradients")
 
 
 class Net(nn.Module):

@@ -77,12 +77,12 @@ class TestPytorchTensorboardXLogger(unittest.TestCase):
     def test_show_pr_curve(self):
         self.logger.show_pr_curve(np.random.rand(100), np.random.randint(2, size=100))
 
-    def test_show_embedding(self):
-        import torch
-        label_img = torch.rand(100, 3, 10, 32)
-        for i in range(100):
-            label_img[i]*=i/100.0
-        self.logger.show_embedding(torch.randn(100, 5), label_img=label_img)
+    # def test_show_embedding(self):
+    #     import torch
+    #     label_img = torch.rand(100, 3, 10, 32)
+    #     for i in range(100):
+    #         label_img[i]*=i/100.0
+    #     self.logger.show_embedding(torch.randn(100, 5), label_img=label_img)
 
     def test_show_histogram(self):
         self.logger.show_histogram(np.random.rand(100))
