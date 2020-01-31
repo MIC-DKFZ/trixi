@@ -565,7 +565,7 @@ class Config(dict):
         return self.difference_config_static(self, *other_configs)
 
     @staticmethod
-    def difference_config_static(*configs, only_set=False):
+    def difference_config_static(*configs, only_set=False, encode=True):
         """Make a Config of all elements that differ between N configs.
 
         The resulting Config looks like this::
@@ -581,6 +581,7 @@ class Config(dict):
             configs (Config): Any number of Configs
             only_set (bool): If only the set of different values hould be returned or for each config the
             corresponding one
+            encode (bool): If True, values will be encoded the same way as they are when exported to disk (e.g."__type__(MyClass)")
 
         Returns:
             Config: Possibly empty Config
@@ -606,7 +607,10 @@ class Config(dict):
                     all_configs = False
                     current_values.append(None)
                 else:
-                    current_values.append(mmte._encode(config[key]))
+                    if encode:
+                        current_values.append(mmte._encode(config[key]))
+                    else:
+                        current_values.append(config[key])
 
                 if len(current_values) >= 2:
                     if current_values[-1] != current_values[-2]:
