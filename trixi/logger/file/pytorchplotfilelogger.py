@@ -77,7 +77,7 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
 
         img_file = os.path.join(image_dir, name)
         os.makedirs(os.path.dirname(img_file), exist_ok=True)
-        tv_save_image(tensor=tensor, filename=img_file, **image_args)
+        tv_save_image(tensor, img_file, **image_args)
 
     def save_image(self, tensor, name, n_iter=None, iter_format="{:05d}", prefix=False, image_args=None):
         """
@@ -180,7 +180,7 @@ class PytorchPlotFileLogger(NumpyPlotFileLogger):
 
         os.makedirs(os.path.dirname(img_file), exist_ok=True)
 
-        tv_save_image(tensor=tensor, filename=img_file, **image_args)
+        tv_save_image(tensor, img_file, **image_args)
 
     def save_image_grid(self, tensor, name, n_iter=None, prefix=False, iter_format="{:05d}", image_args=None):
         """
