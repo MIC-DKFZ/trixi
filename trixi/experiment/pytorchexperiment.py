@@ -29,10 +29,13 @@ logger_lookup_dict = dict(
 )
 
 try:
-    from trixi.logger import TelegramMessageLogger
     from trixi.logger.message.slackmessagelogger import SlackMessageLogger
-
     logger_lookup_dict["slack"] = SlackMessageLogger
+except:
+    pass
+
+try:
+    from trixi.logger import TelegramMessageLogger
     logger_lookup_dict["telegram"] = TelegramMessageLogger
 except:
     pass
