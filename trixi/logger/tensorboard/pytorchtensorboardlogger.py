@@ -1,8 +1,8 @@
 import torch
-from trixi.logger.tensorboard.tensorboardxlogger import TensorboardXLogger
+from trixi.logger.tensorboard.tensorboardlogger import TensorboardLogger
 
 
-class PytorchTensorboardXLogger(TensorboardXLogger):
+class PytorchTensorboardLogger(TensorboardLogger):
     """Abstract interface for visual logger."""
 
     def process_params(self, f, *args, **kwargs):
@@ -21,7 +21,7 @@ class PytorchTensorboardXLogger(TensorboardXLogger):
         return f(self, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
-        super(PytorchTensorboardXLogger, self).__init__(*args, **kwargs)
+        super(PytorchTensorboardLogger, self).__init__(*args, **kwargs)
 
     def plot_model_structure(self, model, input_size):
         """

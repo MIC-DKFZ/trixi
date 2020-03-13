@@ -8,12 +8,12 @@ import numpy as np
 
 from trixi.logger import PytorchExperimentLogger, PytorchVisdomLogger, TelegramMessageLogger
 from trixi.logger.message.slackmessagelogger import SlackMessageLogger
-from trixi.logger.tensorboard import PytorchTensorboardXLogger
+from trixi.logger.tensorboard import PytorchTensorboardLogger
 from trixi.util import ResultElement, ResultLogDict, Config
 
 logger_lookup_dict = dict(
     visdom=PytorchVisdomLogger,
-    tensorboard=PytorchTensorboardXLogger,
+    tensorboard=PytorchTensorboardLogger,
     telegram=TelegramMessageLogger,
     slack=SlackMessageLogger,
 )
