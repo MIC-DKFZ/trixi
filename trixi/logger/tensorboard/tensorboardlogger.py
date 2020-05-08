@@ -9,12 +9,12 @@ from trixi.logger.abstractlogger import convert_params
 from trixi.util.util import np_make_grid
 
 
-class TensorboardXLogger(NumpySeabornPlotLogger):
-    """Logger that uses tensorboardX to log to Tensorboard."""
+class TensorboardLogger(NumpySeabornPlotLogger):
+    """Logger that uses tensorboard to log to Tensorboard."""
 
     def __init__(self, target_dir, *args, **kwargs):
 
-        super(TensorboardXLogger, self).__init__(*args, **kwargs)
+        super(TensorboardLogger, self).__init__(*args, **kwargs)
 
         os.makedirs(target_dir, exist_ok=True)
 
@@ -279,6 +279,22 @@ class TensorboardXLogger(NumpySeabornPlotLogger):
             self.val_dict["{}-pr-curve".format(name)] += 1
 
         self.writer.add_pr_curve(tag=name, labels=labels, predictions=tensor, global_step=self.val_dict["{}-pr-curve".format(name)])
+
+    def show_hparams(self, hparam_dict=None, metric_dict=None, counter=None, *args, **kwargs):
+        """
+
+        Args:
+            hparam_dict: Each key-value pair in the dictionary is the name of the hyper parameter and it’s corresponding value.
+            metric_dict: Each key-value pair in the dictionary is the name of the metric and it’s corresponding value.
+             Note that the key used here should be unique in the tensorboard record. Otherwise the value you added by
+             show_value will be displayed in the hparam plugin. In most cases, this is unwanted.
+        """
+        if counter is not None:
+            self.val_dict["{}-hparams"] = counter
+        else:
+            self.val_dict["{}-hparams"] += 1
+
+        self.writer.add_hparams(hparam_dict=hparam_dict, metric_dict=metric_dict)
 
     def close(self):
         self.writer.close()

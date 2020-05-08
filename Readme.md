@@ -1,7 +1,7 @@
 [![DOI](https://zenodo.org/badge/134823632.svg)](https://zenodo.org/badge/latestdoi/134823632)
 [![PyPI version](https://badge.fury.io/py/trixi.svg)](https://badge.fury.io/py/trixi)
 [![Build Status](https://img.shields.io/travis/MIC-DKFZ/trixi.svg)](https://travis-ci.org/MIC-DKFZ/trixi)
-[![Documentation Status](https://readthedocs.org/projects/trixi/badge/?version=latest)](https://trixi.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/trixi/badge/?version=develop)](https://trixi.readthedocs.io/en/develop/?badge=develop)
 [![Downloads](https://pepy.tech/badge/trixi)](https://pepy.tech/project/trixi)
 [![GitHub](https://img.shields.io/pypi/l/trixi.svg)](https://github.com/MIC-DKFZ/trixi/blob/master/LICENSE)
 <p align="center">
@@ -13,8 +13,9 @@ Finally get some structure into your machine learning experiments.
 
 * [Features](#features)
 * [Installation](#installation)
-* [Documentation](#documentation) ([trixi.rtfd.io](https://trixi.readthedocs.io/en/latest/))
+* [Documentation](#documentation) ([trixi.rtfd.io](https://trixi.readthedocs.io/en/develop/))
 * [Examples](#examples)
+* [How to Cite](#how-to-cite)
 
 # Contribute
 
@@ -151,3 +152,17 @@ Examples can be found here for:
 * [Experiment Infrastructure](https://github.com/MIC-DKFZ/trixi/blob/master/examples/pytorch_experiment.ipynb) (with a
  simple MNIST Experiment example and resuming and comparison of different hyperparameters)
 * [U-Net Example](https://github.com/MIC-DKFZ/basic_unet_example)
+
+# How to Cite
+
+If you use **trixi** in your project, we'd appreciate a citation, for example like this
+
+    @misc{trixi2017,
+      author = {Zimmerer, David and Petersen, Jens and Köhler, Gregor and Wasserthal, Jakob and Adler, Tim and Wirkert, Sebastian and Ross, Tobias},
+      title = {trixi - Training and Retrospective Insight eXperiment Infrastructure},
+      year = {2017},
+      publisher = {GitHub},
+      journal = {GitHub Repository},
+      howpublished = {\url{https://github.com/MIC-DKFZ/trixi}},
+      doi = {10.5281/zenodo.1345136}
+    }
