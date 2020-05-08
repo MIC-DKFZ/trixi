@@ -5,6 +5,7 @@ import json
 from copy import deepcopy
 
 from trixi.util.util import ModuleMultiTypeDecoder, ModuleMultiTypeEncoder
+import inspect
 
 
 class Config(dict):
@@ -135,10 +136,7 @@ class Config(dict):
 
         if deep:
             update_config = Config(config=dict_like, deep=True)
-            self.update(update_config,
-                        deep=False,
-                        ignore=ignore,
-                        allow_dict_overwrite=allow_dict_overwrite)
+            self.update(update_config, deep=False, ignore=ignore, allow_dict_overwrite=allow_dict_overwrite)
 
         else:
             for key, value in dict_like.items():
@@ -146,10 +144,7 @@ class Config(dict):
                     continue
                 if key in self and isinstance(value, dict):
                     try:
-                        self[key].update(value,
-                                         deep=False,
-                                         ignore=ignore,
-                                         allow_dict_overwrite=allow_dict_overwrite)
+                        self[key].update(value, deep=False, ignore=ignore, allow_dict_overwrite=allow_dict_overwrite)
                     except AttributeError as ae:
                         if allow_dict_overwrite:
                             self[key] = value
@@ -171,10 +166,7 @@ class Config(dict):
                 See examples for an illustration of the difference
 
         """
-        self.update(dict_like,
-                    deep=True,
-                    ignore=ignore,
-                    allow_dict_overwrite=allow_dict_overwrite)
+        self.update(dict_like, deep=True, ignore=ignore, allow_dict_overwrite=allow_dict_overwrite)
 
     def __setattr__(self, key, value):
         """Modified to automatically convert `dict` to Config."""
@@ -287,7 +279,7 @@ class Config(dict):
         if type(value) != str:
             raise TypeError("set_with_decode requires string as value.")
 
-        dict_str = ''
+        dict_str = ""
         depth = 0
         key_split = key.split(".")
 
@@ -357,18 +349,10 @@ class Config(dict):
         """
 
         if hasattr(file_, "write"):
-            json.dump(self, file_,
-                      cls=ModuleMultiTypeEncoder,
-                      indent=indent,
-                      separators=separators,
-                      **kwargs)
+            json.dump(self, file_, cls=ModuleMultiTypeEncoder, indent=indent, separators=separators, **kwargs)
         else:
             with open(file_, "w") as file_object:
-                json.dump(self, file_object,
-                          cls=ModuleMultiTypeEncoder,
-                          indent=indent,
-                          separators=separators,
-                          **kwargs)
+                json.dump(self, file_object, cls=ModuleMultiTypeEncoder, indent=indent, separators=separators, **kwargs)
 
     def dumps(self, indent=4, separators=(",", ": "), **kwargs):
         """Get string representation using :meth:`json.dumps`.
@@ -379,11 +363,7 @@ class Config(dict):
             **kwargs: Will be passed to :meth:`json.dumps`.
 
         """
-        return json.dumps(self,
-                          cls=ModuleMultiTypeEncoder,
-                          indent=indent,
-                          separators=separators,
-                          **kwargs)
+        return json.dumps(self, cls=ModuleMultiTypeEncoder, indent=indent, separators=separators, **kwargs)
 
     def load(self, file_, raise_=True, decoder_cls_=ModuleMultiTypeDecoder, **kwargs):
         """Load config from file using :meth:`json.load`.
@@ -686,7 +666,9 @@ class Config(dict):
                         if len(intermediate_dict) > 0:
                             yield str(key), intermediate_dict
                     elif isinstance(val, (list, tuple)):
-                        keep_this = keep_lists or not isinstance(key, (str, int)) or (isinstance(key, int) and not flatten_int)
+                        keep_this = (
+                            keep_lists or not isinstance(key, (str, int)) or (isinstance(key, int) and not flatten_int)
+                        )
                         if max_split_size not in (None, False) and len(val) > max_split_size:
                             keep_this = True
                         if keep_this:
@@ -743,12 +725,12 @@ def update_from_sys_argv(config, warn=False):
     import warnings
 
     def str2bool(v):
-        if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        if v.lower() in ("yes", "true", "t", "y", "1"):
             return True
-        elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        elif v.lower() in ("no", "false", "f", "n", "0"):
             return False
         else:
-            raise argparse.ArgumentTypeError('Boolean value expected.')
+            raise argparse.ArgumentTypeError("Boolean value expected.")
 
     if len(sys.argv) > 1:
 
@@ -766,9 +748,9 @@ def update_from_sys_argv(config, warn=False):
                     parser.add_argument(name, type=str2bool, default=val)
                 elif isinstance(val, (list, tuple)):
                     if len(val) > 0 and type(val[0]) != type:
-                        parser.add_argument(name, nargs='+', type=type(val[0]), default=val)
+                        parser.add_argument(name, nargs="+", type=type(val[0]), default=val)
                     else:
-                        parser.add_argument(name, nargs='+', default=val)
+                        parser.add_argument(name, nargs="+", default=val)
                 else:
                     if type(val) == type:
                         val = encoder._encode(val)
@@ -791,8 +773,8 @@ def update_from_sys_argv(config, warn=False):
                 param[key] = None
             if type(config_flat[key]) == type:
                 if isinstance(val, str):
-                    val = val.replace("\'", "")
-                    val = val.replace("\"", "")
+                    val = val.replace("'", "")
+                    val = val.replace('"', "")
                 param[key] = decoder._decode(val)
             try:
                 key_split = key.split(".")
@@ -812,3 +794,32 @@ def update_from_sys_argv(config, warn=False):
 
         # update dict
         config.update(param)
+
+
+def monkey_patch_fn_args_as_config(f):
+    """Decorator: Monkey patches, aka addes a variable 'fn_args_as_config' to globals, 
+    so that it can be accessed by the decorated function.
+    Adds all function parameters to a dict 'fn_args_as_config', which can be accessed by the method. 
+    Be careful using it!
+
+    """
+    sig = inspect.signature(f)
+
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        bound_arguments = sig.bind(*args, **kwargs)
+        bound_arguments.apply_defaults()
+        c = Config(config=bound_arguments.arguments)
+        if "self" in c:
+            c["self"] = c["self"].__class__
+
+        g = f.__globals__
+        g["fn_args_as_config"] = c
+
+        try:
+            res = f(*args, **kwargs)
+        finally:
+            del g["fn_args_as_config"]
+        return res
+
+    return wrapper
