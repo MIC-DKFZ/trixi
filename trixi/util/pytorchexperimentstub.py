@@ -20,7 +20,6 @@ logger_lookup_dict = dict(
 
 
 class PytorchExperimentStub:
-
     def __init__(self, base_dir=None, name=None, config=None, loggers=None):
         super(PytorchExperimentStub, self).__init__()
 
@@ -31,8 +30,8 @@ class PytorchExperimentStub:
 
         # assert base_dir is not None or "base_dir" in config, "A base dir has to be given, either directly or via config"
 
-        if name is None and 'name' in config:
-            self.name = config['name']
+        if name is None and "name" in config:
+            self.name = config["name"]
         elif name is None:
             self.name = "experiment"
         else:
@@ -41,13 +40,12 @@ class PytorchExperimentStub:
         if base_dir is not None:
             self.base_dir = base_dir
         else:
-            self.base_dir = config.get('base_dir')
+            self.base_dir = config.get("base_dir")
 
         self.config = config
 
         if base_dir is not None:
-            self.elog = PytorchExperimentLogger(base_dir=self.base_dir,
-                                                exp_name=self.name)
+            self.elog = PytorchExperimentLogger(base_dir=self.base_dir, exp_name=self.name)
 
             self.results = ResultLogDict("results-log.json", base_dir=self.elog.result_dir)
         else:
@@ -70,8 +68,9 @@ class PytorchExperimentStub:
             log_params = logger_cfg[1] if len(logger_cfg) > 1 else {}
             log_freq = logger_cfg[2] if len(logger_cfg) > 2 else 10
         else:
-            assert isinstance(logger_cfg, str), "The specified logger has to either be a string or a list with " \
-                                                "name, parameters, clog_frequency"
+            assert isinstance(logger_cfg, str), (
+                "The specified logger has to either be a string or a list with " "name, parameters, clog_frequency"
+            )
             log_type = logger_cfg
             log_params = {}
             log_freq = 10
@@ -104,15 +103,6 @@ class PytorchExperimentStub:
 
     @property
     def tlog(self):
-        if "telegram" in self.loggers:
-            return self.loggers["telegram"]
-        elif "t" in self.loggers:
-            return self.loggers["t"]
-        else:
-            return None
-
-    @property
-    def txlog(self):
         if "tensorboard" in self.loggers:
             return self.loggers["tensorboard"]
         if "tensorboardx" in self.loggers:
@@ -131,17 +121,18 @@ class PytorchExperimentStub:
         else:
             return None
 
+    @property
+    def l(self):
+        return self.loggers
+
     def _save_exp_config(self):
 
         if self.elog is not None and not isinstance(self.elog, Mock):
             cur_time = time.strftime("%y-%m-%d_%H:%M:%S", time.localtime(time.time()))
-            self.elog.save_config(Config(**{'name': self.name,
-                                            'time': cur_time,
-                                            'state': "Stub",
-                                            'current_time': cur_time,
-                                            'epoch': 0
-                                            }),
-                                  "exp")
+            self.elog.save_config(
+                Config(**{"name": self.name, "time": cur_time, "state": "Stub", "current_time": cur_time, "epoch": 0}),
+                "exp",
+            )
 
     def add_result(self, value, name, counter=None, tag=None, label=None, plot_result=True, plot_running_mean=False):
         """
@@ -186,10 +177,8 @@ class PytorchExperimentStub:
             if plot_running_mean:
                 value = np.mean(self.results.running_mean_dict[name])
             self.elog.show_value(value=value, name=name, tag=tag_name, counter=counter, show_legend=legend)
-            if "visdom" in self.loggers:
-                self.vlog.show_value(value=value, name=name, tag=tag_name, counter=counter, show_legend=legend)
-            if "tensorboard" in self.loggers:
-                self.txlog.show_value(value=value, name=name, tag=tag_name, counter=counter, show_legend=legend)
+            for log_name, logger_ in self.loggers.items():
+                logger_.show_value(value=value, name=name, tag=tag_name, counter=counter, show_legend=legend)
 
     def get_result(self, name):
         """
