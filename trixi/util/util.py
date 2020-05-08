@@ -489,7 +489,7 @@ def chw_to_hwc(np_array):
 
 
 def np_make_grid(np_array, nrow=8, padding=2,
-                 normalize=False, range=None, scale_each=False, pad_value=0, to_int=False):
+                 normalize=False, range=None, scale_each=False, pad_value=0, to_int=False, standardize=False):
     """Make a grid of images.
 
     Args:
@@ -530,6 +530,19 @@ def np_make_grid(np_array, nrow=8, padding=2,
     if len(np_array.shape) == 3 == 4 and np_array.shape[1] == 1:  # single-channel images
         np_array = np.concatenate((np_array, np_array, np_array), 1)
 
+    if standardize is True:
+        np_array = np.copy(np_array)  # avoid modifying tensor in-place
+
+        def standardize_array_(img):
+            img = (img - np.mean(img)) / (np.std(img) + 1e-5)
+            return img
+
+        if scale_each is True:
+            for i in np.arange(np_array.shape[0]):  # loop over mini-batch dimension
+                np_array[i] = standardize_array_(np_array[i])
+        else:
+            np_array = standardize_array_(np_array)
+
     if normalize is True:
         np_array = np.copy(np_array)  # avoid modifying tensor in-place
         if range is not None:
@@ -545,7 +558,7 @@ def np_make_grid(np_array, nrow=8, padding=2,
             if range_ is not None:
                 t = norm_ip(t, range_[0], range_[1])
             else:
-                t = norm_ip(t, float(t.min()), float(t.max()))
+                t = norm_ip(t, np.min(t), np.max(t))
             return t
 
         if scale_each is True:
@@ -553,6 +566,10 @@ def np_make_grid(np_array, nrow=8, padding=2,
                 np_array[i] = norm_range(np_array[i], range)
         else:
             np_array = norm_range(np_array, range)
+
+
+
+
 
     if np_array.shape[0] == 1:
         return np_array.squeeze(0)
