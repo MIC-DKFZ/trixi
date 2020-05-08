@@ -74,16 +74,16 @@ class TensorboardLogger(NumpySeabornPlotLogger):
         else:
             key = tag + "-" + name
 
-        if counter is not None:
-            self.val_dict["{}-image".format(key)] = counter
+        if counter is not None and isinstance(counter, int):
+            self.val_dict[f"{key}-image"] = counter
         else:
-            self.val_dict["{}-image".format(key)] += 1
+            self.val_dict[f"{key}-image"] += 1
 
         if tag is not None:
-            self.writer.add_scalars(tag, {name: value}, global_step=self.val_dict["{}-image".format(key)])
+            self.writer.add_scalars(tag, {name: value}, global_step=self.val_dict[f"{key}-image"])
             self.writer.scalar_dict = {}
         else:
-            self.writer.add_scalar(name, value, global_step=self.val_dict["{}-image".format(key)])
+            self.writer.add_scalar(name, value, global_step=self.val_dict[f"{key}-image"])
 
     def show_text(self, text, name="Text", counter=None, **kwargs):
         """
@@ -103,9 +103,20 @@ class TensorboardLogger(NumpySeabornPlotLogger):
         self.writer.add_text(name, text, global_step=self.val_dict["{}-text".format(name)])
 
     @convert_params
-    def show_image_grid(self, image_array, name="Image-Grid", counter=None, nrow=8, padding=2,
-                        normalize=False, range=None, scale_each=False, pad_value=0,
-                        *args, **kwargs):
+    def show_image_grid(
+        self,
+        image_array,
+        name="Image-Grid",
+        counter=None,
+        nrow=8,
+        padding=2,
+        normalize=False,
+        range=None,
+        scale_each=False,
+        pad_value=0,
+        *args,
+        **kwargs,
+    ):
         """
         Sends an array of images to tensorboard as a grid. Like :meth:`.show_image`, but generates
         image grid before.
@@ -123,12 +134,9 @@ class TensorboardLogger(NumpySeabornPlotLogger):
             pad_value (float): Fill padding with this value
         """
 
-        image_args = dict(nrow=nrow,
-                          padding=padding,
-                          normalize=normalize,
-                          range=range,
-                          scale_each=scale_each,
-                          pad_value=pad_value)
+        image_args = dict(
+            nrow=nrow, padding=padding, normalize=normalize, range=range, scale_each=scale_each, pad_value=pad_value
+        )
 
         if counter is not None:
             self.val_dict["{}-image".format(name)] = counter
@@ -223,8 +231,7 @@ class TensorboardLogger(NumpySeabornPlotLogger):
         figure = super().show_piechart(array, name, *args, **kwargs)
         self.writer.add_figure(tag=name, figure=figure, global_step=self.val_dict["{}-figure".format(name)])
 
-    def show_embedding(self, tensor, labels=None, name='default', label_img=None, counter=None,
-                       *args, **kwargs):
+    def show_embedding(self, tensor, labels=None, name="default", label_img=None, counter=None, *args, **kwargs):
         """
         Displays an embedding of a tensor (for more details see tensorboardX)
 
@@ -242,7 +249,13 @@ class TensorboardLogger(NumpySeabornPlotLogger):
         else:
             self.val_dict["{}-embedding".format(name)] += 1
 
-        self.writer.add_embedding(mat=tensor, metadata=labels, label_img=label_img, tag=name, global_step=self.val_dict["{}-embedding".format(name)])
+        self.writer.add_embedding(
+            mat=tensor,
+            metadata=labels,
+            label_img=label_img,
+            tag=name,
+            global_step=self.val_dict["{}-embedding".format(name)],
+        )
 
     def show_histogram(self, array, name="Histogram", counter=None, *args, **kwargs):
         """
@@ -278,7 +291,9 @@ class TensorboardLogger(NumpySeabornPlotLogger):
         else:
             self.val_dict["{}-pr-curve".format(name)] += 1
 
-        self.writer.add_pr_curve(tag=name, labels=labels, predictions=tensor, global_step=self.val_dict["{}-pr-curve".format(name)])
+        self.writer.add_pr_curve(
+            tag=name, labels=labels, predictions=tensor, global_step=self.val_dict["{}-pr-curve".format(name)]
+        )
 
     def show_hparams(self, hparam_dict=None, metric_dict=None, counter=None, *args, **kwargs):
         """
