@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import inspect
 import json
 from copy import deepcopy
+from functools import wraps
 
 from trixi.util.util import ModuleMultiTypeDecoder, ModuleMultiTypeEncoder
-import inspect
 
 
 class Config(dict):
