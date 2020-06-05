@@ -373,6 +373,10 @@ class PytorchExperiment(Experiment):
 
     @property
     def txlog(self):
+        return self.tblog
+
+    @property
+    def tblog(self):
         if "tensorboard" in self.loggers:
             return self.loggers["tensorboard"]
         if "tensorboardx" in self.loggers:
@@ -857,7 +861,7 @@ class PytorchExperiment(Experiment):
                 legend = True
             if plot_running_mean:
                 value = np.mean(self.results.running_mean_dict[name])
-            self.clog.show_value(value=value, name=name, tag=tag_name, counter=counter, show_legend=legend)
+            self.clog.show_value(value=value, name=name, tag=tag, counter=counter, show_legend=legend)
 
     def get_result(self, name):
         """

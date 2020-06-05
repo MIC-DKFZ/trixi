@@ -18,13 +18,12 @@ def create_function(self, sub_methods):
                 if method_freq is None or method_freq == 0:
                     continue
 
-                use_name = False
+                name_id = None
                 if "name" in kwargs and not ("ignore_name_in_args" in kwargs and kwargs["ignore_name_in_args"] is True):
                     name_id = kwargs["name"]
-                    if "tag" in kwargs:
+                    if "tag" in kwargs and kwargs["tag"] is not None:
                         name_id = name_id + kwargs["tag"]
                     method_cntr = self.log_methods_name_cntr[sub_method][name_id]
-                    use_name = True
 
                 if "log_all" in kwargs and kwargs["log_all"] is True:
                     sub_method(*args, **kwargs)
@@ -38,10 +37,10 @@ def create_function(self, sub_methods):
                         sub_method(*args, **kwargs)
                     kwargs["do_not_increase"] = True
 
-                if use_name:
-                    self.log_methods_name_cntr[sub_method][kwargs["name"]] += 1
-                elif "do_not_increase" not in kwargs or ("do_not_increase" in kwargs and kwargs["do_not_increase"] is
-                                                         False):
+                if name_id is not None:
+                    self.log_methods_name_cntr[sub_method][name_id] += 1
+                elif "do_not_increase" not in kwargs or \
+                        ("do_not_increase" in kwargs and kwargs["do_not_increase"] is False):
                     self.log_methods_cntr[sub_method] += 1
 
             except Exception as e:
