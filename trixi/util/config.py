@@ -145,7 +145,12 @@ class Config(dict):
                     continue
                 if key in self and isinstance(value, dict):
                     try:
-                        self[key].update(value, deep=False, ignore=ignore, allow_dict_overwrite=allow_dict_overwrite)
+                        new_ignore = []
+                        for ignore_key in ignore:
+                            ignore_key = ignore_key.split(".")
+                            if ignore_key[0] == key:
+                                new_ignore.append(".".join(ignore_key[1:]))
+                        self[key].update(value, deep=False, ignore=new_ignore, allow_dict_overwrite=allow_dict_overwrite)
                     except AttributeError as ae:
                         if allow_dict_overwrite:
                             self[key] = value
