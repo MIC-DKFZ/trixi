@@ -1,7 +1,7 @@
 colorlover>=0.2.1
 Flask>=0.12.2
 graphviz>=0.8.4
-matplotlib>=2.2.2
+matplotlib>=3.3.2
 numpy>=1.14.5
 seaborn>=0.8.1
 scipy>=0.19.1

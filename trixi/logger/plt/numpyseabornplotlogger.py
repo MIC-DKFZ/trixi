@@ -144,9 +144,9 @@ class NumpySeabornPlotLogger(AbstractLogger):
 
         handles, _ = ax.get_legend_handles_labels()
         try:
-            legend = kwargs['opts']['legend']
+            legend = kwargs["opts"]["legend"]
             ax.legend(handles, legend)
-        except KeyError: # if no legend is defined
+        except KeyError:  # if no legend is defined
             pass
         if show:
             plt.show(block=False)
@@ -202,8 +202,10 @@ class NumpySeabornPlotLogger(AbstractLogger):
         """
 
         if not isinstance(array, np.ndarray):
-            raise TypeError("Array must be numpy arrays (this class is called NUMPY seaborn logger, and seaborn"
-                            " can only handle numpy arrays -.- .__. )")
+            raise TypeError(
+                "Array must be numpy arrays (this class is called NUMPY seaborn logger, and seaborn"
+                " can only handle numpy arrays -.- .__. )"
+            )
         if len(array.shape) != 2:
             raise ValueError("Array must be 2D for scatterplot")
         if array.shape[1] != 2:

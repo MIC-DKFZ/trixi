@@ -17,17 +17,22 @@ class NumpyPlotFileLogger(NumpySeabornPlotLogger):
 
     """
 
-    def __init__(self, img_dir, plot_dir, **kwargs):
+    def __init__(self, img_dir, plot_dir, switch_backend=True, **kwargs):
         """
         Initializes a numpy plot file logger to plot images and plots into an image and plot directory
 
         Args:
             img_dir: The directory to store images in
             plot_dir: The directory to store plots in
+            switch_backend: If true switchtes backend to agg
         """
         super(NumpyPlotFileLogger, self).__init__(**kwargs)
         self.img_dir = img_dir
         self.plot_dir = plot_dir
+        if switch_backend:
+            import matplotlib.pyplot as plt
+
+            plt.switch_backend("Agg")
 
     @convert_params
     def show_image(self, image, name, file_format=".png", *args, **kwargs):
@@ -66,7 +71,7 @@ class NumpyPlotFileLogger(NumpySeabornPlotLogger):
         else:
             outname = os.path.join(self.plot_dir, tag) + file_format
         os.makedirs(os.path.dirname(outname), exist_ok=True)
-        threaded(savefig_and_close)(figure, outname)
+        savefig_and_close(figure, outname)
 
     @convert_params
     def show_barplot(self, array, name, file_format=".png", *args, **kwargs):
