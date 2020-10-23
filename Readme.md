@@ -63,7 +63,7 @@ storing of config, results, plots, dict, array, images, etc. That way your exper
 Here are some examples:
 
 * [Visdom](https://github.com/facebookresearch/visdom):<br>
-<img src="https://lh3.googleusercontent.com/-h3HuvbU2V0SfgqgXGiK3LPghE5vqvS0pzpObS0YgG_LABMFk62JCa3KVu_2NV_4LJKaAa5-tg=s0" alt="visdom-logger" width="300"/>
+<img src="https://camo.githubusercontent.com/d69475a01f9f327fc42931a21df8134d1fbdfc19/68747470733a2f2f6c68332e676f6f676c6575736572636f6e74656e742e636f6d2f2d62714839555843772d42452f574c3255736472726241492f41414141414141416e59632f656d727877436d6e7257345f434c54797955747442305359524a2d693443436951434c63422f73302f53637265656e2b53686f742b323031372d30332d30362b61742b31302e35312e30322b414d2e706e67253232766973646f6d5f626967253232" alt="visdom-logger" width="300"/>
 
 * Files:<br>
 <img src="https://raw.githubusercontent.com/MIC-DKFZ/trixi/master/doc/_static/trixi_file.png" alt="file-logger" height="200"/>
